@@ -13,7 +13,7 @@ from mathutils import Matrix, Vector
 
 sys.path.insert(0, os.path.dirname(__file__))
 import bags
-from common import PZ, fit_affine, obb_axes, out, temp, xio
+from common import PZ, fit_affine, keep_groups, obb_axes, out, sel, temp, xio
 from io_scene_fbx import parse_fbx
 
 cfg = bags.get(sys.argv[sys.argv.index("--") + 1])
@@ -25,7 +25,7 @@ X2B = Matrix(((1, 0, 0, 0), (0, 0, -1, 0), (0, 1, 0, 0), (0, 0, 0, 1)))  # .X（
 d = np.load(os.path.join(TEMP, "final_mesh.npz"))
 V, F, UV, NB = d["V"], d["F"], d["UV"], int(d["nbody"])
 M = xio.read_x(PZ + "/" + cfg["worn"]["M"])
-kidx = np.concatenate([np.arange(a, b) for a, b in cfg["keep"]]) if cfg["keep"] else np.zeros(0, int)
+kidx = np.concatenate(keep_groups(cfg, M)) if cfg["keep"] else np.zeros(0, int)
 bpy.ops.wm.read_factory_settings(use_empty=True)
 sc = bpy.context.scene
 
@@ -86,7 +86,7 @@ if G["method"] == "uvfit":
     dd = np.abs(MUV[:, None] - GUV.reshape(-1, 2)[None]).max(2)
     corr, hit = GL[dd.argmin(1)], dd.min(1) < 2e-3
     assert hit[kidx].all(), f"沿用子網格有 {int((~hit[kidx]).sum())} 個頂點在地面模型找不到同 UV 的點"
-    ref = np.arange(*cfg["weight_ref"])
+    ref = sel(M, cfg["weight_ref"])
     assert hit[ref].mean() >= 0.5, f"本體參考點只有 {hit[ref].mean():.0%} 在地面模型找得到同 UV 的點"
     ref = ref[hit[ref]]
     L, t, r, outl = fit_affine(M["V"][ref], GV[corr[ref]])
@@ -105,7 +105,7 @@ else:
         # upright：原版地面是直立的（信差包 Satchel_New：包身立著、背帶從兩個上角垂到地上，UV 和穿戴模型不同）。
         # 本體照穿戴時的主軸立起來（Blender x＝厚、y＝寬、z＝高，右手系）；沿用的長背帶比包頂高的部分壓到 1/4、前後壓到 0.3，
         # 收成包頂上的提把狀，不然整圈背帶會直直豎在包上
-        c, ew, eh, ed, *_ = obb_axes(M["V"][slice(*cfg["place"]["body"])])
+        c, ew, eh, ed, *_ = obb_axes(M["V"][sel(M, cfg["place"]["body"])])
         A = np.r_[flat, V[NB:]] - c
         Q = np.c_[A @ ed, A @ ew, A @ eh]
         top = Q[:NB, 2].max()

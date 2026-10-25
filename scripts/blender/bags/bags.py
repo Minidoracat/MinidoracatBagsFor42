@@ -9,12 +9,13 @@
   deform    本體怎麼搬到女版／手持：affine＝單一仿射（日行包殘差 ~0）；field＝仿射＋最近 4 點的殘差位移場；
             field_ref＝同 field，但只用 weight_ref 的本體點（沿用子網格在手持模型裡被捲起來的款式）
   keep_from 沿用子網格在女版／手持的位置：預設逐點取對到的原版點；smooth＝男版位置＋鄰近位移中位數（雙面薄片正反同 UV 的款式）
-  keep      沿用的原版子網格（肩帶、腰帶）：原版男版頂點區間，每段一個 UV 島；islands＝(原版 UV 矩形, 新矩形, 轉 90°)，None＝自動
+  keep      沿用的原版子網格（肩帶、腰帶）：每組一個 UV 島，(a, b)＝原版男版頂點區間、("uv", 矩形)＝UV 在矩形內的點（weight_ref、body 同）；islands＝(原版 UV 矩形, 新矩形, 轉 90°)，None＝自動
   weight_ref 本體權重參考的原版頂點區間（不含 keep 和不要的部分）
-  place     Tripo 高模放到 .X 空間的方式：back＝背在背後（底、高、背板、後傾）；obb＝對齊原版本體（頂點區間 body）的主軸外框，push＝沿外側法線再推出去；
+  place     Tripo 高模放到 .X 空間的方式：back＝背在背後（底 y0、高、背板 back_z、後傾 lean、背面 back_y）；obb＝對齊原版本體（body）的主軸外框，push＝沿外側法線再推出去，w_frac＝Tripo 寬度裡包身佔的比例，back_y＝Tripo 背面的 y（預設最大 y）；
             tris／voxel／uv_angle／body_u 見 stage1_bake.py；icon＝圖示相機（center、ortho、dir，沒寫就自動）
   ground    原版地面模型：fbx、腳本 scale；method uvfit＝用同 UV 擬合穿戴→地面；upright＝原版地面直立、UV 另一套時，本體照穿戴主軸立起；
             bbox＝原版地面用別張圖集時，最薄方向朝上擺平
+  skin_push 本體頂點貼進身體超過原版最貼的那點時沿身體法線推出去（stage2）
   clearance closed＝身體頂點不能在封閉本體裡（背在背後的）；skin＝每個頂點沿最近身體頂點法線的距離不比原版差 5 mm 以上（繞身體的）
   bedroll   AttachmentsProvided 的睡袋掛點 y（本體底部要在它上面）
 """
@@ -114,11 +115,24 @@ BAGS = {
         clearance="skin", bedroll=None,
     ),
     "MedicHipPouch": dict(    # 借 Base.Bag_FannyPackBack
+        tripo=dict(glb=TRIPO_ROOT + "/醫療腰包(MedicHipPouch)/model/MedicHipPouch.glb",
+                   navy=TRIPO_ROOT + "/醫療腰包(MedicHipPouch)/model/fbx/tripo_convert_efd8f899-13a6-4548-9002-449be9d039ea.fbm/waist_bag_3d_model_basecolor.JPEG",
+                   olive=TRIPO_ROOT + "/醫療腰包(MedicHipPouch)/model/fbx_Umbrella/waist_bag_3d_model.fbm/waist_bag_3d_model_basecolor.jpg"),
         worn=dict(M="models_X/Skinned/BackPacks/M_FannyPactBack.x", F="models_X/Skinned/BackPacks/F_FannyPactBack.x"),
         alt=None, hands=None, L_from_R=None,
         bones=["Bip01_Pelvis"], merge={},
         corr="uv", deform="field",
+        # 原版一整片 112 點：UV v>0.5 的兩個島是包身（背後），v 0.33-0.48 的兩個島是繞到前面的腰帶；腰帶沿用
+        keep=[("uv", (0, 0.3, 1, 0.5))], islands=None,
         keep_tex="textures/Clothes/Bag/FannyPack.png",
+        weight_ref=("uv", (0, 0.5, 1, 1)),
+        # 原版包身扁（寬 0.19、高 0.06），Tripo 是方包：照原版大小會壓進臀部（y 0.46-0.52 的臀部 z 到 0.093）。
+        # 改用 back 擺法：方包高 0.113（寬約 0.11，兩側腰帶短截到 ±0.083），底 y 0.49，背面 z 0.085（臀部最凸處再由 skin_push 推出）；
+        # Tripo 背面 y≈0.035（兩側腰帶往身體彎到 y 0.36，不能拿最大 y 當背面）
+        place=dict(mode="back", y0=0.49, height=0.113, back_z=0.085, lean=0.0, back_y=0.035),
+        thin=True,   # 兩側腰帶短截與插扣是薄片
+        skin_push=True,   # Tripo 背面那條橫腰帶會壓進下背：推到原版最貼身的距離（stage2）
+        tris=300, voxel=0.002, uv_angle=80, body_u=0.86,
         ground=dict(fbx="models_X/WorldItems/Clothing/M_FannyPackFront_Ground.fbx", scale=0.4, method="uvfit"),
         clearance="skin", bedroll=None,
     ),

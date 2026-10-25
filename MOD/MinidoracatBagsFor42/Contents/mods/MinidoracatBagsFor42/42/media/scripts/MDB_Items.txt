@@ -50,13 +50,13 @@ module MinidoracatBags
         WorldStaticModel = FannyPack_Ground,
     }
 
-    /* 外觀暫時借用原版 Base.Bag_FannyPackBack */
+    /* 自製模型（scripts/blender/bags/build.py）；欄位照原版 Base.Bag_FannyPackBack */
     item MedicHipPouch_Navy
     {
         DisplayCategory = Bag,
         ItemType = base:container,
         Weight = 0.3,
-        Icon = FannyPack,
+        Icon = MDB_MedicHipPouch_Navy,
         CanBeEquipped = base:fannypackback,
         CanHaveHoles = false,
         Capacity = 4,
@@ -68,17 +68,17 @@ module MinidoracatBags
         EquipSound = EquipFannyPack,
         OpenSound = OpenLeatherBag,
         PutInSound = StoreItemLeatherBag,
-        WorldStaticModel = FannyPack_Ground,
+        WorldStaticModel = MinidoracatBags.MDB_MedicHipPouch_Ground,
         AcceptItemFunction = MDB.acceptFirstAid,
     }
 
-    /* 外觀暫時借用原版 Base.Bag_FannyPackBack */
+    /* 自製模型（scripts/blender/bags/build.py）；欄位照原版 Base.Bag_FannyPackBack */
     item MedicHipPouch_Olive
     {
         DisplayCategory = Bag,
         ItemType = base:container,
         Weight = 0.3,
-        Icon = FannyPack,
+        Icon = MDB_MedicHipPouch_Olive,
         CanBeEquipped = base:fannypackback,
         CanHaveHoles = false,
         Capacity = 4,
@@ -90,7 +90,7 @@ module MinidoracatBags
         EquipSound = EquipFannyPack,
         OpenSound = OpenLeatherBag,
         PutInSound = StoreItemLeatherBag,
-        WorldStaticModel = FannyPack_Ground,
+        WorldStaticModel = MinidoracatBags.MDB_MedicHipPouch_Ground,
         AcceptItemFunction = MDB.acceptFirstAid,
     }
 

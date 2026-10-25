@@ -139,8 +139,10 @@ def _mutate(cfg, p, kind):
             V[:, [0, 2]] = c[[0, 2]] + (V[:, [0, 2]] - c[[0, 2]]) * 0.7
     elif kind == "底部":
         V[:, 1] -= 0.08
-    elif kind == "頂點":       # 每個面角各自一份頂點，超過 1100
+    elif kind == "頂點":       # 每個面角各自一份頂點；面少的款式（腰包 364 面）再重複一輪，超過 1100
         c = F.ravel()
+        if len(c) <= MAX_VERTS:
+            c = np.r_[c, c]
         V, UV, N, Wd, F = V[c], UV[c], N[c], Wd[c], np.arange(len(c)).reshape(-1, 3)
     W = {b: (np.nonzero(Wd[:, j])[0], Wd[np.nonzero(Wd[:, j])[0], j]) for j, b in enumerate(bones)}
     xio.write_skinned_x(PZ + "/" + cfg["worn"]["M"], p, V, N, UV, F, W, name=f"MDB_{cfg['name']}")

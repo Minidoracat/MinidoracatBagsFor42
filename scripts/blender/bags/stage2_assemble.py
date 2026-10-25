@@ -10,7 +10,7 @@ import numpy as np
 from PIL import Image
 
 import bags
-from common import NAVY_S, NAVY_V, PZ, fit_affine, out, temp, xio
+from common import NAVY_S, NAVY_V, PZ, fit_affine, keep_groups, out, sel, temp, xio
 
 TEX = 256
 
@@ -161,32 +161,32 @@ def keep_paint(tex, src, islands):
 
 
 def islands_of(cfg, M):
-    """(原版頂點區間, 原版 UV 矩形, 新矩形, 轉 90°)。設定沒寫就自動：外框放寬 0.006，在右側長條由上往下等分，寬的島轉 90°。"""
-    rngs = cfg["keep"]
-    if not rngs:
+    """(原版頂點索引, 原版 UV 矩形, 新矩形, 轉 90°)。設定沒寫就自動：外框放寬 0.006，在右側長條由上往下等分，寬的島轉 90°。"""
+    groups = keep_groups(cfg, M)
+    if not groups:
         return []
     if cfg.get("islands"):
-        return [(r,) + tuple(i) for r, i in zip(rngs, cfg["islands"])]
-    n, u0, gap = len(rngs), cfg["body_u"] + 0.012, 0.02
+        return [(g,) + tuple(i) for g, i in zip(groups, cfg["islands"])]
+    n, u0, gap = len(groups), cfg["body_u"] + 0.012, 0.02
     h = (0.98 - gap * (n - 1)) / n
     res = []
-    for k, (i0, i1) in enumerate(rngs):
-        lo_, hi_ = M["UV"][i0:i1].min(0) - 0.006, M["UV"][i0:i1].max(0) + 0.006
+    for k, g in enumerate(groups):
+        lo_, hi_ = M["UV"][g].min(0) - 0.006, M["UV"][g].max(0) + 0.006
         src = (max(lo_[0], 0), max(lo_[1], 0), min(hi_[0], 1), min(hi_[1], 1))
         dst = (u0, 0.010 + k * (h + gap), 0.992, 0.010 + k * (h + gap) + h)
-        res.append(((i0, i1), src, dst, (src[2] - src[0]) > (src[3] - src[1])))
+        res.append((g, src, dst, (src[2] - src[0]) > (src[3] - src[1])))
     return res
 
 
 def keep_uv(UV, isl):
     UV = UV.copy()
-    for (i0, i1), (su0, sv0, su1, sv1), (du0, dv0, du1, dv1), rot in isl:
-        u, v = UV[i0:i1, 0], UV[i0:i1, 1]
+    for g, (su0, sv0, su1, sv1), (du0, dv0, du1, dv1), rot in isl:
+        u, v = UV[g, 0], UV[g, 1]
         assert u.min() >= su0 and u.max() <= su1 and v.min() >= sv0 and v.max() <= sv1, "沿用的 UV 島超出來源矩形"
         fu, fv = (u - su0) / (su1 - su0), (v - sv0) / (sv1 - sv0)
         if rot:
             fu, fv = fv, fu
-        UV[i0:i1] = np.c_[du0 + fu * (du1 - du0), dv0 + fv * (dv1 - dv0)]
+        UV[g] = np.c_[du0 + fu * (du1 - du0), dv0 + fv * (dv1 - dv0)]
     return UV
 
 
@@ -252,7 +252,7 @@ def main(name):
     M = van["M"]
 
     BV, BUV, BN, F = split_body(np.load(os.path.join(TEMP, "low_body.npz")), thin=cfg.get("thin", False))
-    kidx = np.concatenate([np.arange(a, b) for a, b in cfg["keep"]]) if cfg["keep"] else np.zeros(0, int)
+    kidx = np.concatenate(keep_groups(cfg, M)) if cfg["keep"] else np.zeros(0, int)
     local = np.full(len(M["V"]), -1); local[kidx] = np.arange(len(kidx))
     kF = local[M["F"][np.isin(M["F"], kidx).all(1)]]
     isl = islands_of(cfg, M)
@@ -262,7 +262,7 @@ def main(name):
     assert UV.min() >= 0 and UV.max() <= 1
 
     # 權重：本體每頂點取原版參考點（weight_ref）最近 4 點、距離反比；各版本取該版本自己的權重（排成 M 的頂點序）
-    ref = np.arange(*cfg["weight_ref"])
+    ref = sel(M, cfg["weight_ref"])
     nn, w_idw = idw(np.linalg.norm(BV[:, None] - M["V"][ref][None], axis=2))
     bones, merge = cfg["bones"], cfg["merge"]
     hand_bones = {"R": ["Bip01_R_Hand", "Bip01_Prop1"], "L": ["Bip01_L_Hand", "Bip01_Prop2"]}
@@ -312,6 +312,27 @@ def main(name):
             meshes["L"] = dict(V=R["V"] @ L + t, N=n / np.linalg.norm(n, axis=1, keepdims=True), W=R["W"], bones=hand_bones["L"],
                                flip=(np.linalg.det(L) < 0) != R["flip"])
             print(f"icp R->L: {resid['L']}")
+
+    if cfg.get("skin_push"):
+        # 本體頂點貼進身體超過原版最貼的那點時，沿最近 3 個身體頂點法線推出去到原版那個距離（腰包：Tripo 背面那條橫腰帶會壓進下背）。
+        # 和 verify_x.skin_dist 同一種量法；沿用的原版子網格不動
+        for k, body in (("M", "MaleBody.x"), ("F", "FemaleBody.x"), ("AM", "MaleBody.x"), ("AF", "FemaleBody.x")):
+            if k not in meshes:
+                continue
+            Bd = xio.read_x(f"{PZ}/models_X/Skinned/{body}")
+            Vt = xio.read_x(tpl[k])["V"]
+            V = meshes[k]["V"].copy()
+            for _ in range(3):
+                nn3 = np.argsort(np.linalg.norm(V[:nb, None] - Bd["V"][None], axis=2), 1)[:, :3]
+                s = np.einsum("ikj,ikj->ik", V[:nb, None] - Bd["V"][nn3], Bd["N"][nn3])
+                j = s.argmax(1)
+                van_d = np.linalg.norm(Vt[:, None] - Bd["V"][None], axis=2)
+                vn = np.argsort(van_d, 1)[:, :3]
+                target = np.einsum("ikj,ikj->ik", Vt[:, None] - Bd["V"][vn], Bd["N"][vn]).max(1)[van_d.min(1) < 0.05].min()
+                lack = np.maximum(target - s.max(1), 0)
+                V[:nb] += Bd["N"][nn3[np.arange(nb), j]] * lack[:, None]
+            print(f"skin_push {k}: moved {int((np.linalg.norm(V - meshes[k]['V'], axis=1) > 1e-6).sum())} verts, max {np.linalg.norm(V - meshes[k]['V'], axis=1).max():.4f}")
+            meshes[k]["V"] = V
 
     suffix = dict(M="M", F="F", AM="ALT_M", AF="ALT_F", R="RHand", L="LHand")
     for k, m in meshes.items():

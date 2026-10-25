@@ -11,7 +11,7 @@ from mathutils import Matrix
 
 sys.path.insert(0, os.path.dirname(__file__))
 import bags
-from common import PZ, obb_axes, temp, xio
+from common import PZ, obb_axes, sel, temp, xio
 
 BAKE_PX = 1024
 cfg = bags.get(sys.argv[sys.argv.index("--") + 1])
@@ -38,19 +38,20 @@ def place(co):
         print(f"front: per-axis scale {s3.round(5)}; vanilla bbox {bl.round(4)} {bh.round(4)}")
         return M, float(np.cbrt(np.prod(s3)))
     if P["mode"] == "obb":
-        c, ew, eh, ed, lw, lh, ld = obb_axes(xio.read_x(PZ + "/" + cfg["worn"]["M"])["V"][slice(*P["body"])])
-        tw, th = hi3[0] - lo3[0], hi3[2] - lo3[2]
+        MV = xio.read_x(PZ + "/" + cfg["worn"]["M"])
+        c, ew, eh, ed, lw, lh, ld = obb_axes(MV["V"][sel(MV, P["body"])])
+        tw, th = (hi3[0] - lo3[0]) * P.get("w_frac", 1.0), hi3[2] - lo3[2]   # w_frac：Tripo 寬度裡包身佔的比例（兩側腰帶短截不算）
         s = float(np.sqrt(lw / tw * lh / th))
         back = c - ed * (ld / 2 - P.get("push", 0))
         mid = np.array([(lo3[0] + hi3[0]) / 2, 0, (lo3[2] + hi3[2]) / 2])
         R = np.c_[ew, -ed, eh] * s                          # Tripo x→ew、y→−ed、z→eh
-        t = back - R @ np.array([mid[0], hi3[1], mid[2]])
+        t = back - R @ np.array([mid[0], P.get("back_y", hi3[1]), mid[2]])   # back_y：Tripo 背面 y（腰包兩側腰帶往身體彎，比背面還後面）
         M = Matrix([list(R[0]) + [t[0]], list(R[1]) + [t[1]], list(R[2]) + [t[2]], [0, 0, 0, 1]])
         print(f"obb: van extents w {lw:.4f} h {lh:.4f} d {ld:.4f}; ours w {s * tw:.4f} h {s * th:.4f} d {s * (hi3[1] - lo3[1]):.4f}")
         return M, s
     assert P["mode"] == "back", P["mode"]
     s = P["height"] / (hi3[2] - lo3[2])
-    c = P["back_z"] + s * hi3[1]                   # z_X = c − s·y_B：y_B 最大（背板）→ back_z
+    c = P["back_z"] + s * P.get("back_y", hi3[1])  # z_X = c − s·y_B：背板（y_B 最大，或 back_y）→ back_z
     M = Matrix(((s, 0, 0, -s * (lo3[0] + hi3[0]) / 2), (0, 0, s, P["y0"] - s * lo3[2]), (0, -s, 0, c), (0, 0, 0, 1)))
     M = Matrix(((1, 0, 0, 0), (0, 1, 0, 0), (0, P["lean"], 1, -P["lean"] * P["y0"]), (0, 0, 0, 1))) @ M
     print(f"scale {s:.5f}; Tripo bbox {lo3.round(4)} {hi3.round(4)}")

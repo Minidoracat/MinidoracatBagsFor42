@@ -39,6 +39,19 @@ def fit_affine(A, B):
     return X[:3], X[3], r, np.nonzero(~keep)[0]
 
 
+def sel(M, spec):
+    """原版頂點選取：(a, b)＝頂點區間；("uv", (u0, v0, u1, v1))＝UV 落在矩形內的點（腰包的包身、腰帶是不連續區間的 UV 島）。"""
+    if spec[0] == "uv":
+        u0, v0, u1, v1 = spec[1]
+        return np.nonzero((M["UV"][:, 0] >= u0) & (M["UV"][:, 0] <= u1) & (M["UV"][:, 1] >= v0) & (M["UV"][:, 1] <= v1))[0]
+    return np.arange(*spec)
+
+
+def keep_groups(cfg, M):
+    """沿用子網格：每組一個頂點索引陣列（輸出時一組一個 UV 島）。"""
+    return [sel(M, s) for s in cfg["keep"]]
+
+
 def obb_axes(B):
     """原版本體頂點的主軸外框：回 (外框中心, ew 寬, eh 高〔最接近 +y〕, ed 厚〔背離身體中軸〕, 寬, 高, 厚)；(ew, eh, ed) 右手系。"""
     c = B.mean(0)
