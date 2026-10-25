@@ -5,8 +5,10 @@
 - 圖示：Workbench、STUDIO 光、貼圖色，正交 256 px 透明底（items-and-icons.md §4），後製在 build.py。只畫本體：
   肩帶、腰帶是繞過身體的環，留著會把 32 px 圖示裡的包擠小一圈（日行包第一版實機圖示）。
 - 預覽：新低模（兩種貼圖）疊原版身體，正／側／前／俯／3/4，給人看比例。
-- 隊徽（stage2 寫了 emblem.json 的款式）：本體沿第一個隊徽的法線看，整包與特寫各一張，深藍改前（tex_Navy_plain）／改後，
-  左右翻成實機的樣子（mirror_png）；醫療包的隊徽候選版（alt/）另出預覽與圖示原圖 icon_raw_NavyAlt。
+- 隊徽（stage2 寫了 emblem.json 的款式）：本體沿第一個隊徽的法線看，整包與特寫各一張，深藍改前（tex_Navy_plain）／改後；
+  醫療包的隊徽候選版（alt/）另出預覽與圖示原圖 icon_raw_NavyAlt。
+- 圖示、預覽、隊徽特寫都經 shoot() 拍成實機的左右（Blender 場景是穿戴模型在實機的鏡像，見 shoot）；地面 FBX 在實機和 Blender 同手性，
+  地面預覽用 render() 原樣拍。
 """
 import json, os, sys
 import bpy
@@ -117,20 +119,24 @@ else:
         # bbox：本體＋沿用子網格一起，主軸分析後最薄的方向朝上（原版地面用別張圖集，UV 對不到）
         P = np.r_[flat, V[NB:]] @ np.array(X2B.to_3x3()).T
         _, _, R = np.linalg.svd(P - P.mean(0))
-        R[2] *= np.sign(np.linalg.det(R))                # 純旋轉，不鏡像
+        R[2] *= np.sign(np.linalg.det(R))                # 先取純旋轉，鏡像在下面和 upright 一起做
         Q = (P - P.mean(0)) @ R.T                        # 0＝最長、2＝最薄
-    # 水平長邊對齊原版地面的長邊（要換軸時轉 90°，不鏡像），等比縮放；水平置中，最低點下面再抬到 z=0
+    # 手性：實機的穿戴模型是 .X 照右手系讀的鏡像（decal.py 檔頭第 3 點），地面 FBX 卻照 Blender 的手性畫
+    # （日行包四色八分貼圖實拍 mdb-groundO-1025a 對 Blender 渲染，temp/bags/orientF）。uvfit 跟著原版地面自帶鏡像（det<0）；
+    # 這兩種擺法是純旋轉，地面會和穿戴左右相反（隊徽字反過來），所以沿寬度軸鏡像一次，面序跟著反轉
+    Q[:, 1] *= -1
+    # 水平長邊對齊原版地面的長邊（要換軸時轉 90°），等比縮放；水平置中，最低點下面再抬到 z=0
     gsz = ref_bbox[1] - ref_bbox[0]
     if (np.ptp(Q[:, 0]) >= np.ptp(Q[:, 1])) != (gsz[0] >= gsz[1]):
         Q = np.c_[-Q[:, 1], Q[:, 0], Q[:, 2]]
     s = float(gsz[:2].max() / np.ptp(Q[:, :2], 0).max())
     Q[:, :2] -= (Q[:, :2].min(0) + Q[:, :2].max(0)) / 2
     GVnew = Q * s + np.r_[(ref_bbox[0] + ref_bbox[1])[:2] / 2, 0]
-    ground_fit = dict(method=G["method"], scale=s, det=1.0)   # 兩種擺法都是純旋轉＋等比縮放
+    ground_fit = dict(method=G["method"], scale=s, det=-1.0)   # 旋轉＋一次鏡像＋等比縮放
 GVnew[:, 2] -= GVnew[:, 2].min()   # 新本體最低點和原版不同：整個抬到貼地（原版最低點 z=0）
 print("fit M->Ground (Blender m):", ground_fit)
 bpy.data.objects.remove(g)
-# 日行包：原版地面在 Blender 空間是穿戴模型的鏡像（det<0）。照樣鏡像，面序反轉保持法線朝外
+# det<0（原版地面在 Blender 空間是穿戴模型的鏡像，或上面那次鏡像）：面序反轉保持法線朝外
 gob = make_mesh(f"MDB_{NAME}_Ground", GVnew, F[:, [0, 2, 1]] if ground_fit["det"] < 0 else F, UV)
 for o in sc.objects:
     o.select_set(o is gob)
@@ -185,18 +191,38 @@ cam = bpy.data.objects.new("cam", bpy.data.cameras.new("cam")); sc.collection.ob
 cam.data.type = "ORTHO"
 
 
-def shoot(path, center, direction, ortho, px):
+def mirror_png(path):
+    """把剛存的 PNG 左右翻過來。"""
+    im = bpy.data.images.load(path)
+    w, h = im.size
+    px = np.empty(w * h * 4, np.float32)
+    im.pixels.foreach_get(px)
+    im.pixels.foreach_set(px.reshape(h, w, 4)[:, ::-1].ravel())
+    im.save()
+    bpy.data.images.remove(im)
+
+
+def render(path, center, direction, ortho, px):
+    """照 Blender 場景原樣拍。地面 FBX 在實機就是這個手性（stage3 地面擺法的手性註解），預覽地面用這個。"""
     sc.render.resolution_x = sc.render.resolution_y = px
     cam.data.ortho_scale = ortho
-    c = Vector(center)
-    cam.location = c + Vector(direction).normalized() * 3
-    cam.rotation_euler = (-Vector(direction)).to_track_quat("-Z", "Y").to_euler()
+    d = Vector(direction).normalized()
+    cam.location = Vector(center) + d * 3
+    cam.rotation_euler = (-d).to_track_quat("-Z", "Y").to_euler()
     sc.render.filepath = os.path.abspath(path)
     bpy.ops.render.render(write_still=True)
 
 
+def shoot(path, center, direction, ortho, px):
+    """拍穿戴（.X）模型在實機看到的樣子：PZ 把 .X 當左手座標畫，X2B 照右手系換到 Blender，場景是實機的左右（x）鏡像
+    （decal.py 檔頭第 3 點；圖示實證 temp/bags/orientF）。實機物體從 direction 看＝場景從 x 取負的方向看、再把圖左右翻。
+    center 照場景座標給：翻圖不動畫面中心。"""
+    render(path, center, (-direction[0], direction[1], direction[2]), ortho, px)
+    mirror_png(path)
+
+
 bag.hide_render = body.hide_render = True
-shoot(f"{TEMP}/preview_ground.png", (0, 0, 0.1), (0.3, -1, 1.2), max(2.0, 2.6 * gw), 768)   # 左原版、右我們的（PZ 單位，script scale 前）
+render(f"{TEMP}/preview_ground.png", (0, 0, 0.1), (0.3, -1, 1.2), max(2.0, 2.6 * gw), 768)   # 左原版、右我們的（PZ 單位，script scale 前）
 gv.hide_render = g2.hide_render = True
 bag.hide_render = body.hide_render = False
 Bb = V[:NB] @ np.array(X2B.to_3x3()).T
@@ -215,22 +241,12 @@ for look in ("Navy", "Olive"):
     icon_bag.hide_render = True
 
 
-def mirror_png(path):
-    """PZ 把 .X 當左手座標畫（decal.py 檔頭第 3 點）：Blender 的正交圖左右翻過來，才是實機看到的樣子（隊徽字才讀得正）。"""
-    im = bpy.data.images.load(path)
-    w, h = im.size
-    px = np.empty(w * h * 4, np.float32)
-    im.pixels.foreach_get(px)
-    im.pixels.foreach_set(px.reshape(h, w, 4)[:, ::-1].ravel())
-    im.save()
-    bpy.data.images.remove(im)
-
-
 ej = os.path.join(TEMP, "emblem.json")
 if os.path.exists(ej):
     em = json.load(open(ej))[0]
     ec = X2B @ Vector(em["center"])
     en = X2B.to_3x3() @ Vector(em["normal"])
+    en.x = -en.x   # 鏡像後的隊徽法線（shoot 的 direction 是實機那側的方向）
     views = {"Navy": imgs["Navy"], "NavyPlain": bpy.data.images.load(os.path.join(TEMP, "tex_Navy_plain.png"))}
     alt = os.path.join(TEMP, "alt", f"MDB_{NAME}_Navy.png")
     if os.path.exists(alt):
@@ -241,7 +257,6 @@ if os.path.exists(ej):
         icon_bag.data.materials[0].node_tree.nodes.active.image = im
         for kind, center, ortho in (("bag", bc, float(np.ptp(Bb, axis=0).max()) * 1.15), ("close", ec, em["size"][1] * 2.2)):
             shoot(f"{TEMP}/emblem_{look}_{kind}.png", center, en, ortho, 512)
-            mirror_png(f"{TEMP}/emblem_{look}_{kind}.png")
     if "NavyAlt" in views:
         icon_bag.data.materials[0].node_tree.nodes.active.image = views["NavyAlt"]
         shoot(f"{TEMP}/icon_raw_NavyAlt.png", bc, idir, io, 256)
