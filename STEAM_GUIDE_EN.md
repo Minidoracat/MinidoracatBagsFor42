@@ -155,7 +155,8 @@ Bag Upgrade Plus (BUP below) has been removed from the Workshop. This mod takes 
 [*] [b]Capacity and Encumbrance Reduction[/b]: kept from the save. The main version saved 49/100; the Realistic version and CloudBag keep their own values, for example ALICE 40/90 and Satchel 18/80.
 [*] [b]Take out only[/b]: by default nothing can be put back in, only taken out, and the server enforces it too. The sandbox option "Lock old Bag Upgrade Plus bags" turns this off.
 [*] [b]No new copies[/b]: old bags never appear in loot, on zombies or as any recipe result.
-[*] [b]BUP attachment slots[/b]: items hung on BUP's extra attachment slots are detached after the switch. They are not lost.
+[*] [b]Drinks and plushies[/b]: the drinks and plushies the original mod changed stay in your inventory or bags after the switch; they just turn back into vanilla items. They could never hang on Plus bags in the first place, so the switch does not make anything fall off or disappear.
+[*] [b]Servers that define those slots[/b]: if your server also runs a mod that defines those attachment slots, anything hanging there should be detached into your inventory after the switch. This case has not been tested.
 [*] [b]Water bottles[/b]: BUP's two water bottles keep working with their water. They are neither locked nor convertible. The empty soda bottle that only the older branches 3403697073 and 3640342538 have is not taken over and disappears after the switch.
 [/list]
 
