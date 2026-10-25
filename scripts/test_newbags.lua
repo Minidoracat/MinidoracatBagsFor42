@@ -25,6 +25,7 @@ local F = {
     MODELS = MEDIA .. "scripts/MDB_Models.txt",
     DAYPACK_XML = MEDIA .. "clothing/clothingItems/MDB_DayPack_Navy.xml",
     DAYPACK_LHAND_XML = MEDIA .. "clothing/clothingItems/MDB_DayPack_Olive_LHand.xml",
+    CHESTRIG_XML = MEDIA .. "clothing/clothingItems/MDB_ScoutChestRig_Navy.xml",
     I18N_RECIPES = TRANSLATE .. "EN/Recipes.json",
 }
 -- conventions.md「介面語系」：12 種語言＋ES 的 AR／ES_CL／ES_MX、PTBR 的 PT
@@ -279,11 +280,13 @@ local function suite()
 
     -- 2b. 自製資產的款式（scripts/blender/bags/build.py）：圖示、地面模型、左右手、穿戴模型、貼圖都指向 MOD 自己的檔，
     --     而且檔案存在。xml 的模型路徑要寫 media\ 開頭與副檔名（PopTemplateManager.java:272-275、FileTask_AbstractLoadModel.java:53-87）。
-    --     scale 照各自借用的原版地面模型（models_items.txt）；hands＝原版有手持模型的款式
+    --     scale 照各自借用的原版地面模型（models_items.txt／models_clothes.txt）；hands＝原版有手持模型的款式；
+    --     alt＝原版有 m_Alt*Model 的款式（胸掛：穿外套時換用，PopTemplateManager.java:73-76），沒有的款式 XML 也不能有
     local OWN = {
         { name = "DayPack", scale = "0.4", hands = true },        -- HikingBag_Ground（models_items.txt:3664-3668）
         { name = "ExpeditionPack", scale = "0.4", hands = true }, -- BigHikingBag_Ground（models_items.txt:3601-3605）
         { name = "CourierSatchel", scale = "0.08", hands = true }, -- Satchel_Military_Ground（models_items.txt:8919-8924）
+        { name = "ScoutChestRig", scale = "0.15", alt = true },   -- ChestRig_Ground（models_clothes.txt:1661-1666）
     }
     local models = {}
     for _, b in ipairs(parseBlocks(readFile(F.MODELS), "model")) do models[b.module .. "." .. b.name] = b end
@@ -292,7 +295,7 @@ local function suite()
         if fh then fh:close() end
         return fh ~= nil
     end
-    local function xmlOk(name, male, female, tex)
+    local function xmlOk(name, male, female, tex, alt)
         local xml = readFile(MEDIA .. "clothing/clothingItems/" .. name .. ".xml", true)
         if not xml then return false end
         local g = xml:match("<m_GUID>%s*(.-)%s*</m_GUID>")
@@ -307,6 +310,9 @@ local function suite()
             and modelFile("m_MaleModel") == "models_X/Skinned/BackPacks/" .. male .. ".X" and fileExists(modelFile("m_MaleModel"))
             and modelFile("m_FemaleModel") == "models_X/Skinned/BackPacks/" .. female .. ".X" and fileExists(modelFile("m_FemaleModel"))
             and #texs == 1 and texs[1] == "Clothes\\Bag\\" .. tex and fileExists("textures/Clothes/Bag/" .. tex .. ".png")
+            and (alt and modelFile("m_AltMaleModel") == "models_X/Skinned/BackPacks/" .. alt[1] .. ".X" and fileExists(modelFile("m_AltMaleModel"))
+                and modelFile("m_AltFemaleModel") == "models_X/Skinned/BackPacks/" .. alt[2] .. ".X" and fileExists(modelFile("m_AltFemaleModel"))
+                or not alt and modelFile("m_AltMaleModel") == "" and modelFile("m_AltFemaleModel") == "")
         if not ok then diag("    own-asset clothing problem: " .. name) end
         return ok
     end
@@ -323,8 +329,8 @@ local function suite()
                 and (not own.hands or f.ReplaceInPrimaryHand == P .. skin .. "_RHand holdingbagright"
                     and f.ReplaceInSecondHand == P .. skin .. "_LHand holdingbagleft"))
             local tex = P .. skin
-            check(B .. "_" .. skin .. ": worn" .. (own.hands and " and hand" or "") .. " ClothingItems use own .X and one own texture",
-                xmlOk(P .. skin, P .. "M", P .. "F", tex)
+            check(B .. "_" .. skin .. ": worn" .. (own.alt and " (with alt)" or "") .. (own.hands and " and hand" or "") .. " ClothingItems use own .X and one own texture",
+                xmlOk(P .. skin, P .. "M", P .. "F", tex, own.alt and { P .. "ALT_M", P .. "ALT_F" })
                 and (not own.hands or xmlOk(P .. skin .. "_RHand", P .. "RHand", P .. "RHand", tex)
                     and xmlOk(P .. skin .. "_LHand", P .. "LHand", P .. "LHand", tex)))
         end
@@ -710,6 +716,7 @@ if arg and arg[1] == "--mutants" then
         { name = "日行包 XML 兩張貼圖", file = "DAYPACK_XML", from = "</clothingItem>", to = "\t<textureChoices>Clothes\\Bag\\MDB_DayPack_Olive</textureChoices>\n</clothingItem>" },
         { name = "左手模型路徑沒副檔名", file = "DAYPACK_LHAND_XML", from = "MDB_DayPack_LHand.X</m_MaleModel>", to = "MDB_DayPack_LHand</m_MaleModel>" },
         { name = "遠征包左手借回原版", file = "ITEMS", from = "ReplaceInSecondHand = MDB_ExpeditionPack_Olive_LHand holdingbagleft,", to = "ReplaceInSecondHand = Bag_BigHikingBag_LHand holdingbagleft," },
+        { name = "胸掛 Alt 模型借回原版", file = "CHESTRIG_XML", from = "MDB_ScoutChestRig_ALT_M.X", to = "Bob_ChestRig_ALT.x" },
         { name = "沙盒預設值錯", file = "SANDBOX", from = "max = 3, default = 3,", to = "max = 3, default = 2," },
         { name = "翻譯缺鍵", file = "I18N_RECIPES", from = '"MDB_UpgradeBagTier3"', to = '"MDB_UpgradeBagTierX"' },
     }

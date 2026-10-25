@@ -94,12 +94,22 @@ BAGS = {
         clearance="skin", bedroll=None,
     ),
     "ScoutChestRig": dict(    # 借 Base.Bag_ChestRig
+        tripo=dict(glb=TRIPO_ROOT + "/偵察胸掛(ScoutChestRig)/model/ScoutChestRig.glb",
+                   navy=TRIPO_ROOT + "/偵察胸掛(ScoutChestRig)/model/fbx/tripo_convert_2bbbcaf7-5a4b-4914-8ca6-828143829178.fbm/tactical_vest_3d_model_basecolor.JPEG",
+                   olive=TRIPO_ROOT + "/偵察胸掛(ScoutChestRig)/model/fbx_Umbrella/tactical_vest_3d_model.fbm/tactical_vest_3d_model_basecolor.jpg"),
         worn=dict(M="models_X/Skinned/Clothes/Bob_ChestRig.x", F="models_X/Skinned/Clothes/Kate_ChestRig.x"),
         alt=dict(M="models_X/Skinned/Clothes/Bob_ChestRig_ALT.x", F="models_X/Skinned/Clothes/Kate_ChestRig_ALT.x"),
         hands=None, L_from_R=None,
         bones=["Bip01_Spine", "Bip01_Spine1", "Bip01_L_Clavicle", "Bip01_R_Clavicle"], merge={},
         corr="uv", deform="field",
+        # 原版是一整片（338 點），Tripo 有自己的肩帶、背後 X 帶與腰帶，原版不沿用
+        keep=[], islands=None,
         keep_tex="textures/Clothes/Bag/ChestRig.png",
+        weight_ref=(0, 338),
+        place=dict(mode="front", grow=1.0),
+        icon=dict(dir=(-0.55, 1, 0.45)),   # 看正面（Blender +y＝角色正面），不是背後的 X 帶
+        thin=True,   # 帶子是薄片，減面後正反兩面共用頂點（stage2 split_body）
+        tris=400, voxel=0.002, uv_angle=89, body_u=1.0,   # 帶子是薄片：voxel 0.003 會斷成 6 塊；面數再多 UV 接縫點超過 600
         ground=dict(fbx="models_X/WorldItems/Clothing/ChestRig_Ground.fbx", scale=0.15, method="uvfit"),
         clearance="skin", bedroll=None,
     ),

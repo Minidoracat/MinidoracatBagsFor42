@@ -80,15 +80,18 @@ if cfg["place"].get("lean"):
 if G["method"] == "uvfit":
     GL = np.empty(len(gme.loops), int); gme.loops.foreach_get("vertex_index", GL)
     GUV = np.empty(len(gme.loops) * 2); gme.uv_layers[0].data.foreach_get("uv", GUV)
-    # 以 UV 對點：M 每個頂點找 UV 相同的地面面角；擬合的離群檢查兜底
+    # 以 UV 對點：M 每個頂點找 UV 相同的地面面角；擬合的離群檢查兜底。
+    # 沿用子網格每點都要對到；本體參考點對到一半以上就夠（胸掛地面是 171 點的簡化網格，338 點只對到 260）
     MUV = M["UV"].copy(); MUV[:, 1] = 1 - MUV[:, 1]
     dd = np.abs(MUV[:, None] - GUV.reshape(-1, 2)[None]).max(2)
-    corr = GL[dd.argmin(1)]
-    assert dd.min(1).max() < 2e-3, f"有 {int((dd.min(1) >= 2e-3).sum())} 個頂點在地面模型找不到同 UV 的點"
+    corr, hit = GL[dd.argmin(1)], dd.min(1) < 2e-3
+    assert hit[kidx].all(), f"沿用子網格有 {int((~hit[kidx]).sum())} 個頂點在地面模型找不到同 UV 的點"
     ref = np.arange(*cfg["weight_ref"])
+    assert hit[ref].mean() >= 0.5, f"本體參考點只有 {hit[ref].mean():.0%} 在地面模型找得到同 UV 的點"
+    ref = ref[hit[ref]]
     L, t, r, outl = fit_affine(M["V"][ref], GV[corr[ref]])
     inl = np.delete(r, outl)
-    ground_fit = dict(max=float(inl.max()), rms=float(np.sqrt((inl ** 2).mean())), outliers={int(i): float(r[i]) for i in outl},
+    ground_fit = dict(max=float(inl.max()), rms=float(np.sqrt((inl ** 2).mean())), outliers={int(ref[i]): float(r[i]) for i in outl},
                       sv=np.linalg.svd(L, compute_uv=False).round(5).tolist(), det=float(np.linalg.det(L)))
     # 沿用子網格的邊長比（地面／穿戴×整體縮放）只記錄：攤平的地方本來就會拉長或壓短，靠預覽圖看
     if len(kidx):

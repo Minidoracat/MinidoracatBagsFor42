@@ -1,15 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 外觀暫時：模型與貼圖借原版 Bag_ChestRig，自製模型完成後替換 -->
+<!-- 偵察胸掛：自製模型（scripts/blender/bags/build.py 產生），兩種外觀共用模型，只換貼圖。
+     Alt 模型照原版 Bag_ChestRig：穿外套、毛衣、胸甲時改用（BodyLocations.lua:1010-1014，PopTemplateManager.java:73-76） -->
 <clothingItem>
 	<m_GUID>e008dfc5-24de-4714-bb4e-ba8a118c7d14</m_GUID>
-	<m_MaleModel>media\models_X\Skinned\Clothes\Bob_ChestRig.x</m_MaleModel>
-	<m_FemaleModel>media\models_X\Skinned\Clothes\Kate_ChestRig.x</m_FemaleModel>
-	<m_AltMaleModel>media\models_X\Skinned\Clothes\Bob_ChestRig_ALT.x</m_AltMaleModel>
-	<m_AltFemaleModel>media\models_X\Skinned\Clothes\Kate_ChestRig_ALT.x</m_AltFemaleModel>
+	<m_MaleModel>media\models_X\Skinned\BackPacks\MDB_ScoutChestRig_M.X</m_MaleModel>
+	<m_FemaleModel>media\models_X\Skinned\BackPacks\MDB_ScoutChestRig_F.X</m_FemaleModel>
+	<m_AltMaleModel>media\models_X\Skinned\BackPacks\MDB_ScoutChestRig_ALT_M.X</m_AltMaleModel>
+	<m_AltFemaleModel>media\models_X\Skinned\BackPacks\MDB_ScoutChestRig_ALT_F.X</m_AltFemaleModel>
 	<m_Static>false</m_Static>
 	<m_AllowRandomHue>false</m_AllowRandomHue>
 	<m_AllowRandomTint>false</m_AllowRandomTint>
 	<m_AttachBone></m_AttachBone>
 	<m_MasksFolder>none</m_MasksFolder>
-	<textureChoices>clothes\bag\chestrig</textureChoices>
+	<textureChoices>Clothes\Bag\MDB_ScoutChestRig_Olive</textureChoices>
 </clothingItem>

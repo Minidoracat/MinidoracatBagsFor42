@@ -163,6 +163,8 @@ def keep_paint(tex, src, islands):
 def islands_of(cfg, M):
     """(原版頂點區間, 原版 UV 矩形, 新矩形, 轉 90°)。設定沒寫就自動：外框放寬 0.006，在右側長條由上往下等分，寬的島轉 90°。"""
     rngs = cfg["keep"]
+    if not rngs:
+        return []
     if cfg.get("islands"):
         return [(r,) + tuple(i) for r, i in zip(rngs, cfg["islands"])]
     n, u0, gap = len(rngs), cfg["body_u"] + 0.012, 0.02
@@ -209,8 +211,9 @@ def limit4(W):
     return W / W.sum(1, keepdims=True)
 
 
-def split_body(d):
-    """依 (頂點, UV) 拆點；Blender UV v 朝上 → .X 朝下。"""
+def split_body(d, thin=False):
+    """依 (頂點, UV) 拆點；Blender UV v 朝上 → .X 朝下。
+    thin（胸掛）：薄帶減面後正反兩面共用頂點，焊接法線互相抵消；和拆點後自己那面的法線夾角超過 60° 的點改用拆點法線。"""
     bV, bF, bUVc = d["V"], d["F"], d["UV"].copy()
     bUVc[..., 1] = 1 - bUVc[..., 1]
     key, src, F = {}, [], np.zeros_like(bF)
@@ -223,6 +226,11 @@ def split_body(d):
     BV = bV[[s[0] for s in src]]
     BUV = np.array([s[1:] for s in src])
     BN = vertex_normals(bV, bF)[[s[0] for s in src]]
+    if thin:
+        NS = vertex_normals(BV, F)
+        bad = np.einsum("ij,ij->i", BN, NS) < 0.5
+        BN[bad] = NS[bad]
+        print(f"thin: {int(bad.sum())} verts use split normals")
     cen = bV.mean(0)
     out_ok = (np.einsum("ij,ij->i", np.cross(bV[bF[:, 1]] - bV[bF[:, 0]], bV[bF[:, 2]] - bV[bF[:, 0]]), bV[bF].mean(1) - cen) > 0).mean()
     print(f"body: {len(bV)} welded -> {len(BV)} split verts, {len(F)} tris; faces facing out {out_ok:.1%}")
@@ -243,7 +251,7 @@ def main(name):
     van = {k: xio.read_x(p) for k, p in tpl.items()}
     M = van["M"]
 
-    BV, BUV, BN, F = split_body(np.load(os.path.join(TEMP, "low_body.npz")))
+    BV, BUV, BN, F = split_body(np.load(os.path.join(TEMP, "low_body.npz")), thin=cfg.get("thin", False))
     kidx = np.concatenate([np.arange(a, b) for a, b in cfg["keep"]]) if cfg["keep"] else np.zeros(0, int)
     local = np.full(len(M["V"]), -1); local[kidx] = np.arange(len(kidx))
     kF = local[M["F"][np.isin(M["F"], kidx).all(1)]]

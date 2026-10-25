@@ -24,8 +24,19 @@ def place(co):
     back：等比縮放讓高度＝height、底在 y0，背板（Tripo +y 側）底端貼 z=back_z，再照原版後傾 lean（z += lean·(y−y0)）。
     日行包：平背板在 y≈0.68–0.72 被男性身體背面（z 0.099–0.102）頂穿；原版背板 y 0.56→0.83 是 z 0.083→0.132（斜率約 0.18）。
     obb：對齊原版男版本體（頂點區間 body）的主軸外框：Tripo 寬（x）→最長軸、高（z）→朝上的軸、正面（−y）→最薄軸朝外；
-    等比縮放取寬、高兩個比例的幾何平均；背面貼原版背面那一層，上下、左右置中。"""
+    等比縮放取寬、高兩個比例的幾何平均；背面貼原版背面那一層，上下、左右置中。
+    front：穿在胸前的（胸掛）：Tripo 正面（−y）→角色正面（−z），繞上軸轉 180°（x 反向，det>0）；
+    三軸各自縮放到原版男版外框再乘 grow（空腔要套得住身體），中心對齊原版外框中心。"""
     lo3, hi3 = co.min(0), co.max(0)
+    if P["mode"] == "front":
+        B = xio.read_x(PZ + "/" + cfg["worn"]["M"])["V"]
+        bl, bh = B.min(0), B.max(0)
+        s3 = (bh - bl) / np.array([hi3[0] - lo3[0], hi3[2] - lo3[2], hi3[1] - lo3[1]]) * P.get("grow", 1.0)
+        R = np.array([[-s3[0], 0, 0], [0, 0, s3[1]], [0, s3[2], 0]])   # x_X=−x_B、y_X=z_B、z_X=y_B
+        t = (bl + bh) / 2 - R @ ((lo3 + hi3) / 2)
+        M = Matrix([list(R[0]) + [t[0]], list(R[1]) + [t[1]], list(R[2]) + [t[2]], [0, 0, 0, 1]])
+        print(f"front: per-axis scale {s3.round(5)}; vanilla bbox {bl.round(4)} {bh.round(4)}")
+        return M, float(np.cbrt(np.prod(s3)))
     if P["mode"] == "obb":
         c, ew, eh, ed, lw, lh, ld = obb_axes(xio.read_x(PZ + "/" + cfg["worn"]["M"])["V"][slice(*P["body"])])
         tw, th = hi3[0] - lo3[0], hi3[2] - lo3[2]

@@ -23,4 +23,11 @@ module MinidoracatBags
         mesh = WorldItems/Clothing/MDB_CourierSatchel_Ground,
         scale = 0.08,
     }
+
+    /* 原版 ChestRig_Ground 同 scale 0.15（models_clothes.txt:1661-1666） */
+    model MDB_ScoutChestRig_Ground
+    {
+        mesh = WorldItems/Clothing/MDB_ScoutChestRig_Ground,
+        scale = 0.15,
+    }
 }

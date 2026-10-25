@@ -288,13 +288,13 @@ module MinidoracatBags
         AttachmentsProvided = BedrollBottomBig,
     }
 
-    /* 外觀暫時借用原版 Base.Bag_ChestRig */
+    /* 自製模型（scripts/blender/bags/build.py）；欄位照原版 Base.Bag_ChestRig */
     item ScoutChestRig_Navy
     {
         DisplayCategory = Bag,
         ItemType = base:container,
         Weight = 0.5,
-        Icon = ChestRig,
+        Icon = MDB_ScoutChestRig_Navy,
         CanBeEquipped = base:webbing,
         CanHaveHoles = false,
         Capacity = 6,
@@ -305,17 +305,17 @@ module MinidoracatBags
         CloseSound = CloseCargoVest,
         OpenSound = OpenCargoVest,
         PutInSound = StoreItemCargoVest,
-        WorldStaticModel = ChestRig_Ground,
+        WorldStaticModel = MinidoracatBags.MDB_ScoutChestRig_Ground,
         MaxItemSize = 1.3,
     }
 
-    /* 外觀暫時借用原版 Base.Bag_ChestRig */
+    /* 自製模型（scripts/blender/bags/build.py）；欄位照原版 Base.Bag_ChestRig */
     item ScoutChestRig_Olive
     {
         DisplayCategory = Bag,
         ItemType = base:container,
         Weight = 0.5,
-        Icon = ChestRig,
+        Icon = MDB_ScoutChestRig_Olive,
         CanBeEquipped = base:webbing,
         CanHaveHoles = false,
         Capacity = 6,
@@ -326,7 +326,7 @@ module MinidoracatBags
         CloseSound = CloseCargoVest,
         OpenSound = OpenCargoVest,
         PutInSound = StoreItemCargoVest,
-        WorldStaticModel = ChestRig_Ground,
+        WorldStaticModel = MinidoracatBags.MDB_ScoutChestRig_Ground,
         MaxItemSize = 1.3,
     }
 
