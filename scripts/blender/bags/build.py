@@ -1,6 +1,6 @@
 # /// script
 # requires-python = ">=3.11"
-# dependencies = ["numpy", "pillow"]
+# dependencies = ["numpy", "pillow", "scipy"]
 # ///
 """背包一鍵重建（設定在 bags.py）：Tripo 高模 → 低模、貼圖、男女（ALT）穿戴與左右手 .X、地面 FBX、圖示。
   uv run scripts/blender/bags/build.py DayPack                     # 建到 temp/bags/DayPack/out/media，跑 verify_x
@@ -42,13 +42,19 @@ def icon(src, dst):
 
 def main(name):
     OUT, TEMP = out(name), temp(name)
-    if os.path.isdir(OUT):
-        shutil.rmtree(OUT)
+    for p in (OUT, f"{TEMP}/alt"):   # 隊徽候選版、改前貼圖每次重出，拿掉 emblem 設定後不留舊檔
+        if os.path.isdir(p):
+            shutil.rmtree(p)
+    for f in ("emblem.json", "tex_Navy_plain.png", "icon_raw_NavyAlt.png"):
+        if os.path.exists(f"{TEMP}/{f}"):
+            os.remove(f"{TEMP}/{f}")
     blender("stage1_bake.py", name)
     stage2_assemble.main(name)
     blender("stage3_blender.py", name)
     for look in ("Navy", "Olive"):
         icon(f"{TEMP}/icon_raw_{look}.png", f"{OUT}/textures/Item_MDB_{name}_{look}.png")
+    if os.path.exists(f"{TEMP}/icon_raw_NavyAlt.png"):   # 醫療包的隊徽候選版（bags.py emblem_alt）
+        icon(f"{TEMP}/icon_raw_NavyAlt.png", f"{TEMP}/alt/Item_MDB_{name}_Navy.png")
     fail, info = verify_x.check(name, OUT)
     for k, v in info.items():
         print(k, v)

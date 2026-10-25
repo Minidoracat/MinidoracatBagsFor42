@@ -5,6 +5,8 @@
 - 圖示：Workbench、STUDIO 光、貼圖色，正交 256 px 透明底（items-and-icons.md §4），後製在 build.py。只畫本體：
   肩帶、腰帶是繞過身體的環，留著會把 32 px 圖示裡的包擠小一圈（日行包第一版實機圖示）。
 - 預覽：新低模（兩種貼圖）疊原版身體，正／側／前／俯／3/4，給人看比例。
+- 隊徽（stage2 寫了 emblem.json 的款式）：本體沿第一個隊徽的法線看，整包與特寫各一張，深藍改前（tex_Navy_plain）／改後；
+  醫療包的隊徽候選版（alt/）另出預覽與圖示原圖 icon_raw_NavyAlt。
 """
 import json, os, sys
 import bpy
@@ -211,4 +213,23 @@ for look in ("Navy", "Olive"):
     shoot(f"{TEMP}/icon_raw_{look}.png", bc, idir, io, 256)
     bag.hide_render = body.hide_render = False
     icon_bag.hide_render = True
+
+ej = os.path.join(TEMP, "emblem.json")
+if os.path.exists(ej):
+    em = json.load(open(ej))[0]
+    ec = X2B @ Vector(em["center"])
+    en = X2B.to_3x3() @ Vector(em["normal"])
+    views = {"Navy": imgs["Navy"], "NavyPlain": bpy.data.images.load(os.path.join(TEMP, "tex_Navy_plain.png"))}
+    alt = os.path.join(TEMP, "alt", f"MDB_{NAME}_Navy.png")
+    if os.path.exists(alt):
+        views["NavyAlt"] = bpy.data.images.load(alt)
+    bag.hide_render = body.hide_render = True
+    icon_bag.hide_render = False
+    for look, im in views.items():
+        icon_bag.data.materials[0].node_tree.nodes.active.image = im
+        shoot(f"{TEMP}/emblem_{look}_bag.png", bc, en, float(np.ptp(Bb, axis=0).max()) * 1.15, 512)
+        shoot(f"{TEMP}/emblem_{look}_close.png", ec, en, em["size"][1] * 2.2, 512)
+    if "NavyAlt" in views:
+        icon_bag.data.materials[0].node_tree.nodes.active.image = views["NavyAlt"]
+        shoot(f"{TEMP}/icon_raw_NavyAlt.png", bc, idir, io, 256)
 print("stage3 done")

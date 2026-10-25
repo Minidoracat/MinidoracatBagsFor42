@@ -18,6 +18,8 @@
   skin_push 本體頂點貼進身體超過原版最貼的那點時沿身體法線推出去（stage2）
   clearance closed＝身體頂點不能在封閉本體裡（背在背後的）；skin＝每個頂點沿最近身體頂點法線的距離不比原版差 5 mm 以上（繞身體的）
   bedroll   AttachmentsProvided 的睡袋掛點 y（本體底部要在它上面）
+  emblem    深藍款的 S.T.A.R.S. 隊徽（decal.py）：每個舊徽章一項，seed＝1024 烘焙貼圖上舊金星的一點，h＝隊徽高（.X 單位，約黑底高×0.9）；
+            emblem_alt＝True 時 MOD 貼圖保留舊徽章，隊徽版只輸出到 temp/bags/<款>/alt/ 給人選
 """
 from common import TRIPO_ROOT
 
@@ -44,6 +46,7 @@ BAGS = {
         ground=dict(fbx="models_X/WorldItems/Clothing/HikingBag_Ground.fbx", scale=0.4, method="uvfit"),
         clearance="closed", bedroll=0.509,
         icon=dict(center=(0, -0.16, 0.72), ortho=0.42),   # 圖示相機（Blender 座標）；沒寫就照本體外框自動
+        emblem=[dict(seed=(523, 180), h=0.030)],   # 黑底 39×33 mm
     ),
     # ---- 以下 6 款：原版那半邊先填好；Tripo 那半邊（tripo、place、keep、islands、weight_ref、tris）收到模型才填 ----
     "ExpeditionPack": dict(   # 借 Base.Bag_BigHikingBag
@@ -68,6 +71,7 @@ BAGS = {
         tris=400, voxel=0.008, uv_angle=80, body_u=0.86,   # 0.004 時背架細管減面後正反面相疊（面朝外 90%），UV 拆到 613 點
         ground=dict(fbx="models_X/WorldItems/Clothing/BigHikingBag_Ground.fbx", scale=0.4, method="uvfit"),
         clearance="closed", bedroll=0.509,
+        emblem=[dict(seed=(490, 513), h=0.033)],   # 黑底 39×36 mm
     ),
     "CourierSatchel": dict(   # 借 Base.Bag_Satchel_Military
         tripo=dict(glb=TRIPO_ROOT + "/信差側背包(CourierSatchel)/model/CourierSatchel.glb",
@@ -93,6 +97,7 @@ BAGS = {
         icon=dict(dir=(-0.18, -1, 0.5)),           # 包身外側法線（Blender 座標約 (−0.45, −0.89, 0.06)）偏右上
         ground=dict(fbx="models_X/WorldItems/Clothing/Satchel_New.fbx", scale=0.08, method="upright"),   # 原版地面 UV 自成一套（u 跨 −0.6～1.6），對不到
         clearance="skin", bedroll=None,
+        emblem=[dict(seed=(857, 728), h=0.021)],   # 黑底 27×23 mm，金星被 UV 島切成兩半（另一半在 (358, 257)）
     ),
     "ScoutChestRig": dict(    # 借 Base.Bag_ChestRig
         tripo=dict(glb=TRIPO_ROOT + "/偵察胸掛(ScoutChestRig)/model/ScoutChestRig.glb",
@@ -113,6 +118,7 @@ BAGS = {
         tris=400, voxel=0.002, uv_angle=89, body_u=1.0,   # 帶子是薄片：voxel 0.003 會斷成 6 塊；面數再多 UV 接縫點超過 600
         ground=dict(fbx="models_X/WorldItems/Clothing/ChestRig_Ground.fbx", scale=0.15, method="uvfit"),
         clearance="skin", bedroll=None,
+        emblem=[dict(seed=(622, 447), h=0.0225)],  # 黑底 37×25 mm
     ),
     "MedicHipPouch": dict(    # 借 Base.Bag_FannyPackBack
         tripo=dict(glb=TRIPO_ROOT + "/醫療腰包(MedicHipPouch)/model/MedicHipPouch.glb",
@@ -135,6 +141,8 @@ BAGS = {
         tris=300, voxel=0.002, uv_angle=80, body_u=0.86,
         ground=dict(fbx="models_X/WorldItems/Clothing/M_FannyPackFront_Ground.fbx", scale=0.4, method="uvfit"),
         clearance="skin", bedroll=None,
+        emblem=[dict(seed=(289, 925), h=0.036)],   # 黑底 40×39 mm，原本是綠色草藥章
+        emblem_alt=True,   # 2026-10-25 草藥章和隊徽兩版給使用者選；選定前 MOD 保留草藥章
     ),
     "ToolBeltPouch": dict(    # 借 Base.Bag_FannyPackFront
         tripo=dict(glb=TRIPO_ROOT + "/腰掛工具包(ToolBeltPouch)/model/ToolBeltPouch.glb",
@@ -156,6 +164,7 @@ BAGS = {
         tris=360, voxel=0.002, uv_angle=80, body_u=0.86,
         ground=dict(fbx="models_X/WorldItems/Clothing/M_FannyPackFront_Ground.fbx", scale=0.4, method="uvfit"),
         clearance="skin", bedroll=None,
+        emblem=[dict(seed=(638, 947), h=0.0147)],  # 插扣上方的小黑底 18×16 mm
     ),
     "AmmoBandolier": dict(    # 借 Base.AmmoStrap_Shells
         tripo=dict(glb=TRIPO_ROOT + "/彈藥背帶(AmmoBandolier)/model/AmmoBandolier.glb",
@@ -180,6 +189,8 @@ BAGS = {
         # 原版地面 WorldItems/AmmoStrap 用另一張圖集（WorldItems/AmmoStrap_Shells），UV 對不到穿戴模型
         ground=dict(fbx="models_X/WorldItems/AmmoStrap.fbx", scale=0.4, method="bbox"),
         clearance="skin", bedroll=None,
+        # 兩個彈藥袋蓋上的金星（Tripo 畫成斜拉長、被 UV 島切開）；袋蓋窄邊約 14 mm
+        emblem=[dict(seed=(35, 195), h=0.015), dict(seed=(40, 705), h=0.013)],
     ),
 }
 
