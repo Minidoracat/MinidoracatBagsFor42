@@ -11,7 +11,7 @@
   keep_from 沿用子網格在女版／手持的位置：預設逐點取對到的原版點；smooth＝男版位置＋鄰近位移中位數（雙面薄片正反同 UV 的款式）
   keep      沿用的原版子網格（肩帶、腰帶）：每組一個 UV 島，(a, b)＝原版男版頂點區間、("uv", 矩形)＝UV 在矩形內的點（weight_ref、body 同）；islands＝(原版 UV 矩形, 新矩形, 轉 90°)，None＝自動
   weight_ref 本體權重參考的原版頂點區間（不含 keep 和不要的部分）
-  place     Tripo 高模放到 .X 空間的方式：back＝背在背後（底 y0、高、背板 back_z、後傾 lean、背面 back_y；side="front" 改掛肚子前）；obb＝對齊原版本體（body）的主軸外框，push＝沿外側法線再推出去，w_frac＝Tripo 寬度裡包身佔的比例，back_y＝Tripo 背面的 y（預設最大 y）；
+  place     Tripo 高模放到 .X 空間的方式：back＝背在背後（底 y0、高、背板 back_z、後傾 lean、背面 back_y；side="front" 改掛肚子前）；obb＝對齊原版本體（body）的主軸外框，push＝沿外側法線再推出去，w_frac＝Tripo 寬度裡包身佔的比例，back_y＝Tripo 背面的 y（預設最大 y）；path＝沿原版一段帶子（along）的中心線彎曲（彈藥背帶）；
             tris／voxel／uv_angle／body_u 見 stage1_bake.py；icon＝圖示相機（center、ortho、dir，沒寫就自動）
   ground    原版地面模型：fbx、腳本 scale；method uvfit＝用同 UV 擬合穿戴→地面；upright＝原版地面直立、UV 另一套時，本體照穿戴主軸立起；
             bbox＝原版地面用別張圖集時，最薄方向朝上擺平
@@ -158,6 +158,9 @@ BAGS = {
         clearance="skin", bedroll=None,
     ),
     "AmmoBandolier": dict(    # 借 Base.AmmoStrap_Shells
+        tripo=dict(glb=TRIPO_ROOT + "/彈藥背帶(AmmoBandolier)/model/AmmoBandolier.glb",
+                   navy=TRIPO_ROOT + "/彈藥背帶(AmmoBandolier)/model/fbx/tripo_convert_4505984a-9858-4d36-b08e-0bd42676b4e9.fbm/bandolier_ammo_belt_3d_model_basecolor.JPEG",
+                   olive=TRIPO_ROOT + "/彈藥背帶(AmmoBandolier)/model/fbx_Umbrella/tripo_convert_5e3e3916-683d-4ebf-b264-73a0476ec24a.fbm/bandolier_ammo_belt_3d_model_basecolor.JPEG"),
         worn=dict(M="models_X/Skinned/Clothes/Bob_AmmoStrap.x", F="models_X/Skinned/Clothes/Kate_AmmoStrap.x"),
         alt=None, hands=None, L_from_R=None,
         # 原版 8 骨。背帶從左肩斜到右髖，留軀幹三節＋左肩兩節；Neck（38 點）、Head（20 點）只在領口附近，併進 Spine1；
@@ -165,6 +168,14 @@ BAGS = {
         bones=["Bip01_Spine1", "Bip01_Spine", "Bip01_Pelvis", "Bip01_L_Clavicle", "Bip01_L_UpperArm"],
         merge={"Bip01_Neck": "Bip01_Spine1", "Bip01_Head": "Bip01_Spine1", "Bip01_R_UpperArm": "Bip01_Spine1"},
         corr="uv", deform="field",
+        # 原版 154 點：UV v<0.68 的 5 個島是胸前斜過去的前段（u 0→1 從右腰側到左肩），v≥0.68 的 4 個島是背後那段；背後沿用。
+        # Tripo 是筆直一段（八發霰彈、兩端小袋與扣具），沿前段中心線彎過去
+        keep=[("uv", (0, 0.68, 1, 1))], islands=None,
+        weight_ref=("uv", (0, 0, 1, 0.68)),
+        place=dict(mode="path", along=("uv", (0, 0, 1, 0.68)), bins=10, width=0.04, lift=0.005),
+        icon=dict(dir=(-0.55, 1, 0.45)),   # 看正面的霰彈
+        thin=True, skin_push=True,
+        tris=400, voxel=0.0015, uv_angle=80, body_u=0.86,
         keep_tex="textures/Clothes/Straps/AmmoStrap_Shells.png",
         # 原版地面 WorldItems/AmmoStrap 用另一張圖集（WorldItems/AmmoStrap_Shells），UV 對不到穿戴模型
         ground=dict(fbx="models_X/WorldItems/AmmoStrap.fbx", scale=0.4, method="bbox"),

@@ -28,6 +28,8 @@ def place(co):
     front：穿在胸前的（胸掛）：Tripo 正面（−y）→角色正面（−z），繞上軸轉 180°（x 反向，det>0）；
     三軸各自縮放到原版男版外框再乘 grow（空腔要套得住身體），中心對齊原版外框中心。"""
     lo3, hi3 = co.min(0), co.max(0)
+    if P["mode"] == "path":
+        return path_deform(co, lo3, hi3), P["width"] / (hi3[2] - lo3[2])
     if P["mode"] == "front":
         B = xio.read_x(PZ + "/" + cfg["worn"]["M"])["V"]
         bl, bh = B.min(0), B.max(0)
@@ -60,6 +62,39 @@ def place(co):
     return M, s
 
 
+def path_deform(co, lo3, hi3):
+    """path（彈藥背帶）：Tripo 是筆直一段，沿原版前段斜帶的中心線彎過去。中心線＝原版頂點（along）依 UV u 分 bins 段取重心；
+    Tripo 長度（x）→中心線弧長，高（z）→帶寬方向，正面（−y）→身體表面法線方向（最近 8 個 MaleBody 頂點法線平均）。
+    帶寬縮到 width；厚度同比例；背面（back_y）貼中心線再沿法線 lift。回傳「Tripo 座標 → .X 座標」的函式（非線性，不能用 4×4）。"""
+    MV = xio.read_x(PZ + "/" + cfg["worn"]["M"])
+    idx = sel(MV, P["along"])
+    u = MV["UV"][idx, 0]
+    edges = np.linspace(u.min(), u.max() + 1e-9, P.get("bins", 10) + 1)
+    C = np.array([MV["V"][idx][(u >= a) & (u < b)].mean(0) for a, b in zip(edges[:-1], edges[1:]) if ((u >= a) & (u < b)).any()])
+    seg = np.linalg.norm(np.diff(C, axis=0), axis=1)
+    arc = np.r_[0, np.cumsum(seg)]
+    T = np.gradient(C, arc, axis=0); T /= np.linalg.norm(T, axis=1, keepdims=True)
+    B = xio.read_x(PZ + "/models_X/Skinned/MaleBody.x")
+    nn = np.argsort(np.linalg.norm(C[:, None] - B["V"][None], axis=2), 1)[:, :8]
+    N = B["N"][nn].mean(1)
+    Wd = np.cross(T, N); Wd /= np.linalg.norm(Wd, axis=1, keepdims=True)
+    N = np.cross(Wd, T)
+    sw = P["width"] / (hi3[2] - lo3[2])
+    # Tripo x→T（伸長）、y→−N、z→Wd：三者右手系時 det>0；否則帶寬方向反過來，繞序才不會翻
+    if np.dot(T[len(T) // 2], np.cross(-N[len(T) // 2], Wd[len(T) // 2])) < 0:
+        Wd = -Wd
+    print(f"path: centerline {len(C)} pts, length {arc[-1]:.4f}; width scale {sw:.5f}")
+
+    def f(p):
+        s = (p[:, 0] - lo3[0]) / (hi3[0] - lo3[0]) * arc[-1]
+        lerp = lambda A: np.stack([np.interp(s, arc, A[:, k]) for k in range(3)], 1)
+        Ns, Ws = lerp(N), lerp(Wd)
+        w = (p[:, 2] - (lo3[2] + hi3[2]) / 2) * sw
+        d = (P.get("back_y", hi3[1]) - p[:, 1]) * sw + P.get("lift", 0.0)
+        return lerp(C) + Ws * w[:, None] + Ns * d[:, None]
+    return f
+
+
 os.makedirs(TEMP, exist_ok=True)
 bpy.ops.wm.read_factory_settings(use_empty=True)
 bpy.ops.import_scene.gltf(filepath=cfg["tripo"]["glb"])
@@ -69,7 +104,10 @@ for o in list(bpy.context.scene.objects):
         bpy.data.objects.remove(o)
 co = np.empty(len(hi.data.vertices) * 3); hi.data.vertices.foreach_get("co", co); co = co.reshape(-1, 3)
 M, s = place(co)
-hi.data.transform(M)                              # 旋轉＋剪切，det>0，繞序不變
+if callable(M):                                   # path：逐點彎曲
+    hi.data.vertices.foreach_set("co", M(co).ravel())
+else:
+    hi.data.transform(M)                          # 旋轉＋剪切，det>0，繞序不變
 hi.data.update()
 
 # 低模：體素重建 → 減面 → 三角化

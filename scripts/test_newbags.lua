@@ -289,6 +289,7 @@ local function suite()
         { name = "ScoutChestRig", scale = "0.15", alt = true },   -- ChestRig_Ground（models_clothes.txt:1661-1666）
         { name = "MedicHipPouch", scale = "0.4" },                -- FannyPack_Ground（models_items.txt:3670-3674）
         { name = "ToolBeltPouch", scale = "0.4" },                -- FannyPack_Ground（models_items.txt:3670-3674）
+        { name = "AmmoBandolier", scale = "0.4" },                -- AmmoStrap_Ground_Shells（models_items.txt:5241-5246）
     }
     local models = {}
     for _, b in ipairs(parseBlocks(readFile(F.MODELS), "model")) do models[b.module .. "." .. b.name] = b end

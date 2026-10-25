@@ -44,4 +44,11 @@ module MinidoracatBags
         mesh = WorldItems/Clothing/MDB_ToolBeltPouch_Ground,
         scale = 0.4,
     }
+
+    /* 原版 AmmoStrap_Ground_Shells 同 scale 0.4（models_items.txt:5241-5246）；原版地面用另一張圖集，網格照外框平放 */
+    model MDB_AmmoBandolier_Ground
+    {
+        mesh = WorldItems/Clothing/MDB_AmmoBandolier_Ground,
+        scale = 0.4,
+    }
 }

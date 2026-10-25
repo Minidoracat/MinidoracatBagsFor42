@@ -94,13 +94,13 @@ module MinidoracatBags
         AcceptItemFunction = MDB.acceptFirstAid,
     }
 
-    /* 外觀暫時借用原版 Base.AmmoStrap_Shells */
+    /* 自製模型（scripts/blender/bags/build.py）；欄位照原版 Base.AmmoStrap_Shells */
     item AmmoBandolier_Navy
     {
         DisplayCategory = Bag,
         ItemType = base:container,
         Weight = 0.3,
-        Icon = AmmoStrap,
+        Icon = MDB_AmmoBandolier_Navy,
         CanBeEquipped = base:ammostrap,
         CanHaveHoles = false,
         Capacity = 4,
@@ -111,18 +111,18 @@ module MinidoracatBags
         CloseSound = CloseShellsBandolier,
         OpenSound = OpenShellsBandolier,
         PutInSound = StoreItemShellsBandolier,
-        WorldStaticModel = AmmoStrap_Ground_Shells,
+        WorldStaticModel = MinidoracatBags.MDB_AmmoBandolier_Ground,
         AcceptItemFunction = MDB.acceptAmmo,
         Tags = base:reloadfastbullets;base:reloadfastmagazines;base:reloadfastshells,
     }
 
-    /* 外觀暫時借用原版 Base.AmmoStrap_Shells */
+    /* 自製模型（scripts/blender/bags/build.py）；欄位照原版 Base.AmmoStrap_Shells */
     item AmmoBandolier_Olive
     {
         DisplayCategory = Bag,
         ItemType = base:container,
         Weight = 0.3,
-        Icon = AmmoStrap,
+        Icon = MDB_AmmoBandolier_Olive,
         CanBeEquipped = base:ammostrap,
         CanHaveHoles = false,
         Capacity = 4,
@@ -133,7 +133,7 @@ module MinidoracatBags
         CloseSound = CloseShellsBandolier,
         OpenSound = OpenShellsBandolier,
         PutInSound = StoreItemShellsBandolier,
-        WorldStaticModel = AmmoStrap_Ground_Shells,
+        WorldStaticModel = MinidoracatBags.MDB_AmmoBandolier_Ground,
         AcceptItemFunction = MDB.acceptAmmo,
         Tags = base:reloadfastbullets;base:reloadfastmagazines;base:reloadfastshells,
     }
