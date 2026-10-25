@@ -5,8 +5,8 @@
 - 圖示：Workbench、STUDIO 光、貼圖色，正交 256 px 透明底（items-and-icons.md §4），後製在 build.py。只畫本體：
   肩帶、腰帶是繞過身體的環，留著會把 32 px 圖示裡的包擠小一圈（日行包第一版實機圖示）。
 - 預覽：新低模（兩種貼圖）疊原版身體，正／側／前／俯／3/4，給人看比例。
-- 隊徽（stage2 寫了 emblem.json 的款式）：本體沿第一個隊徽的法線看，整包與特寫各一張，深藍改前（tex_Navy_plain）／改後；
-  醫療包的隊徽候選版（alt/）另出預覽與圖示原圖 icon_raw_NavyAlt。
+- 隊徽（stage2 寫了 emblem.json 的款式）：本體沿第一個隊徽的法線看，整包與特寫各一張，深藍改前（tex_Navy_plain）／改後，
+  左右翻成實機的樣子（mirror_png）；醫療包的隊徽候選版（alt/）另出預覽與圖示原圖 icon_raw_NavyAlt。
 """
 import json, os, sys
 import bpy
@@ -214,6 +214,18 @@ for look in ("Navy", "Olive"):
     bag.hide_render = body.hide_render = False
     icon_bag.hide_render = True
 
+
+def mirror_png(path):
+    """PZ 把 .X 當左手座標畫（decal.py 檔頭第 3 點）：Blender 的正交圖左右翻過來，才是實機看到的樣子（隊徽字才讀得正）。"""
+    im = bpy.data.images.load(path)
+    w, h = im.size
+    px = np.empty(w * h * 4, np.float32)
+    im.pixels.foreach_get(px)
+    im.pixels.foreach_set(px.reshape(h, w, 4)[:, ::-1].ravel())
+    im.save()
+    bpy.data.images.remove(im)
+
+
 ej = os.path.join(TEMP, "emblem.json")
 if os.path.exists(ej):
     em = json.load(open(ej))[0]
@@ -227,8 +239,9 @@ if os.path.exists(ej):
     icon_bag.hide_render = False
     for look, im in views.items():
         icon_bag.data.materials[0].node_tree.nodes.active.image = im
-        shoot(f"{TEMP}/emblem_{look}_bag.png", bc, en, float(np.ptp(Bb, axis=0).max()) * 1.15, 512)
-        shoot(f"{TEMP}/emblem_{look}_close.png", ec, en, em["size"][1] * 2.2, 512)
+        for kind, center, ortho in (("bag", bc, float(np.ptp(Bb, axis=0).max()) * 1.15), ("close", ec, em["size"][1] * 2.2)):
+            shoot(f"{TEMP}/emblem_{look}_{kind}.png", center, en, ortho, 512)
+            mirror_png(f"{TEMP}/emblem_{look}_{kind}.png")
     if "NavyAlt" in views:
         icon_bag.data.materials[0].node_tree.nodes.active.image = views["NavyAlt"]
         shoot(f"{TEMP}/icon_raw_NavyAlt.png", bc, idir, io, 256)

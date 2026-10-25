@@ -2,8 +2,9 @@
 1. 每個貼圖像素取樣它在低模（男版穿戴，.X 模型空間：y 上、+z 背包外側）上的 3D 位置與面法線。
 2. 種子像素（bags.py 的 emblem.seed，1024 烘焙貼圖座標，Tripo 金星上一點）→ 表面點與法線；同一平面上和它相連的圖案像素
    （金星、醫療包的綠草藥）＝舊徽章。舊徽章先用旁邊最近的非圖案像素補掉（黑底或布料），隊徽比舊圖案小的地方不會露出金角。
-3. 隊徽中心＝舊徽章的 3D 中心（＋bags.py 的 off 位移）；高＝bags.py 的 h；「上」＝世界上方投影到表面（＋roll 度），
-   「右」＝上×法線（從外面看過去的右手邊），所以穿在身上一定是正的。
+3. 隊徽中心＝舊徽章的 3D 中心；高＝bags.py 的 h；「上」＝世界上方投影到表面，「右」＝法線×上。
+   PZ 把 .X 當左手座標畫：照右手系算的「上×法線」，實機看到的是左右顛倒的「ꟻ」（mdb-stars-orient-1025b，日行包背面大 F 實拍）。
+   Blender 預覽是右手系，隊徽特寫要左右翻過來才和實機一樣（stage3）。
 4. 每像素 8×8 次取樣，落在隊徽內才蓋上；沒蓋到任何面的邊緣像素（烘焙外擴）用最近的已改像素補，縮圖時不滲出舊顏色。
 黑色方形底保留：戰術包的魔鬼氈底（loop panel）本來就是讓臂章黏上去的，圓章四角露出一點黑底才像「布章黏在包上」；
 挖掉黑底得替底下的布料補圖，256 px 上會多一圈接縫，改動也不再只在徽章範圍。
@@ -54,7 +55,7 @@ def art_mask(tex):
     return gold | green
 
 
-def frame(seed, tex, V, F, UV, N, roll=0.0):
+def frame(seed, tex, V, F, UV, N):
     """量種子所在的舊徽章：回 dict(center, normal, up, right, old＝舊圖案像素遮罩, size＝舊圖案在平面上的寬高)。"""
     res = tex.shape[0]
     ys, xs, fs, bs = raster(V, F, UV, res)
@@ -66,9 +67,7 @@ def frame(seed, tex, V, F, UV, N, roll=0.0):
     up = np.array([0.0, 1.0, 0.0])
     et = up - (up @ n0) * n0
     et /= np.linalg.norm(et)
-    r = np.radians(roll)
-    et = np.cos(r) * et + np.sin(r) * np.cross(n0, et)
-    es = np.cross(et, n0)
+    es = np.cross(n0, et)   # 實機看過去的右手邊（見檔頭第 3 點）
     d = pos - p0
     art = art_mask(tex)[ys, xs] & (np.abs(d @ n0) < PLANE_TOL) & (fn @ n0 > 0.7) & (np.linalg.norm(d, axis=1) < 0.05)
     P = np.c_[d[art] @ es, d[art] @ et]
@@ -98,7 +97,7 @@ def emblem_box(emb):
     return (xs.min() + xs.max() + 1) / 2, (ys.min() + ys.max() + 1) / 2, xs.max() - xs.min() + 1, ys.max() - ys.min() + 1
 
 
-def apply(tex, V, F, UV, N, fr, emb, h, off=(0.0, 0.0)):
+def apply(tex, V, F, UV, N, fr, emb, h):
     """先補掉舊圖案，再把隊徽（高 h，.X 單位）蓋上。回 (新貼圖 uint8, 隊徽 3D 寬高, 改動遮罩)。"""
     res = tex.shape[0]
     # 1. 舊圖案（外擴 2 像素含反鋸齒邊）→ 最近的非圖案像素（烘焙外擴區也有金色，不能拿來補）
@@ -111,8 +110,7 @@ def apply(tex, V, F, UV, N, fr, emb, h, off=(0.0, 0.0)):
     E[..., :3] *= E[..., 3:]
     ecx, ecy, ew, eh = emblem_box(emb)
     scale = h / eh                                   # .X 單位 / 隊徽像素
-    n0, upv, right = fr["normal"], fr["up"], fr["right"]
-    c = fr["center"] + off[0] * right + off[1] * upv
+    n0, upv, right, c = fr["normal"], fr["up"], fr["right"], fr["center"]
     reach = 0.5 * np.hypot(ew, eh) * scale
     fn = face_normals(V, F, N)
     faces = [i for i in range(len(F)) if fn[i] @ n0 > 0.5 and np.abs((V[F[i]] - c) @ n0).min() < PLANE_TOL
