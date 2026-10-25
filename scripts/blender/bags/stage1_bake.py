@@ -11,7 +11,7 @@ from mathutils import Matrix
 
 sys.path.insert(0, os.path.dirname(__file__))
 import bags
-from common import temp
+from common import PZ, obb_axes, temp, xio
 
 BAKE_PX = 1024
 cfg = bags.get(sys.argv[sys.argv.index("--") + 1])
@@ -22,8 +22,21 @@ P = cfg["place"]
 def place(co):
     """Tripo（Blender：z 上、背包正面朝 −y）→ .X 模型空間（y 上、+z 朝角色背後＝背包外側）的 4×4 矩陣。
     back：等比縮放讓高度＝height、底在 y0，背板（Tripo +y 側）底端貼 z=back_z，再照原版後傾 lean（z += lean·(y−y0)）。
-    日行包：平背板在 y≈0.68–0.72 被男性身體背面（z 0.099–0.102）頂穿；原版背板 y 0.56→0.83 是 z 0.083→0.132（斜率約 0.18）。"""
+    日行包：平背板在 y≈0.68–0.72 被男性身體背面（z 0.099–0.102）頂穿；原版背板 y 0.56→0.83 是 z 0.083→0.132（斜率約 0.18）。
+    obb：對齊原版男版本體（頂點區間 body）的主軸外框：Tripo 寬（x）→最長軸、高（z）→朝上的軸、正面（−y）→最薄軸朝外；
+    等比縮放取寬、高兩個比例的幾何平均；背面貼原版背面那一層，上下、左右置中。"""
     lo3, hi3 = co.min(0), co.max(0)
+    if P["mode"] == "obb":
+        c, ew, eh, ed, lw, lh, ld = obb_axes(xio.read_x(PZ + "/" + cfg["worn"]["M"])["V"][slice(*P["body"])])
+        tw, th = hi3[0] - lo3[0], hi3[2] - lo3[2]
+        s = float(np.sqrt(lw / tw * lh / th))
+        back = c - ed * (ld / 2 - P.get("push", 0))
+        mid = np.array([(lo3[0] + hi3[0]) / 2, 0, (lo3[2] + hi3[2]) / 2])
+        R = np.c_[ew, -ed, eh] * s                          # Tripo x→ew、y→−ed、z→eh
+        t = back - R @ np.array([mid[0], hi3[1], mid[2]])
+        M = Matrix([list(R[0]) + [t[0]], list(R[1]) + [t[1]], list(R[2]) + [t[2]], [0, 0, 0, 1]])
+        print(f"obb: van extents w {lw:.4f} h {lh:.4f} d {ld:.4f}; ours w {s * tw:.4f} h {s * th:.4f} d {s * (hi3[1] - lo3[1]):.4f}")
+        return M, s
     assert P["mode"] == "back", P["mode"]
     s = P["height"] / (hi3[2] - lo3[2])
     c = P["back_z"] + s * hi3[1]                   # z_X = c − s·y_B：y_B 最大（背板）→ back_z

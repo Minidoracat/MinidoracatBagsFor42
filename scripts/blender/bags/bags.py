@@ -1,4 +1,4 @@
-"""每款背包一份設定（build.py --bag <名>）。原版樣板照 MDB_Items.txt 每件上方註明借用的那款。
+"""每款背包一份設定（build.py <款>）。原版樣板照 MDB_Items.txt 每件上方註明借用的那款。
 
 欄位（路徑都相對 PZ media/）：
   worn      男女穿戴模板 .X（反綁定矩陣、骨架、動畫原樣照抄）；alt＝ClothingItem 的 m_Alt*Model 模板（胸掛）
@@ -6,11 +6,15 @@
   L_from_R  左手怎麼來：negate＝右手點對稱（原版日行包實測逐點相同）；icp＝用原版左右手點雲對齊求的變換
   bones     穿戴骨頭白名單（≤5）；merge＝砍掉的骨頭權重併到哪根
   corr      原版各版本之間怎麼對點：faces＝面序相同逐角對（日行包）；uv＝同 UV 對點，歧義用仿射擬合挑最近的
-  deform    本體怎麼搬到女版／手持：affine＝單一仿射（日行包殘差 ~0）；field＝仿射＋最近 4 點的殘差位移場
+  deform    本體怎麼搬到女版／手持：affine＝單一仿射（日行包殘差 ~0）；field＝仿射＋最近 4 點的殘差位移場；
+            field_ref＝同 field，但只用 weight_ref 的本體點（沿用子網格在手持模型裡被捲起來的款式）
+  keep_from 沿用子網格在女版／手持的位置：預設逐點取對到的原版點；smooth＝男版位置＋鄰近位移中位數（雙面薄片正反同 UV 的款式）
   keep      沿用的原版子網格（肩帶、腰帶）：原版男版頂點區間，每段一個 UV 島；islands＝(原版 UV 矩形, 新矩形, 轉 90°)，None＝自動
   weight_ref 本體權重參考的原版頂點區間（不含 keep 和不要的部分）
-  place     Tripo 高模放到 .X 空間的方式；tris／voxel／uv_angle／body_u 見 stage1_bake.py
-  ground    原版地面模型：fbx、腳本 scale；method uvfit＝用同 UV 擬合穿戴→地面，bbox＝原版地面用別張圖集時，照外框擺平
+  place     Tripo 高模放到 .X 空間的方式：back＝背在背後（底、高、背板、後傾）；obb＝對齊原版本體（頂點區間 body）的主軸外框，push＝沿外側法線再推出去；
+            tris／voxel／uv_angle／body_u 見 stage1_bake.py；icon＝圖示相機（center、ortho、dir，沒寫就自動）
+  ground    原版地面模型：fbx、腳本 scale；method uvfit＝用同 UV 擬合穿戴→地面；upright＝原版地面直立、UV 另一套時，本體照穿戴主軸立起；
+            bbox＝原版地面用別張圖集時，最薄方向朝上擺平
   clearance closed＝身體頂點不能在封閉本體裡（背在背後的）；skin＝每個頂點沿最近身體頂點法線的距離不比原版差 5 mm 以上（繞身體的）
   bedroll   AttachmentsProvided 的睡袋掛點 y（本體底部要在它上面）
 """
@@ -65,14 +69,28 @@ BAGS = {
         clearance="closed", bedroll=0.509,
     ),
     "CourierSatchel": dict(   # 借 Base.Bag_Satchel_Military
+        tripo=dict(glb=TRIPO_ROOT + "/信差側背包(CourierSatchel)/model/CourierSatchel.glb",
+                   navy=TRIPO_ROOT + "/信差側背包(CourierSatchel)/model/fbx/tripo_convert_621b0dd8-c572-4020-9a6e-7e1b5305c84d.fbm/tactical_messenger_bag_3d_model_basecolor.JPEG",
+                   olive=TRIPO_ROOT + "/信差側背包(CourierSatchel)/model/fbx_Umbrella/tactical_messenger_bag_3d_model.fbm/tactical_messenger_bag_3d_model_basecolor.jpg"),
         worn=dict(M="models_X/Skinned/BackPacks/M_Satchel_New.x", F="models_X/Skinned/BackPacks/F_Satchel_New.x"),
         alt=None,
         hands=dict(R="models_X/Skinned/BackPacks/Satchel_New_RHand.x", L="models_X/Skinned/BackPacks/Satchel_New_LHand.x"),
         L_from_R="icp",
         bones=["Bip01_BackPack", "Bip01_Spine", "Bip01_Spine1", "Bip01_L_Clavicle", "Bip01_L_UpperArm"], merge={},
-        corr="uv", deform="field",
+        corr="uv", deform="field_ref", keep_from="smooth",
+        # 原版男版五塊：0-149 斜背帶（掛左肩，骨頭有 L_Clavicle／L_UpperArm）、150-254 包身、255-278 與 279-302 背帶兩端扣環、303-375 包頂上的一段背帶。
+        # Tripo 只有兩個上角的短帶耳，長背帶與扣環沿用原版
+        keep=[(0, 150), (255, 279), (279, 303), (303, 376)],
+        islands=[((0.007, 0.903, 0.996, 0.999), (0.872, 0.010, 0.992, 0.640), True),
+                 ((0.804, 0.045, 0.899, 0.164), (0.872, 0.660, 0.992, 0.740), False),
+                 ((0.801, 0.049, 0.899, 0.159), (0.872, 0.760, 0.992, 0.840), False),
+                 ((0.350, 0.907, 0.750, 0.999), (0.872, 0.860, 0.992, 0.990), True)],
         keep_tex="textures/Clothes/Bag/Satchel_Military.png",
-        ground=dict(fbx="models_X/WorldItems/Clothing/Satchel_New.fbx", scale=0.08, method="uvfit"),
+        weight_ref=(150, 255),
+        place=dict(mode="obb", body=(150, 255), push=0.008),   # 原版包身斜掛在後腰一側（寬軸繞 y 轉約 27°）；背面貼原版背面時離臀部 −5 mm，往外推 8 mm
+        tris=300, voxel=0.003, uv_angle=80, body_u=0.86,
+        icon=dict(dir=(-0.18, -1, 0.5)),           # 包身外側法線（Blender 座標約 (−0.45, −0.89, 0.06)）偏右上
+        ground=dict(fbx="models_X/WorldItems/Clothing/Satchel_New.fbx", scale=0.08, method="upright"),   # 原版地面 UV 自成一套（u 跨 −0.6～1.6），對不到
         clearance="skin", bedroll=None,
     ),
     "ScoutChestRig": dict(    # 借 Base.Bag_ChestRig

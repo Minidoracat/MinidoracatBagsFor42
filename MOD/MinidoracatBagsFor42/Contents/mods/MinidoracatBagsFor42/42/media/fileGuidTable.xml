@@ -181,6 +181,22 @@
 		<guid>5ee0b72a-4d47-4737-afd1-bdf8be5cb4e1</guid>
 	</files>
 	<files>
+		<path>media/clothing/clothingItems/MDB_CourierSatchel_Navy_RHand.xml</path>
+		<guid>5748c926-4686-4371-9eb3-c49582fe1388</guid>
+	</files>
+	<files>
+		<path>media/clothing/clothingItems/MDB_CourierSatchel_Navy_LHand.xml</path>
+		<guid>79d8c9c1-5a64-4ac2-98e6-0ab674d4976b</guid>
+	</files>
+	<files>
+		<path>media/clothing/clothingItems/MDB_CourierSatchel_Olive_RHand.xml</path>
+		<guid>ff78f175-1fe9-4de5-a3ef-07ea5aed7770</guid>
+	</files>
+	<files>
+		<path>media/clothing/clothingItems/MDB_CourierSatchel_Olive_LHand.xml</path>
+		<guid>8aaab750-fccd-4937-b671-1fdf724cfdf6</guid>
+	</files>
+	<files>
 		<path>media/clothing/clothingItems/MDB_DayPack_Navy.xml</path>
 		<guid>318b4bd3-70d1-4dec-847f-7a0c6d0d0086</guid>
 	</files>

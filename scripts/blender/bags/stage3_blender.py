@@ -13,7 +13,7 @@ from mathutils import Matrix, Vector
 
 sys.path.insert(0, os.path.dirname(__file__))
 import bags
-from common import PZ, fit_affine, out, temp, xio
+from common import PZ, fit_affine, obb_axes, out, temp, xio
 from io_scene_fbx import parse_fbx
 
 cfg = bags.get(sys.argv[sys.argv.index("--") + 1])
@@ -98,20 +98,30 @@ if G["method"] == "uvfit":
         ground_fit["keep_edge_ratio_p5_p50_p95"] = np.percentile(ratio, [5, 50, 95]).round(3).tolist()
     GVnew = np.r_[flat @ L + t, GV[corr[kidx]]] / UNIT
 else:
-    # bbox：本體＋沿用子網格一起，主軸分析後最薄的方向朝上、最長的方向對齊原版地面的長邊，等比縮放
-    P = np.r_[flat, V[NB:]] @ np.array(X2B.to_3x3()).T
-    c0 = P.mean(0)
-    _, _, vt = np.linalg.svd(P - c0)
-    R = vt.copy()
-    if np.linalg.det(R) < 0:
-        R[2] *= -1
-    Q = (P - c0) @ R.T                                   # 主軸座標：0＝最長、2＝最薄
+    if G["method"] == "upright":
+        # upright：原版地面是直立的（信差包 Satchel_New：包身立著、背帶從兩個上角垂到地上，UV 和穿戴模型不同）。
+        # 本體照穿戴時的主軸立起來（Blender x＝厚、y＝寬、z＝高，右手系）；沿用的長背帶比包頂高的部分壓到 1/4、前後壓到 0.3，
+        # 收成包頂上的提把狀，不然整圈背帶會直直豎在包上
+        c, ew, eh, ed, *_ = obb_axes(M["V"][slice(*cfg["place"]["body"])])
+        A = np.r_[flat, V[NB:]] - c
+        Q = np.c_[A @ ed, A @ ew, A @ eh]
+        top = Q[:NB, 2].max()
+        Q[NB:, 2] = np.where(Q[NB:, 2] > top, top + (Q[NB:, 2] - top) * 0.25, Q[NB:, 2])
+        Q[NB:, 0] *= 0.3
+    else:
+        # bbox：本體＋沿用子網格一起，主軸分析後最薄的方向朝上（原版地面用別張圖集，UV 對不到）
+        P = np.r_[flat, V[NB:]] @ np.array(X2B.to_3x3()).T
+        _, _, R = np.linalg.svd(P - P.mean(0))
+        R[2] *= np.sign(np.linalg.det(R))                # 純旋轉，不鏡像
+        Q = (P - P.mean(0)) @ R.T                        # 0＝最長、2＝最薄
+    # 水平長邊對齊原版地面的長邊（要換軸時轉 90°，不鏡像），等比縮放；水平置中，最低點下面再抬到 z=0
     gsz = ref_bbox[1] - ref_bbox[0]
-    ax = np.argsort(-gsz[:2])                            # 原版地面水平兩軸，長的在前
-    Gq = np.zeros_like(Q); Gq[:, ax[0]], Gq[:, ax[1]], Gq[:, 2] = Q[:, 0], Q[:, 1], Q[:, 2]
-    s = gsz[ax[0]] / np.ptp(Q[:, 0])
-    GVnew = Gq * s + np.r_[(ref_bbox[0] + ref_bbox[1])[:2] / 2, 0]
-    ground_fit = dict(method="bbox", scale=float(s), det=float(np.linalg.det(R)))
+    if (np.ptp(Q[:, 0]) >= np.ptp(Q[:, 1])) != (gsz[0] >= gsz[1]):
+        Q = np.c_[-Q[:, 1], Q[:, 0], Q[:, 2]]
+    s = float(gsz[:2].max() / np.ptp(Q[:, :2], 0).max())
+    Q[:, :2] -= (Q[:, :2].min(0) + Q[:, :2].max(0)) / 2
+    GVnew = Q * s + np.r_[(ref_bbox[0] + ref_bbox[1])[:2] / 2, 0]
+    ground_fit = dict(method=G["method"], scale=s, det=1.0)   # 兩種擺法都是純旋轉＋等比縮放
 GVnew[:, 2] -= GVnew[:, 2].min()   # 新本體最低點和原版不同：整個抬到貼地（原版最低點 z=0）
 print("fit M->Ground (Blender m):", ground_fit)
 bpy.data.objects.remove(g)
@@ -187,6 +197,7 @@ bag.hide_render = body.hide_render = False
 Bb = V[:NB] @ np.array(X2B.to_3x3()).T
 bc = cfg.get("icon", {}).get("center", tuple(((Bb.min(0) + Bb.max(0)) / 2).round(4)))   # 本體中心（Blender 座標）
 io = cfg.get("icon", {}).get("ortho", round(float(np.ptp(Bb, axis=0).max()) * 1.35, 4))
+idir = cfg.get("icon", {}).get("dir", (0.55, -1, 0.45))   # 看外側正面偏右上；斜掛的款式（信差包）另給
 for look in ("Navy", "Olive"):
     bag.data.materials[0].node_tree.nodes.active.image = imgs[look]
     for name, dirn in (("back", (0.0001, -1, 0)), ("side", (1, 0, 0)), ("front", (0.0001, 1, 0)), ("top", (0.0001, -0.3, 1)), ("3q", (0.8, -1, 0.5))):
@@ -194,7 +205,7 @@ for look in ("Navy", "Olive"):
     icon_bag.data.materials[0].node_tree.nodes.active.image = imgs[look]
     bag.hide_render = body.hide_render = True
     icon_bag.hide_render = False
-    shoot(f"{TEMP}/icon_raw_{look}.png", bc, (0.55, -1, 0.45), io, 256)
+    shoot(f"{TEMP}/icon_raw_{look}.png", bc, idir, io, 256)
     bag.hide_render = body.hide_render = False
     icon_bag.hide_render = True
 print("stage3 done")

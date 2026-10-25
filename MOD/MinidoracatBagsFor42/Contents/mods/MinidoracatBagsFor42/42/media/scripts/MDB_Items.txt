@@ -138,13 +138,13 @@ module MinidoracatBags
         Tags = base:reloadfastbullets;base:reloadfastmagazines;base:reloadfastshells,
     }
 
-    /* 外觀暫時借用原版 Base.Bag_Satchel_Military */
+    /* 自製模型（scripts/blender/bags/build.py）；欄位照原版 Base.Bag_Satchel_Military */
     item CourierSatchel_Navy
     {
         DisplayCategory = Bag,
         ItemType = base:container,
         Weight = 0.6,
-        Icon = Satchel_Military,
+        Icon = MDB_CourierSatchel_Navy,
         CanBeEquipped = base:satchel,
         CanHaveHoles = false,
         Capacity = 14,
@@ -156,18 +156,18 @@ module MinidoracatBags
         EquipSound = EquipSatchel,
         OpenSound = OpenSatchelMilitary,
         PutInSound = StoreItemSatchelMilitary,
-        ReplaceInPrimaryHand = Bag_Satchel_Military_RHand holdingbagright,
-        ReplaceInSecondHand = Bag_Satchel_Military_LHand holdingbagleft,
-        WorldStaticModel = Satchel_Military_Ground,
+        ReplaceInPrimaryHand = MDB_CourierSatchel_Navy_RHand holdingbagright,
+        ReplaceInSecondHand = MDB_CourierSatchel_Navy_LHand holdingbagleft,
+        WorldStaticModel = MinidoracatBags.MDB_CourierSatchel_Ground,
     }
 
-    /* 外觀暫時借用原版 Base.Bag_Satchel_Military */
+    /* 自製模型（scripts/blender/bags/build.py）；欄位照原版 Base.Bag_Satchel_Military */
     item CourierSatchel_Olive
     {
         DisplayCategory = Bag,
         ItemType = base:container,
         Weight = 0.6,
-        Icon = Satchel_Military,
+        Icon = MDB_CourierSatchel_Olive,
         CanBeEquipped = base:satchel,
         CanHaveHoles = false,
         Capacity = 14,
@@ -179,9 +179,9 @@ module MinidoracatBags
         EquipSound = EquipSatchel,
         OpenSound = OpenSatchelMilitary,
         PutInSound = StoreItemSatchelMilitary,
-        ReplaceInPrimaryHand = Bag_Satchel_Military_RHand holdingbagright,
-        ReplaceInSecondHand = Bag_Satchel_Military_LHand holdingbagleft,
-        WorldStaticModel = Satchel_Military_Ground,
+        ReplaceInPrimaryHand = MDB_CourierSatchel_Olive_RHand holdingbagright,
+        ReplaceInSecondHand = MDB_CourierSatchel_Olive_LHand holdingbagleft,
+        WorldStaticModel = MinidoracatBags.MDB_CourierSatchel_Ground,
     }
 
     /* 自製模型（scripts/blender/bags/build.py）；欄位照原版 Base.Bag_NormalHikingBag */

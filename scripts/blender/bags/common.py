@@ -37,3 +37,19 @@ def fit_affine(A, B):
         r = np.linalg.norm(Ah @ X - B, axis=1)
         keep = r < max(0.002, 5 * np.median(r))
     return X[:3], X[3], r, np.nonzero(~keep)[0]
+
+
+def obb_axes(B):
+    """原版本體頂點的主軸外框：回 (外框中心, ew 寬, eh 高〔最接近 +y〕, ed 厚〔背離身體中軸〕, 寬, 高, 厚)；(ew, eh, ed) 右手系。"""
+    c = B.mean(0)
+    ax = np.linalg.svd(B - c)[2]
+    q = (B - c) @ ax.T
+    c = c + ((q.min(0) + q.max(0)) / 2) @ ax
+    ext = np.ptp(q, 0)
+    h = int(np.argmax(np.abs(ax[:, 1])))
+    w, d = [k for k in range(3) if k != h]
+    if ext[w] < ext[d]:
+        w, d = d, w
+    eh = ax[h] * np.sign(ax[h][1])
+    ed = ax[d] * np.sign(np.dot(ax[d], c - np.array([0, c[1], 0.02])))
+    return c, np.cross(eh, ed), eh, ed, ext[w], ext[h], ext[d]

@@ -283,6 +283,7 @@ local function suite()
     local OWN = {
         { name = "DayPack", scale = "0.4", hands = true },        -- HikingBag_Ground（models_items.txt:3664-3668）
         { name = "ExpeditionPack", scale = "0.4", hands = true }, -- BigHikingBag_Ground（models_items.txt:3601-3605）
+        { name = "CourierSatchel", scale = "0.08", hands = true }, -- Satchel_Military_Ground（models_items.txt:8919-8924）
     }
     local models = {}
     for _, b in ipairs(parseBlocks(readFile(F.MODELS), "model")) do models[b.module .. "." .. b.name] = b end

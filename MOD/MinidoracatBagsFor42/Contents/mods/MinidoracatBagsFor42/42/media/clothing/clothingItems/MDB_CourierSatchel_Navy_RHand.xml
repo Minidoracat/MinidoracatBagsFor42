@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 信差側背包拿在手上（ReplaceInPrimaryHand）：照原版 Bag_Satchel_Military_RHand，男女共用一個模型 -->
+<clothingItem>
+	<m_MaleModel>media\models_X\Skinned\BackPacks\MDB_CourierSatchel_RHand.X</m_MaleModel>
+	<m_FemaleModel>media\models_X\Skinned\BackPacks\MDB_CourierSatchel_RHand.X</m_FemaleModel>
+	<m_GUID>5748c926-4686-4371-9eb3-c49582fe1388</m_GUID>
+	<m_Static>false</m_Static>
+	<m_AllowRandomHue>false</m_AllowRandomHue>
+	<m_AllowRandomTint>false</m_AllowRandomTint>
+	<m_AttachBone></m_AttachBone>
+	<textureChoices>Clothes\Bag\MDB_CourierSatchel_Navy</textureChoices>
+</clothingItem>

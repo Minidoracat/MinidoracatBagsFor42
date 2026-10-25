@@ -27,7 +27,10 @@ def corr_from_faces(M, T):
 
 def corr_from_uv(M, T):
     """同 UV（<2e-3）對點。原版對稱零件常共用 UV（遠征包 8 點、信差包 322 點有歧義）：
-    先用只有一個位置的點擬合仿射，歧義的點挑離仿射預測最近的候選，再擬合一次。對不到的點回 -1。"""
+    先用只有一個位置的點擬合仿射，歧義的點挑離仿射預測最近的候選，再擬合一次。
+    最後歧義點的位移和最近 8 個鄰點的位移中位數差 >8 cm 單位的當錯配丟掉（信差包女版 4 點、右手 1 點差 0.17：兩個候選都不對）；
+    唯一對點不丟（遠征包右手第 23 點是捲起的肩帶，和鄰點本來就不同向）。
+    對不到的點回 -1。"""
     d = np.abs(M["UV"][:, None] - T["UV"][None]).max(2)
     cand = [np.nonzero(row < 2e-3)[0] for row in d]
     c = np.full(len(M["V"]), -1)
@@ -38,10 +41,17 @@ def corr_from_uv(M, T):
     for _ in range(2):
         m = c >= 0
         L, t, _, _ = fit_affine(M["V"][m], T["V"][c[m]])
-        pred = M["V"] @ L + t
+        pred, predN = M["V"] @ L + t, M["N"] @ np.linalg.inv(L).T
         for i, k in enumerate(cand):
             if len(k) and not uniq[i]:
-                c[i] = k[np.linalg.norm(T["V"][k] - pred[i], axis=1).argmin()]
+                # 雙面薄片（信差包背帶）正反兩面同 UV、位置只差厚度：法線反向的候選加 1 單位懲罰，才不會挑到背面
+                score = np.linalg.norm(T["V"][k] - pred[i], axis=1) + (T["N"][k] @ predN[i] < 0)
+                c[i] = k[score.argmin()]
+    m = np.nonzero(c >= 0)[0]
+    disp = T["V"][c[m]] - M["V"][m]
+    nn = np.argsort(np.linalg.norm(M["V"][m][:, None] - M["V"][m][None], axis=2), 1)[:, 1:9]
+    bad = m[np.linalg.norm(disp - np.median(disp[nn], axis=1), axis=1) > 0.08]
+    c[bad[~uniq[bad]]] = -1
     return c
 
 
@@ -79,16 +89,17 @@ def target_arrays(M, T, c, bones, merge):
 
 
 def deform(cfg, M, TV, ref, P, PN):
-    """本體頂點 P（M 空間）搬到 T：affine＝參考點仿射；field＝全部點仿射＋最近 4 點的殘差位移。回 (P', N', 殘差摘要)。"""
-    pts = ref if cfg["deform"] == "affine" else np.arange(len(M["V"]))
+    """本體頂點 P（M 空間）搬到 T：affine＝參考點仿射；field＝全部點仿射＋最近 4 點的殘差位移；
+    field_ref＝仿射與殘差都只用參考點（信差包：手持模型把長背帶捲成一團，全部點擬合的仿射在一軸壓到 0.15）。回 (P', N', 殘差摘要)。"""
+    pts = np.arange(len(M["V"])) if cfg["deform"] == "field" else ref
     L, t, r, outl = fit_affine(M["V"][pts], TV[pts])
     inl = np.delete(r, outl)
     info = dict(max=float(inl.max()), rms=float(np.sqrt((inl ** 2).mean())), outliers={int(pts[i]): float(r[i]) for i in outl},
                 sv=np.linalg.svd(L, compute_uv=False).round(5).tolist(), det=float(np.linalg.det(L)))
     Q = P @ L + t
-    if cfg["deform"] == "field":
-        nn, w = idw(np.linalg.norm(P[:, None] - M["V"][None], axis=2))
-        disp = np.einsum("ik,ikj->ij", w, (TV - (M["V"] @ L + t))[nn])
+    if cfg["deform"] != "affine":
+        nn, w = idw(np.linalg.norm(P[:, None] - M["V"][pts][None], axis=2))
+        disp = np.einsum("ik,ikj->ij", w, (TV[pts] - (M["V"][pts] @ L + t))[nn])
         Q = Q + disp
         info["field_max"] = float(np.linalg.norm(disp, axis=1).max())
     n = PN @ np.linalg.inv(L).T
@@ -250,8 +261,24 @@ def main(name):
 
     meshes, resid = {}, {}
     WM = weights(M, bones, merge)
+
+    def keep_w(W):
+        """沿用子網格照原版權重；原版超過 4 個權重的點（信差包背帶有 5 個）才砍到 4 個，其餘原樣（日行包、遠征包位元組不變）。"""
+        W = W.copy()
+        many = (W > 0).sum(1) > 4
+        W[many] = limit4(W[many])
+        return W
+
+    def keep_smooth(TV):
+        """keep_from="smooth"：沿用子網格不直接取對到的原版點，而是男版位置＋最近 8 個原版點位移的中位數，法線照變形後的面重算。
+        信差包背帶是雙面薄片、正反同 UV，逐點對應會讓正反兩面塌到同一層（女版 23%、手持 43% 的面和法線反向）。"""
+        disp = TV - M["V"]
+        nn8 = np.argsort(np.linalg.norm(M["V"][kidx][:, None] - M["V"][None], axis=2), 1)[:, :8]
+        V = M["V"][kidx] + np.median(disp[nn8], axis=1)
+        return V, vertex_normals(V, kF)
+
     meshes["M"] = dict(V=np.r_[BV, M["V"][kidx]], N=np.r_[BN, M["N"][kidx]],
-                       W=np.r_[limit4(np.einsum("ik,ikj->ij", w_idw, WM[ref][nn])), WM[kidx]], bones=bones)
+                       W=np.r_[limit4(np.einsum("ik,ikj->ij", w_idw, WM[ref][nn])), keep_w(WM[kidx])], bones=bones)
     targets = [k for k in ("F", "AM", "AF", "R") if k in van]
     for k in targets:
         T = van[k]
@@ -262,8 +289,9 @@ def main(name):
         info["matched"] = int((c >= 0).sum())
         resid[k] = info
         print(f"fit M->{k}: {info}")
-        meshes[k] = dict(V=np.r_[V2, TV[kidx]], N=np.r_[N2, TN[kidx]],
-                         W=np.r_[limit4(np.einsum("ik,ikj->ij", w_idw, TW[ref][nn])), TW[kidx]], bones=bk, flip=info["det"] < 0)
+        KV, KN = keep_smooth(TV) if cfg.get("keep_from") == "smooth" else (TV[kidx], TN[kidx])
+        meshes[k] = dict(V=np.r_[V2, KV], N=np.r_[N2, KN],
+                         W=np.r_[limit4(np.einsum("ik,ikj->ij", w_idw, TW[ref][nn])), keep_w(TW[kidx])], bones=bk, flip=info["det"] < 0)
     if "L" in van:
         R = meshes["R"]
         if cfg["L_from_R"] == "negate":
