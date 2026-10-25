@@ -144,18 +144,19 @@ Bag Upgrade Plus (BUP below) has been removed from the Workshop. This mod takes 
 [list]
 [*] [b]Main version[/b]: Bag Upgrade Plus (3668094025, mod id BagUpgradePlusUpdated).
 [*] [b]Realistic version[/b]: 3825931520, mod id BagUpgradePlusRealistic.
-[*] [b]Older branches[/b]: 3403697073, 3640342538, 3780399230.
+[*] [b]Older branches[/b]: 3403697073, 3640342538, 3780399230; all use mod id BagUpgradePlus.
+[*] [b]CloudBag Upgrade Plus[/b]: 3811180026, mod id CloudBag. Same item names as the main version, same values as the Realistic version.
 [*] [b]EFT compatibility version not supported[/b]: 3781184534 depends on another mod (EFTBP), so this mod does not take it over.
 [/list]
 
 [h3]What old bags look like after the switch[/h3]
 [list]
 [*] [b]Look and weight[/b]: same as the matching vanilla bag. An old ALICE pack looks like the vanilla Military Backpack.
-[*] [b]Capacity and Encumbrance Reduction[/b]: kept from the save. The main version saved 49/100; the Realistic version keeps its own values, for example ALICE 40/90 and Satchel 18/80.
+[*] [b]Capacity and Encumbrance Reduction[/b]: kept from the save. The main version saved 49/100; the Realistic version and CloudBag keep their own values, for example ALICE 40/90 and Satchel 18/80.
 [*] [b]Take out only[/b]: by default nothing can be put back in, only taken out, and the server enforces it too. The sandbox option "Lock old Bag Upgrade Plus bags" turns this off.
 [*] [b]No new copies[/b]: old bags never appear in loot, on zombies or as any recipe result.
 [*] [b]BUP attachment slots[/b]: items hung on BUP's extra attachment slots are detached after the switch. They are not lost.
-[*] [b]Water bottles[/b]: BUP's two water bottles keep working with their water. They are neither locked nor convertible.
+[*] [b]Water bottles[/b]: BUP's two water bottles keep working with their water. They are neither locked nor convertible. The empty soda bottle that only the older branches 3403697073 and 3640342538 have is not taken over and disappears after the switch.
 [/list]
 
 [h3]Converting to a new bag[/h3]
@@ -175,7 +176,7 @@ Bag Upgrade Plus (BUP below) has been removed from the Workshop. This mod takes 
 
 [olist]
 [*] [b]Back up[/b]: stop the server and back up the whole server save (world and player data).
-[*] [b]Swap the mods[/b]: in the server config, remove every BUP from Mods= (mod ids BagUpgradePlusUpdated, BagUpgradePlusRealistic, BagUpgradePlus; all branches count) and add MinidoracatBagsFor42. In WorkshopItems=, remove BUP's Workshop ID and add this mod's XXXX.
+[*] [b]Swap the mods[/b]: in the server config, remove every BUP from Mods= (mod ids BagUpgradePlusUpdated, BagUpgradePlusRealistic, BagUpgradePlus, CloudBag) and add MinidoracatBagsFor42. In WorkshopItems=, remove BUP's Workshop ID and add this mod's XXXX.
 [*] [b]Check after start[/b]: server-console.txt has no "WARNING: another Bag Upgrade Plus is loaded" line, and players who log in still have their old bags, take-out only.
 [*] [b]If the server already ran without the original mod[/b]: bags loaded into the game during that time were deleted along with everything inside them. Switching to this mod cannot bring them back; only a backup from before that start can. The deleted bags are those worn or in the inventory of players who logged in during that time, plus bags on the ground or in containers near where anyone went. Bags worn or carried by players who did not log in during that time, and bags in places nobody visited, are still there and show up normally after switching to this mod.
 [/olist]
@@ -183,13 +184,13 @@ Bag Upgrade Plus (BUP below) has been removed from the Workshop. This mod takes 
 [h3]What happens if BUP and this mod run together[/h3]
 [list]
 [*] [b]Warning[/b]: the server's server-console.txt and each player's console.txt get one line "WARNING: another Bag Upgrade Plus is loaded; disable it."
-[*] [b]Old bags are still there[/b]: but BUP overrides the definitions of some old bags (the two fanny packs in our test).
+[*] [b]Old bags are still there[/b]: but BUP overrides the definitions of some old bags (the two fanny packs in our tests, with both the main version and CloudBag). The active= part of the warning names the version.
 [*] [b]Fix[/b]: disable BUP and keep only this mod.
 [/list]
 
 [h3]Single-player saves[/h3]
 [list]
-[*] [b]Same rule, one switch[/b]: back up the save folder first, then in the save's mod list disable BUP and enable this mod before loading.
+[*] [b]Same rule, one switch[/b]: back up the save folder first. Pick the save on the Load screen, disable BUP and enable this mod in its mod list, then load. The old bags, everything inside them and the water bottles are all there; old bags are take-out only.
 [/list]
 === ⚙️ Sandbox Options and Defaults
 On the "Tactical Bags" page of the sandbox settings.

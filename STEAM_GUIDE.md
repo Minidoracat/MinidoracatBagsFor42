@@ -144,18 +144,19 @@ Bag Upgrade Plus（以下簡稱 BUP）已經從 Workshop 下架。本 MOD 接手
 [list]
 [*] [b]主版[/b]：Bag Upgrade Plus（3668094025，mod id BagUpgradePlusUpdated）。
 [*] [b]Realistic 版[/b]：3825931520，mod id BagUpgradePlusRealistic。
-[*] [b]舊分支[/b]：3403697073、3640342538、3780399230。
+[*] [b]舊分支[/b]：3403697073、3640342538、3780399230，mod id 都是 BagUpgradePlus。
+[*] [b]CloudBag Upgrade Plus[/b]：3811180026，mod id CloudBag。物品名稱和主版相同，數值和 Realistic 版相同。
 [*] [b]不支援 EFT 相容版[/b]：3781184534 依賴另一個 MOD（EFTBP），本 MOD 不接手它。
 [/list]
 
 [h3]舊背包換裝後的樣子[/h3]
 [list]
 [*] [b]外觀與重量[/b]：改成原版同款，例如舊的 ALICE 背包看起來就是原版大背包。
-[*] [b]容量與負重減輕[/b]：照存檔裡的值保留。主版是 49／100；Realistic 版照它自己的值，例如 ALICE 40／90、側背包 18／80。
+[*] [b]容量與負重減輕[/b]：照存檔裡的值保留。主版是 49／100；Realistic 版和 CloudBag 照它們自己的值，例如 ALICE 40／90、側背包 18／80。
 [*] [b]只能取出[/b]：預設不能再放東西進去，只能把東西拿出來；伺服器也會擋。沙盒「鎖住舊 Bag Upgrade Plus 背包」可以關掉。
 [*] [b]不會再出現[/b]：舊款不會出現在戰利品、殭屍身上或任何配方的產出。
 [*] [b]BUP 自訂掛點[/b]：舊背包上掛在 BUP 額外掛點的物品，換裝後會被卸下，物品不會消失。
-[*] [b]水瓶[/b]：BUP 的兩種水瓶照常使用，裡面的水保留，不鎖也不改裝。
+[*] [b]水瓶[/b]：BUP 的兩種水瓶照常使用，裡面的水保留，不鎖也不改裝。舊分支 3403697073、3640342538 才有的空汽水瓶不在接手範圍，換裝後會消失。
 [/list]
 
 [h3]改裝成新背包[/h3]
@@ -175,7 +176,7 @@ Bag Upgrade Plus（以下簡稱 BUP）已經從 Workshop 下架。本 MOD 接手
 
 [olist]
 [*] [b]備份[/b]：關掉伺服器，備份整個伺服器存檔（世界與玩家資料）。
-[*] [b]換掉 MOD[/b]：伺服器設定檔的 Mods= 拿掉所有 BUP（mod id BagUpgradePlusUpdated、BagUpgradePlusRealistic、BagUpgradePlus，各分支都算），加上 MinidoracatBagsFor42；WorkshopItems= 拿掉 BUP 的 Workshop ID，加上本 MOD 的 XXXX。
+[*] [b]換掉 MOD[/b]：伺服器設定檔的 Mods= 拿掉所有 BUP（mod id BagUpgradePlusUpdated、BagUpgradePlusRealistic、BagUpgradePlus、CloudBag），加上 MinidoracatBagsFor42；WorkshopItems= 拿掉 BUP 的 Workshop ID，加上本 MOD 的 XXXX。
 [*] [b]開服確認[/b]：server-console.txt 沒有「WARNING: another Bag Upgrade Plus is loaded」這一行；玩家登入後舊背包都在，而且只能取出。
 [*] [b]已經在缺少原 MOD 的情況下開過伺服器[/b]：那段期間被讀進遊戲的背包已經連同裡面的東西一起刪除，換上本 MOD 也找不回來，只能從開服前的備份還原；被刪的是那段期間登入過的玩家身上與背包欄裡的背包，以及有人走近過的地面與容器裡的背包。那段期間沒登入的玩家身上與背包欄裡的背包、沒人去過的地方的背包都還在，換上本 MOD 後照常出現。
 [/olist]
@@ -183,13 +184,13 @@ Bag Upgrade Plus（以下簡稱 BUP）已經從 Workshop 下架。本 MOD 接手
 [h3]BUP 和本 MOD 同時開會怎樣[/h3]
 [list]
 [*] [b]會出現警告[/b]：伺服器的 server-console.txt 和玩家的 console.txt 各有一行「WARNING: another Bag Upgrade Plus is loaded; disable it.」
-[*] [b]舊背包還在[/b]：但部分舊背包的設定會被 BUP 蓋回去（實測是兩種腰包）。
+[*] [b]舊背包還在[/b]：但部分舊背包的設定會被 BUP 蓋回去（實測主版、CloudBag 都是兩種腰包）。警告後面的 active= 會寫出是哪個版本。
 [*] [b]做法[/b]：停用 BUP，只留本 MOD。
 [/list]
 
 [h3]單人存檔[/h3]
 [list]
-[*] [b]一樣要同一次換[/b]：先備份存檔資料夾；讀檔前在存檔的 MOD 清單停用 BUP、啟用本 MOD，再進遊戲。
+[*] [b]一樣要同一次換[/b]：先備份存檔資料夾；在「載入遊戲」選這個存檔，從它的 MOD 清單停用 BUP、啟用本 MOD，再讀檔。舊背包、裡面的東西和水瓶都會在，舊背包只能取出。
 [/list]
 === ⚙️ 沙盒選項與預設值
 沙盒設定的「戰術背包」頁。
