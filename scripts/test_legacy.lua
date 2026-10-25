@@ -199,6 +199,15 @@ local function suite()
     for ft in pairs(items) do if vanillaItems[ft] then clash[#clash + 1] = ft end end
     check("沒有和原版同名的物品（" .. table.concat(clash, ",") .. "）", #clash == 0)
 
+    -- 2b. 舊模組不 import：BUP 配方檔寫 module Base { imports { BagUpgradePlus } }，這邊再 import Base 就成環，
+    --     Base 查不到的名稱在兩個模組間無限遞迴（ScriptBucket.get 依 imports 往下查），伺服器開機 StackOverflowError（E2E bags-coexist-1025a）
+    local legacyText = source(MEDIA .. "scripts/MDB_Legacy.txt"):gsub("/%*.-%*/", "")
+    local importing = {}
+    for name, body in legacyText:gmatch("module%s+(%S+)%s*(%b{})") do
+        if name ~= "Base" and body:match("^{%s*imports%s*{") then importing[#importing + 1] = name end
+    end
+    check("舊模組不寫 imports（有：" .. table.concat(importing, ",") .. "）", #importing == 0)
+
     -- 3. 欄位：鎖、原版同款數值、禁用欄位
     local guardSet = {}
     for _, ft in ipairs(MDB.LEGACY_SHELLS or {}) do guardSet[ft] = true end
@@ -404,6 +413,7 @@ if arg and arg[1] == "--mutants" then
     local C = "scripts/MDB_Convert.txt"
     local mutants = {
         { name = "外殼少一個", file = L, from = "    item MoneyBagPlus\n", to = "    item MoneyBagPlusX\n" },
+        { name = "舊模組 import Base", file = L, from = "module BagUpgradePlus\n{\n", to = "module BagUpgradePlus\n{\n    imports\n    {\n        Base\n    }\n\n" },
         { name = "拿掉一個背包的鎖", file = L, from = "        AcceptItemFunction = MDB.acceptLegacy,\n", to = "" },
         { name = "鎖函式名打錯", file = L, from = "AcceptItemFunction = MDB.acceptLegacy", to = "AcceptItemFunction = MDB.acceptLegacyX" },
         { name = "Weight 改回 BUP 的 0.1", file = L, from = "Weight = 2.0,", to = "Weight = 0.1," },
