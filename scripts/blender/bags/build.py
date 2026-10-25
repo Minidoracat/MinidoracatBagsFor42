@@ -2,23 +2,23 @@
 # requires-python = ">=3.11"
 # dependencies = ["numpy", "pillow"]
 # ///
-"""日行背包（DayPack_Navy／DayPack_Olive）一鍵重建：Tripo 高模 → 低模、貼圖、男女穿戴與左右手 .X、地面 FBX、圖示。
-  uv run scripts/blender/bags/build.py                     # 建到 temp/bags/out/media，跑 verify_x
-  uv run scripts/blender/bags/build.py --install <media>   # 驗證通過後複製進 <media>（MOD 的 42/media 或 temp 副本）
-中間產物在 temp/bags/；verify_x.py 任一項失敗就中止，不安裝。
+"""背包一鍵重建（設定在 bags.py）：Tripo 高模 → 低模、貼圖、男女（ALT）穿戴與左右手 .X、地面 FBX、圖示。
+  uv run scripts/blender/bags/build.py DayPack                     # 建到 temp/bags/DayPack/out/media，跑 verify_x
+  uv run scripts/blender/bags/build.py DayPack --install <media>   # 驗證通過後複製進 <media>（MOD 的 42/media 或 temp 副本）
+中間產物在 temp/bags/<款>/；verify_x.py 任一項失敗就中止，不安裝。
 """
 import os, shutil, subprocess, sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from PIL import Image, ImageEnhance, ImageFilter
 
-from common import BLENDER, HERE, OUT, TEMP
+from common import BLENDER, HERE, out, temp
 import stage2_assemble
 import verify_x
 
 
-def blender(script):
-    subprocess.run([BLENDER, "-b", "--factory-startup", "--python", os.path.join(HERE, script)], check=True)
+def blender(script, name):
+    subprocess.run([BLENDER, "-b", "--factory-startup", "--python", os.path.join(HERE, script), "--", name], check=True)
 
 
 def icon(src, dst):
@@ -40,20 +40,21 @@ def icon(src, dst):
     out.save(dst)
 
 
-def main():
+def main(name):
+    OUT, TEMP = out(name), temp(name)
     if os.path.isdir(OUT):
         shutil.rmtree(OUT)
-    blender("stage1_bake.py")
-    stage2_assemble.main()
-    blender("stage3_blender.py")
+    blender("stage1_bake.py", name)
+    stage2_assemble.main(name)
+    blender("stage3_blender.py", name)
     for look in ("Navy", "Olive"):
-        icon(f"{TEMP}/icon_raw_{look}.png", f"{OUT}/textures/Item_MDB_DayPack_{look}.png")
-    fail, info = verify_x.check(OUT)
+        icon(f"{TEMP}/icon_raw_{look}.png", f"{OUT}/textures/Item_MDB_{name}_{look}.png")
+    fail, info = verify_x.check(name, OUT)
     for k, v in info.items():
         print(k, v)
     if fail:
         sys.exit("VERIFY FAIL\n" + "\n".join("  - " + m for m in fail))
-    verify_x.selftest()   # 植入違規要被抓到，證明檢查本身沒壞
+    verify_x.selftest(name)   # 植入違規要被抓到，證明檢查本身沒壞
     print("VERIFY OK")
     if "--install" in sys.argv:
         dst = sys.argv[sys.argv.index("--install") + 1]
@@ -62,4 +63,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv[1])

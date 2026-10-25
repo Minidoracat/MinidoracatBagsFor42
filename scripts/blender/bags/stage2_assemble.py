@@ -1,26 +1,23 @@
-"""第 2 段（純 Python）：低模本體＋原版肩帶 → 貼圖、權重、男／女／右手／左手四份 .X。
-輸入 temp/bags/low_body.npz、bake_*.png（第 1 段）；輸出 temp/bags/out/media/...（MOD 同結構）與 final_mesh.npz。
+"""第 2 段（純 Python）：低模本體＋沿用的原版子網格 → 貼圖、權重、男／女（／ALT）／右手／左手 .X。
+輸入 temp/bags/<款>/low_body.npz、bake_*.png（第 1 段）；輸出 temp/bags/<款>/out/media/...（MOD 同結構）與 final_mesh.npz。
+深藍調色參數是 common.NAVY_S／NAVY_V（7 款共用；2026-10-25 使用者選「中」0.70／1.00）。
+uv run --with numpy --with pillow python stage2_assemble.py <款>
 """
 import json
 import os
+import sys
 import numpy as np
 from PIL import Image
 
-from common import BELT0, OUT, PZ, STRAP0, TEMP, fit_affine, xio
+import bags
+from common import NAVY_S, NAVY_V, PZ, fit_affine, out, temp, xio
 
-BP = PZ + "/models_X/Skinned/BackPacks/"
-TPL = {k: BP + v for k, v in dict(M="M_HikingBag.x", F="F_HikingBag.x", R="HikingBag_RHand.x", L="HikingBag_LHand.x").items()}
-BONES = ["Bip01_BackPack", "Bip01_Spine", "Bip01_Spine1", "Bip01_L_Clavicle", "Bip01_R_Clavicle"]
 TEX = 256
-# 肩帶 UV 島：原版圖集的矩形 → 新圖集右側長條（第二條轉 90°）。.X 的 v 由上往下
-STRAP_ISLANDS = [  # (原版頂點範圍, 原版 UV 矩形 u0,v0,u1,v1, 新矩形, 轉 90°)
-    ((251, 326), (0.010, 0.120, 0.136, 0.477), (0.872, 0.010, 0.992, 0.490), False),
-    ((326, 399), (0.010, 0.005, 0.334, 0.124), (0.872, 0.510, 0.992, 0.990), True),
-]
 
 
+# ---- 原版各版本之間對點 ----
 def corr_from_faces(M, T):
-    """原版 M 與 T 的面順序相同（第 0 步實測：F、RHand 的 412 面逐角 UV 相同）→ 頂點對應 M→T。"""
+    """面順序相同（日行包實測：F、RHand 的 412 面逐角 UV 相同）→ 頂點對應 M→T。"""
     assert (np.abs(M["UV"][M["F"]] - T["UV"][T["F"]]).max() < 1e-6), "面順序不同，不能逐角對應"
     c = np.full(len(M["V"]), -1)
     c[M["F"].ravel()] = T["F"].ravel()
@@ -28,15 +25,159 @@ def corr_from_faces(M, T):
     return c
 
 
-def weights(X, bones):
+def corr_from_uv(M, T):
+    """同 UV（<2e-3）對點。原版對稱零件常共用 UV（遠征包 8 點、信差包 322 點有歧義）：
+    先用只有一個位置的點擬合仿射，歧義的點挑離仿射預測最近的候選，再擬合一次。對不到的點回 -1。"""
+    d = np.abs(M["UV"][:, None] - T["UV"][None]).max(2)
+    cand = [np.nonzero(row < 2e-3)[0] for row in d]
+    c = np.full(len(M["V"]), -1)
+    uniq = np.zeros(len(M["V"]), bool)
+    for i, k in enumerate(cand):
+        if len(k) and np.ptp(T["V"][k], axis=0).max() < 1e-4:
+            c[i], uniq[i] = k[0], True
+    for _ in range(2):
+        m = c >= 0
+        L, t, _, _ = fit_affine(M["V"][m], T["V"][c[m]])
+        pred = M["V"] @ L + t
+        for i, k in enumerate(cand):
+            if len(k) and not uniq[i]:
+                c[i] = k[np.linalg.norm(T["V"][k] - pred[i], axis=1).argmin()]
+    return c
+
+
+def weights(X, bones, merge):
+    """原版權重換成白名單骨頭；merge 的骨頭併進指定骨頭；兩邊都沒列的骨頭直接報錯（不悄悄丟權重）。"""
+    stray = set(X["sw"]) - set(bones) - set(merge)
+    assert not stray, f"模板有骨頭 {stray} 沒列在 bones 或 merge"
     W = np.zeros((len(X["V"]), len(bones)))
-    for j, b in enumerate(bones):
-        if b in X["sw"]:
-            idx, w, _ = X["sw"][b]
-            W[idx, j] = w
+    for b, (idx, w, _) in X["sw"].items():
+        W[idx, bones.index(merge.get(b, b))] += w
     return W
 
 
+def idw(dist, k=4):
+    nn = np.argsort(dist, 1)[:, :k]
+    w = 1 / np.maximum(np.take_along_axis(dist, nn, 1), 1e-4) ** 2
+    return nn, w / w.sum(1, keepdims=True)
+
+
+def target_arrays(M, T, c, bones, merge):
+    """T 的位置、法線、權重，排成 M 的頂點序；對不到的點用已對到的點補（仿射＋最近 4 點殘差，權重距離反比）。"""
+    TV, TN, TW = np.zeros_like(M["V"]), np.zeros_like(M["V"]), np.zeros((len(M["V"]), len(bones)))
+    m = c >= 0
+    WT = weights(T, bones, merge)
+    TV[m], TN[m], TW[m] = T["V"][c[m]], T["N"][c[m]], WT[c[m]]
+    if not m.all():
+        L, t, _, _ = fit_affine(M["V"][m], TV[m])
+        nn, w = idw(np.linalg.norm(M["V"][~m][:, None] - M["V"][m][None], axis=2))
+        res = (TV[m] - (M["V"][m] @ L + t))[nn]
+        TV[~m] = M["V"][~m] @ L + t + np.einsum("ik,ikj->ij", w, res)
+        n = M["N"][~m] @ np.linalg.inv(L).T
+        TN[~m] = n / np.linalg.norm(n, axis=1, keepdims=True)
+        TW[~m] = np.einsum("ik,ikj->ij", w, TW[m][nn])
+    return TV, TN, TW
+
+
+def deform(cfg, M, TV, ref, P, PN):
+    """本體頂點 P（M 空間）搬到 T：affine＝參考點仿射；field＝全部點仿射＋最近 4 點的殘差位移。回 (P', N', 殘差摘要)。"""
+    pts = ref if cfg["deform"] == "affine" else np.arange(len(M["V"]))
+    L, t, r, outl = fit_affine(M["V"][pts], TV[pts])
+    inl = np.delete(r, outl)
+    info = dict(max=float(inl.max()), rms=float(np.sqrt((inl ** 2).mean())), outliers={int(pts[i]): float(r[i]) for i in outl},
+                sv=np.linalg.svd(L, compute_uv=False).round(5).tolist(), det=float(np.linalg.det(L)))
+    Q = P @ L + t
+    if cfg["deform"] == "field":
+        nn, w = idw(np.linalg.norm(P[:, None] - M["V"][None], axis=2))
+        disp = np.einsum("ik,ikj->ij", w, (TV - (M["V"] @ L + t))[nn])
+        Q = Q + disp
+        info["field_max"] = float(np.linalg.norm(disp, axis=1).max())
+    n = PN @ np.linalg.inv(L).T
+    return Q, n / np.linalg.norm(n, axis=1, keepdims=True), info
+
+
+def icp_affine(A, B, iters=30):
+    """沒有對應點時，把點雲 A 對齊到 B（原版左右手）：先試 8 種軸向鏡像當起點，最近點＋仿射最小平方疊代；回 (L, t, 最近點殘差)。"""
+    best = None
+    ca, cb = A.mean(0), B.mean(0)
+    for sx in (1, -1):
+        for sy in (1, -1):
+            for sz in (1, -1):
+                L = np.diag([sx, sy, sz]).astype(float); t = cb - ca @ L
+                for _ in range(iters):
+                    P = A @ L + t
+                    j = np.linalg.norm(P[:, None] - B[None], axis=2).argmin(1)
+                    L, t, _, _ = fit_affine(A, B[j])
+                r = np.linalg.norm((A @ L + t)[:, None] - B[None], axis=2).min(1)
+                if best is None or r.max() < best[2].max():
+                    best = (L, t, r)
+    return best
+
+
+# ---- 貼圖 ----
+def recolor_navy(img):
+    """Tripo 的亮寶藍 → 原稿深藍（A-stars-v2）：藍色調的布料 飽和度×NAVY_S、亮度×NAVY_V，黑、灰、金不動。"""
+    a = np.asarray(img.convert("RGB")).astype(float) / 255
+    mx, mn = a.max(2), a.min(2)
+    v, s = mx, np.where(mx > 0, (mx - mn) / np.maximum(mx, 1e-6), 0)
+    blue = (a[..., 2] >= a[..., 0]) & (a[..., 2] >= a[..., 1]) & (a[..., 2] - a[..., 0] > 0.04)
+    k = np.clip((s - 0.15) / 0.2, 0, 1) * blue                # 越藍越完整套用，灰黑的織帶不受影響
+    s2, v2 = s * NAVY_S, v * NAVY_V
+    # 色相固定 0.625（原稿量到 0.62）：h·6=3.75 落在 HSV 第 3 扇區 → (p, q, v)，f=0.75
+    out_ = np.stack([v2 * (1 - s2), v2 * (1 - s2 * 0.75), v2], -1)
+    res = a * (1 - k[..., None]) + out_ * k[..., None]
+    return Image.fromarray((res.clip(0, 1) * 255 + 0.5).astype(np.uint8))
+
+
+def keep_paint(tex, src, islands):
+    """沿用的原版 UV 島：原版貼圖像素仿射搬到新矩形，轉成黑色尼龍（亮度 ×0.32＋底 0.06）。"""
+    a = np.asarray(tex).copy()
+    s = np.asarray(src.convert("RGB")).astype(float) / 255
+    N = a.shape[0]
+    for (su0, sv0, su1, sv1), (du0, dv0, du1, dv1), rot in islands:
+        x0, x1, y0, y1 = int(du0 * N) - 2, int(np.ceil(du1 * N)) + 2, int(dv0 * N) - 2, int(np.ceil(dv1 * N)) + 2
+        yy, xx = np.mgrid[y0:y1, x0:x1]
+        u, v = (xx + 0.5) / N, (yy + 0.5) / N
+        fu, fv = (u - du0) / (du1 - du0), (v - dv0) / (dv1 - dv0)
+        if rot:
+            fu, fv = fv, fu
+        su, sv = su0 + fu * (su1 - su0), sv0 + fv * (sv1 - sv0)
+        px = np.clip((su * s.shape[1]).astype(int), 0, s.shape[1] - 1)
+        py = np.clip((sv * s.shape[0]).astype(int), 0, s.shape[0] - 1)
+        lum = s[py, px] @ [0.299, 0.587, 0.114]
+        c = (0.06 + 0.32 * lum)[..., None] * [1.0, 1.0, 1.05]
+        a[max(y0, 0):y1, max(x0, 0):x1] = (c.clip(0, 1) * 255).astype(np.uint8)[max(0, -y0):, max(0, -x0):]
+    return Image.fromarray(a)
+
+
+def islands_of(cfg, M):
+    """(原版頂點區間, 原版 UV 矩形, 新矩形, 轉 90°)。設定沒寫就自動：外框放寬 0.006，在右側長條由上往下等分，寬的島轉 90°。"""
+    rngs = cfg["keep"]
+    if cfg.get("islands"):
+        return [(r,) + tuple(i) for r, i in zip(rngs, cfg["islands"])]
+    n, u0, gap = len(rngs), cfg["body_u"] + 0.012, 0.02
+    h = (0.98 - gap * (n - 1)) / n
+    res = []
+    for k, (i0, i1) in enumerate(rngs):
+        lo_, hi_ = M["UV"][i0:i1].min(0) - 0.006, M["UV"][i0:i1].max(0) + 0.006
+        src = (max(lo_[0], 0), max(lo_[1], 0), min(hi_[0], 1), min(hi_[1], 1))
+        dst = (u0, 0.010 + k * (h + gap), 0.992, 0.010 + k * (h + gap) + h)
+        res.append(((i0, i1), src, dst, (src[2] - src[0]) > (src[3] - src[1])))
+    return res
+
+
+def keep_uv(UV, isl):
+    UV = UV.copy()
+    for (i0, i1), (su0, sv0, su1, sv1), (du0, dv0, du1, dv1), rot in isl:
+        u, v = UV[i0:i1, 0], UV[i0:i1, 1]
+        assert u.min() >= su0 and u.max() <= su1 and v.min() >= sv0 and v.max() <= sv1, "沿用的 UV 島超出來源矩形"
+        fu, fv = (u - su0) / (su1 - su0), (v - sv0) / (sv1 - sv0)
+        if rot:
+            fu, fv = fv, fu
+        UV[i0:i1] = np.c_[du0 + fu * (du1 - du0), dv0 + fv * (dv1 - dv0)]
+    return UV
+
+
+# ---- 幾何 ----
 def vertex_normals(V, F):
     n = np.zeros_like(V)
     fn = np.cross(V[F[:, 1]] - V[F[:, 0]], V[F[:, 2]] - V[F[:, 0]])  # 面積加權
@@ -57,62 +198,8 @@ def limit4(W):
     return W / W.sum(1, keepdims=True)
 
 
-def recolor_navy(img):
-    """Tripo 的亮寶藍 → 原稿深藍（A-stars-v2）：藍色調的布料降飽和、壓暗，黑、灰、金不動。"""
-    a = np.asarray(img.convert("RGB")).astype(float) / 255
-    mx, mn = a.max(2), a.min(2)
-    v, s = mx, np.where(mx > 0, (mx - mn) / np.maximum(mx, 1e-6), 0)
-    blue = (a[..., 2] >= a[..., 0]) & (a[..., 2] >= a[..., 1]) & (a[..., 2] - a[..., 0] > 0.04)
-    k = np.clip((s - 0.15) / 0.2, 0, 1) * blue                # 越藍越完整套用，灰黑的織帶不受影響
-    s2, v2 = s * 0.70, v * 0.82
-    # 色相固定 0.625（原稿量到 0.62）：h·6=3.75 落在 HSV 第 3 扇區 → (p, q, v)，f=0.75
-    out = np.stack([v2 * (1 - s2), v2 * (1 - s2 * 0.75), v2], -1)
-    res = a * (1 - k[..., None]) + out * k[..., None]
-    return Image.fromarray((res.clip(0, 1) * 255 + 0.5).astype(np.uint8))
-
-
-def strap_paint(tex, src):
-    """原版肩帶島的像素仿射搬到新矩形，轉成黑色尼龍（亮度 ×0.32＋底 0.06）。"""
-    a = np.asarray(tex).copy()
-    s = np.asarray(src.convert("RGB")).astype(float) / 255
-    N = a.shape[0]
-    for _, (su0, sv0, su1, sv1), (du0, dv0, du1, dv1), rot in STRAP_ISLANDS:
-        x0, x1, y0, y1 = int(du0 * N) - 2, int(np.ceil(du1 * N)) + 2, int(dv0 * N) - 2, int(np.ceil(dv1 * N)) + 2
-        yy, xx = np.mgrid[y0:y1, x0:x1]
-        u, v = (xx + 0.5) / N, (yy + 0.5) / N
-        fu, fv = (u - du0) / (du1 - du0), (v - dv0) / (dv1 - dv0)
-        if rot:
-            fu, fv = fv, fu
-        su, sv = su0 + fu * (su1 - su0), sv0 + fv * (sv1 - sv0)
-        px = np.clip((su * s.shape[1]).astype(int), 0, s.shape[1] - 1)
-        py = np.clip((sv * s.shape[0]).astype(int), 0, s.shape[0] - 1)
-        lum = s[py, px] @ [0.299, 0.587, 0.114]
-        c = (0.06 + 0.32 * lum)[..., None] * [1.0, 1.0, 1.05]
-        a[max(y0, 0):y1, max(x0, 0):x1] = (c.clip(0, 1) * 255).astype(np.uint8)[max(0, -y0):, max(0, -x0):]
-    return Image.fromarray(a)
-
-
-def strap_uv(UV):
-    UV = UV.copy()
-    for (i0, i1), (su0, sv0, su1, sv1), (du0, dv0, du1, dv1), rot in STRAP_ISLANDS:
-        u, v = UV[i0:i1, 0], UV[i0:i1, 1]
-        assert u.min() >= su0 and u.max() <= su1 and v.min() >= sv0 and v.max() <= sv1, "肩帶島超出來源矩形"
-        fu, fv = (u - su0) / (su1 - su0), (v - sv0) / (sv1 - sv0)
-        if rot:
-            fu, fv = fv, fu
-        UV[i0:i1] = np.c_[du0 + fu * (du1 - du0), dv0 + fv * (dv1 - dv0)]
-    return UV
-
-
-def main():
-    os.makedirs(OUT + "/models_X/Skinned/BackPacks", exist_ok=True)
-    os.makedirs(OUT + "/textures/Clothes/Bag", exist_ok=True)
-    van = {k: xio.read_x(p) for k, p in TPL.items()}
-    M = van["M"]
-    corr = {k: corr_from_faces(M, van[k]) for k in ("F", "R")}
-
-    # 本體：依 (頂點, UV) 拆點；Blender UV v 朝上 → .X 朝下
-    d = np.load(os.path.join(TEMP, "low_body.npz"))
+def split_body(d):
+    """依 (頂點, UV) 拆點；Blender UV v 朝上 → .X 朝下。"""
     bV, bF, bUVc = d["V"], d["F"], d["UV"].copy()
     bUVc[..., 1] = 1 - bUVc[..., 1]
     key, src, F = {}, [], np.zeros_like(bF)
@@ -128,65 +215,82 @@ def main():
     cen = bV.mean(0)
     out_ok = (np.einsum("ij,ij->i", np.cross(bV[bF[:, 1]] - bV[bF[:, 0]], bV[bF[:, 2]] - bV[bF[:, 0]]), bV[bF].mean(1) - cen) > 0).mean()
     print(f"body: {len(bV)} welded -> {len(BV)} split verts, {len(F)} tris; faces facing out {out_ok:.1%}")
+    return BV, BUV, BN, F
 
-    # 肩帶：原版 M 的 251-398 與面 264-411，UV 搬到新矩形
-    sidx = np.arange(STRAP0, len(M["V"]))
-    sF = M["F"][264:] - STRAP0
-    assert sF.min() == 0 and (M["F"][:264] < STRAP0).all()
-    SUV = strap_uv(M["UV"])[STRAP0:]
 
+def main(name):
+    cfg = bags.get(name)
+    TEMP, OUT = temp(name), out(name)
+    os.makedirs(OUT + "/models_X/Skinned/BackPacks", exist_ok=True)
+    os.makedirs(OUT + "/textures/Clothes/Bag", exist_ok=True)
+    tpl = {"M": cfg["worn"]["M"], "F": cfg["worn"]["F"]}
+    if cfg.get("alt"):
+        tpl.update(AM=cfg["alt"]["M"], AF=cfg["alt"]["F"])
+    if cfg.get("hands"):
+        tpl.update(R=cfg["hands"]["R"], L=cfg["hands"]["L"])
+    tpl = {k: PZ + "/" + v for k, v in tpl.items()}
+    van = {k: xio.read_x(p) for k, p in tpl.items()}
+    M = van["M"]
+
+    BV, BUV, BN, F = split_body(np.load(os.path.join(TEMP, "low_body.npz")))
+    kidx = np.concatenate([np.arange(a, b) for a, b in cfg["keep"]]) if cfg["keep"] else np.zeros(0, int)
+    local = np.full(len(M["V"]), -1); local[kidx] = np.arange(len(kidx))
+    kF = local[M["F"][np.isin(M["F"], kidx).all(1)]]
+    isl = islands_of(cfg, M)
     nb = len(BV)
-    UV = np.r_[BUV, SUV]
-    FF = np.r_[F, sF + nb]
+    UV = np.r_[BUV, keep_uv(M["UV"], isl)[kidx]]
+    FF = np.r_[F, kF + nb]
     assert UV.min() >= 0 and UV.max() <= 1
 
-    # 權重：本體每頂點取原版本體（不含腰帶）最近 4 點、距離反比；各版本取該版本自己的權重（同序）
-    body_ref = np.arange(BELT0)
-    dist = np.linalg.norm(BV[:, None] - M["V"][body_ref][None], axis=2)
-    nn = np.argsort(dist, 1)[:, :4]
-    w_idw = 1 / np.maximum(np.take_along_axis(dist, nn, 1), 1e-4) ** 2
-    w_idw /= w_idw.sum(1, keepdims=True)
+    # 權重：本體每頂點取原版參考點（weight_ref）最近 4 點、距離反比；各版本取該版本自己的權重（排成 M 的頂點序）
+    ref = np.arange(*cfg["weight_ref"])
+    nn, w_idw = idw(np.linalg.norm(BV[:, None] - M["V"][ref][None], axis=2))
+    bones, merge = cfg["bones"], cfg["merge"]
+    hand_bones = {"R": ["Bip01_R_Hand", "Bip01_Prop1"], "L": ["Bip01_L_Hand", "Bip01_Prop2"]}
 
-    def body_weights(T, bones, c=None):
-        WT = weights(T, bones)
-        Wv = WT if c is None else WT[c]                   # 以 M 的頂點序排列
-        return limit4(np.einsum("ik,ikj->ij", w_idw, Wv[body_ref][nn])), Wv[STRAP0:]
+    meshes, resid = {}, {}
+    WM = weights(M, bones, merge)
+    meshes["M"] = dict(V=np.r_[BV, M["V"][kidx]], N=np.r_[BN, M["N"][kidx]],
+                       W=np.r_[limit4(np.einsum("ik,ikj->ij", w_idw, WM[ref][nn])), WM[kidx]], bones=bones)
+    targets = [k for k in ("F", "AM", "AF", "R") if k in van]
+    for k in targets:
+        T = van[k]
+        bk = hand_bones["R"] if k == "R" else bones
+        c = corr_from_faces(M, T) if cfg["corr"] == "faces" else corr_from_uv(M, T)
+        TV, TN, TW = target_arrays(M, T, c, bk, {} if k == "R" else merge)
+        V2, N2, info = deform(cfg, M, TV, ref, BV, BN)
+        info["matched"] = int((c >= 0).sum())
+        resid[k] = info
+        print(f"fit M->{k}: {info}")
+        meshes[k] = dict(V=np.r_[V2, TV[kidx]], N=np.r_[N2, TN[kidx]],
+                         W=np.r_[limit4(np.einsum("ik,ikj->ij", w_idw, TW[ref][nn])), TW[kidx]], bones=bk, flip=info["det"] < 0)
+    if "L" in van:
+        R = meshes["R"]
+        if cfg["L_from_R"] == "negate":
+            # 原版日行包 LHand 的頂點＝RHand 點對稱（−V）、法線取負（逐點實測相同）；點對稱翻手性 → 面反轉。UV 不動
+            meshes["L"] = dict(V=-R["V"], N=-R["N"], W=R["W"], bones=hand_bones["L"], flip=True)
+        else:
+            L, t, r = icp_affine(van["R"]["V"], van["L"]["V"])
+            resid["L"] = dict(icp_max=float(r.max()), icp_rms=float(np.sqrt((r ** 2).mean())), det=float(np.linalg.det(L)))
+            n = R["N"] @ np.linalg.inv(L).T
+            meshes["L"] = dict(V=R["V"] @ L + t, N=n / np.linalg.norm(n, axis=1, keepdims=True), W=R["W"], bones=hand_bones["L"],
+                               flip=(np.linalg.det(L) < 0) != R["flip"])
+            print(f"icp R->L: {resid['L']}")
 
-    meshes = {}
-    # 男
-    Wb, Ws = body_weights(M, BONES)
-    meshes["M"] = dict(V=np.r_[BV, M["V"][sidx]], N=np.r_[BN, M["N"][sidx]], W=np.r_[Wb, Ws], bones=BONES)
-    # 女、右手：本體用原版 M→T 的仿射擬合（只用本體頂點），肩帶用原版 T 的同序頂點
-    resid = {}
-    for k, bones in (("F", BONES), ("R", ["Bip01_R_Hand", "Bip01_Prop1"])):
-        T, c = van[k], corr[k]
-        L, t, r, out = fit_affine(M["V"][body_ref], T["V"][c[body_ref]])
-        inl = np.delete(r, out)
-        resid[k] = dict(max=float(inl.max()), rms=float(np.sqrt((inl ** 2).mean())), outliers={int(i): float(r[i]) for i in out},
-                        sv=np.linalg.svd(L, compute_uv=False).round(5).tolist())
-        print(f"fit M->{k}: inlier residual max {inl.max() * 1000:.2f}, rms {resid[k]['rms'] * 1000:.2f} (×0.001 units)；"
-              f"outliers {resid[k]['outliers']}；singular values {resid[k]['sv']}, t {t.round(4)}")
-        nrm = BN @ np.linalg.inv(L).T
-        nrm /= np.linalg.norm(nrm, axis=1, keepdims=True)
-        Wb, Ws = body_weights(T, bones, c)
-        meshes[k] = dict(V=np.r_[BV @ L + t, T["V"][c[sidx]]], N=np.r_[nrm, T["N"][c[sidx]]], W=np.r_[Wb, Ws], bones=bones)
-    # 左手：原版 LHand 的頂點＝RHand 點對稱（−V）、法線取負（第 0 步實測逐點相同）；點對稱翻手性 → 面反轉。UV 不動
-    R = meshes["R"]
-    meshes["L"] = dict(V=-R["V"], N=-R["N"], W=R["W"], bones=["Bip01_L_Hand", "Bip01_Prop2"], flip=True)
-
-    names = dict(M="MDB_DayPack_M", F="MDB_DayPack_F", R="MDB_DayPack_RHand", L="MDB_DayPack_LHand")
+    suffix = dict(M="M", F="F", AM="ALT_M", AF="ALT_F", R="RHand", L="LHand")
     for k, m in meshes.items():
         W = m["W"]
         Wd = {b: (np.nonzero(W[:, j])[0], W[np.nonzero(W[:, j])[0], j]) for j, b in enumerate(m["bones"]) if W[:, j].any()}
         Fk = FF[:, [0, 2, 1]] if m.get("flip") else FF
-        xio.write_skinned_x(TPL[k], f"{OUT}/models_X/Skinned/BackPacks/{names[k]}.X", m["V"], m["N"], UV, Fk, Wd, name="MDB_DayPack")
-        print(f"{names[k]}.X: {len(m['V'])} verts, {len(FF)} tris, bones {list(Wd)}")
+        xio.write_skinned_x(tpl[k], f"{OUT}/models_X/Skinned/BackPacks/MDB_{name}_{suffix[k]}.X", m["V"], m["N"], UV, Fk, Wd,
+                            name=f"MDB_{name}")
+        print(f"MDB_{name}_{suffix[k]}.X: {len(m['V'])} verts, {len(FF)} tris, bones {list(Wd)}")
 
-    # 貼圖：1024 烘焙 → 調色 → 肩帶 → 縮 256
-    van_tex = Image.open(PZ + "/textures/Clothes/Bag/HikingBagBlue.png")
+    # 貼圖：1024 烘焙 → 調色 → 沿用的原版子網格塗黑 → 縮 256
+    van_tex = Image.open(PZ + "/" + cfg["keep_tex"])
     for look, fix in (("Navy", recolor_navy), ("Olive", lambda i: i.convert("RGB"))):
-        img = strap_paint(fix(Image.open(os.path.join(TEMP, f"bake_{look.lower()}.png"))), van_tex)
-        img.resize((TEX, TEX), Image.LANCZOS).save(f"{OUT}/textures/Clothes/Bag/MDB_DayPack_{look}.png")
+        img = keep_paint(fix(Image.open(os.path.join(TEMP, f"bake_{look.lower()}.png"))), van_tex, [i[1:] for i in isl])
+        img.resize((TEX, TEX), Image.LANCZOS).save(f"{OUT}/textures/Clothes/Bag/MDB_{name}_{look}.png")
         img.save(os.path.join(TEMP, f"tex_{look}_1024.png"))
 
     np.savez(os.path.join(TEMP, "final_mesh.npz"), V=meshes["M"]["V"], N=meshes["M"]["N"], F=FF, UV=UV, nbody=nb)
@@ -194,4 +298,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv[1])

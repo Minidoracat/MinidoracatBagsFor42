@@ -116,12 +116,13 @@ def write_skinned_x(template, out, V, N, UV, F, W, name=None):
     ibm = {b: v[2] for b, v in T["sw"].items()}
     missing = set(W) - set(ibm)
     assert not missing, f"模板沒有這些骨頭的反綁定矩陣：{missing}"
-    m = re.search(r"\nFrame " + re.escape(T["name"]) + r" \{", t)
+    # 網格 Frame 多半在檔案頂層；遠征包 LHand 的掛在 Bip01_Prop1 底下（有縮排）：一樣原地換掉，內層縮排不跟著加（.X 不看空白）
+    m = re.search(r"\n([ \t]*)Frame " + re.escape(T["name"]) + r" \{", t)
     s, e = _block(t, m.start())
     # 模板網格 Frame 的矩陣原樣照抄（LHand 是 diag(1,-1,-1)）；頂點要和模板原始頂點在同一個空間
     fm = re.search(r"FrameTransformMatrix \{\r?\n([^\r\n]*)", t[s:e])[1]
     body = _mesh_frame(name or T["name"], V, N, UV, F, W, T["material"], ibm, fm)
-    txt = t[:m.start() + 1] + "\r\n".join(body) + t[e + 1:]
+    txt = t[:m.start() + 1] + m[1] + "\r\n".join(body) + t[e + 1:]
     with open(out, "w", encoding="ascii", newline="") as fh:
         fh.write(txt)
 

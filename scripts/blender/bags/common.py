@@ -1,4 +1,4 @@
-"""日行背包產線共用：路徑、原版網格的分段、仿射擬合。Blender 內外都能 import（只用 numpy）。"""
+"""背包產線共用：路徑、深藍調色參數、仿射擬合。Blender 內外都能 import（只用 numpy）。"""
 import os
 import sys
 
@@ -6,19 +6,25 @@ import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.abspath(os.path.join(HERE, "..", "..", ".."))
-TEMP = os.path.join(REPO, "temp", "bags")
-OUT = os.path.join(TEMP, "out", "media")          # 產物，結構同 MOD 的 media/
+TEMP_ROOT = os.path.join(REPO, "temp", "bags")
 PZ = "D:/SteamLibrary/steamapps/common/ProjectZomboid/media"
 BLENDER = r"C:\Program Files\Blender Foundation\Blender 5.2\blender.exe"
-TRIPO = "D:/github/tripo-refs/collections/MinidoracatBagsFor42/items/日行背包(DayPack)/model"
-MEDIA = os.path.join(REPO, "MOD", "MinidoracatBagsFor42", "Contents", "mods", "MinidoracatBagsFor42", "42", "media")
-STRAP0 = 251   # 原版 M/F/RHand 第 251 號以後是兩條肩帶（連通塊 251-325、326-398），面 264-411
-BELT0 = 195    # 本體連通塊 195-250 是繞到前面的腰帶，新背包不要
-Y0 = 0.5625   # 原版日行包本體底部 y；新本體底部對齊這裡
-LEAN = 0.17   # 本體背板後傾（z += LEAN·(y−Y0)），照原版背板斜率，否則被身體背面頂穿；地面模型擬合前要先去掉
+TRIPO_ROOT = "D:/github/tripo-refs/collections/MinidoracatBagsFor42/items"
+# 深藍調色（7 款共用，只放這裡）：Tripo 的藍色布料 飽和度×NAVY_S、亮度×NAVY_V，色相固定 0.625。
+# 2026-10-25 使用者看實機對照（ServerPatch temp/bags-design/ingame/navy/）選「中」；另兩版是 0.70/0.82（太暗近黑）、0.72/1.20
+NAVY_S, NAVY_V = 0.70, 1.00
 
 sys.path.insert(0, HERE)
 import xio  # noqa: E402
+
+
+def temp(name):
+    """每款的中間產物資料夾；產物在 <temp>/out/media（結構同 MOD 的 media/）。"""
+    return os.path.join(TEMP_ROOT, name)
+
+
+def out(name):
+    return os.path.join(temp(name), "out", "media")
 
 
 def fit_affine(A, B):

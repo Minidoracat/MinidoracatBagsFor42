@@ -6,7 +6,7 @@ import numpy as np
 import bpy
 
 sys.path.insert(0, os.path.dirname(__file__))
-from common import PZ, TEMP, xio
+from common import PZ, TEMP_ROOT as TEMP, xio
 
 X = PZ + "/models_X/Skinned/"
 
