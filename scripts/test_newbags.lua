@@ -22,6 +22,9 @@ local F = {
     RECIPES = MEDIA .. "scripts/MDB_Recipes.txt",
     SANDBOX = MEDIA .. "sandbox-options.txt",
     GUIDTABLE = MEDIA .. "fileGuidTable.xml",
+    MODELS = MEDIA .. "scripts/MDB_Models.txt",
+    DAYPACK_XML = MEDIA .. "clothing/clothingItems/MDB_DayPack_Navy.xml",
+    DAYPACK_LHAND_XML = MEDIA .. "clothing/clothingItems/MDB_DayPack_Olive_LHand.xml",
     I18N_RECIPES = TRANSLATE .. "EN/Recipes.json",
 }
 -- conventions.md「介面語系」：12 種語言＋ES 的 AR／ES_CL／ES_MX、PTBR 的 PT
@@ -272,6 +275,49 @@ local function suite()
     end
     check("clothing: unique non-vanilla names, XML present, GUID registered", clothingOk)
     check("clothing: GUIDs unique and not vanilla", dupOk)
+
+    -- 2b. 日行背包用自製資產（scripts/blender/bags/build.py）：圖示、地面模型、左右手、穿戴模型、貼圖都指向 MOD 自己的檔，
+    --     而且檔案存在。xml 的模型路徑要寫 media\ 開頭與副檔名（PopTemplateManager.java:272-275、FileTask_AbstractLoadModel.java:53-87）。
+    local models = {}
+    for _, b in ipairs(parseBlocks(readFile(F.MODELS), "model")) do models[b.module .. "." .. b.name] = b end
+    local function fileExists(rel)
+        local fh = io.open(MEDIA .. rel, "rb")
+        if fh then fh:close() end
+        return fh ~= nil
+    end
+    local function xmlOk(name, male, female, tex)
+        local xml = readFile(MEDIA .. "clothing/clothingItems/" .. name .. ".xml", true)
+        if not xml then return false end
+        local g = xml:match("<m_GUID>%s*(.-)%s*</m_GUID>")
+        local texs = {}
+        for t in xml:gmatch("<textureChoices>%s*(.-)%s*</textureChoices>") do texs[#texs + 1] = t end
+        local function modelFile(tag)
+            local p = xml:match("<" .. tag .. ">%s*(.-)%s*</" .. tag .. ">")
+            return p and (p:gsub("\\", "/"):gsub("^media/", "")) or ""
+        end
+        local ok = g and guidOf["media/clothing/clothingItems/" .. name .. ".xml"] == g:lower() and not VAN.guids[g:lower()]
+            and not VAN.clothing[name]
+            and modelFile("m_MaleModel") == "models_X/Skinned/BackPacks/" .. male .. ".X" and fileExists(modelFile("m_MaleModel"))
+            and modelFile("m_FemaleModel") == "models_X/Skinned/BackPacks/" .. female .. ".X" and fileExists(modelFile("m_FemaleModel"))
+            and #texs == 1 and texs[1] == "Clothes\\Bag\\" .. tex and fileExists("textures/Clothes/Bag/" .. tex .. ".png")
+        if not ok then diag("    daypack clothing problem: " .. name) end
+        return ok
+    end
+    for _, skin in ipairs(SKINS) do
+        local f = (items["MinidoracatBags.DayPack_" .. skin] or { fields = {} }).fields
+        local m = models[f.WorldStaticModel or ""]
+        check("DayPack_" .. skin .. ": own icon, ground model (no texture, scale 0.4), hand ClothingItems",
+            f.Icon == "MDB_DayPack_" .. skin and fileExists("textures/Item_MDB_DayPack_" .. skin .. ".png")
+            and m ~= nil and fileExists("models_X/" .. tostring(m.fields.mesh) .. ".fbx") and m.fields.texture == nil
+            and m.fields.scale == "0.4"
+            and f.ReplaceInPrimaryHand == "MDB_DayPack_" .. skin .. "_RHand holdingbagright"
+            and f.ReplaceInSecondHand == "MDB_DayPack_" .. skin .. "_LHand holdingbagleft")
+        local tex = "MDB_DayPack_" .. skin
+        check("DayPack_" .. skin .. ": worn and hand ClothingItems use own .X and one own texture",
+            xmlOk("MDB_DayPack_" .. skin, "MDB_DayPack_M", "MDB_DayPack_F", tex)
+            and xmlOk("MDB_DayPack_" .. skin .. "_RHand", "MDB_DayPack_RHand", "MDB_DayPack_RHand", tex)
+            and xmlOk("MDB_DayPack_" .. skin .. "_LHand", "MDB_DayPack_LHand", "MDB_DayPack_LHand", tex))
+    end
 
     -- 3. 配方
     local expectNames = { MDB_UpgradeBagTier1 = true, MDB_UpgradeBagTier2 = true, MDB_UpgradeBagTier3 = true }
@@ -589,6 +635,13 @@ if arg and arg[1] == "--mutants" then
         { name = "OnTest 名稱拼錯", file = "RECIPES", from = "OnTest = MDB.onTestTier2,", to = "OnTest = MDB.onTestTeir2," },
         { name = "線材整捲銷毀", file = "RECIPES", from = "item 2 tags[base:thread],", to = "item 2 [Base.Thread] mode:destroy," },
         { name = "fileGuidTable 對不上", file = "GUIDTABLE", from = "MDB_ToolBeltPouch_Navy.xml</path>", to = "MDB_ToolBeltPouch_NavyX.xml</path>" },
+        { name = "日行包手持借回原版", file = "ITEMS", from = "ReplaceInPrimaryHand = MDB_DayPack_Navy_RHand holdingbagright,", to = "ReplaceInPrimaryHand = Bag_HikingBag_RHand holdingbagright," },
+        { name = "日行包地面模型沒帶 module", file = "ITEMS", from = "WorldStaticModel = MinidoracatBags.MDB_DayPack_Ground,", to = "WorldStaticModel = MDB_DayPack_Ground," },
+        { name = "日行包圖示借回原版", file = "ITEMS", from = "Icon = MDB_DayPack_Olive,", to = "Icon = Hiking_Green," },
+        { name = "地面模型 mesh 拼錯", file = "MODELS", from = "mesh = WorldItems/Clothing/MDB_DayPack_Ground,", to = "mesh = WorldItems/Clothing/MDB_Daypack_Grnd," },
+        { name = "日行包 XML 借回原版模型", file = "DAYPACK_XML", from = "MDB_DayPack_M.X", to = "M_HikingBag.X" },
+        { name = "日行包 XML 兩張貼圖", file = "DAYPACK_XML", from = "</clothingItem>", to = "\t<textureChoices>Clothes\\Bag\\MDB_DayPack_Olive</textureChoices>\n</clothingItem>" },
+        { name = "左手模型路徑沒副檔名", file = "DAYPACK_LHAND_XML", from = "MDB_DayPack_LHand.X</m_MaleModel>", to = "MDB_DayPack_LHand</m_MaleModel>" },
         { name = "沙盒預設值錯", file = "SANDBOX", from = "max = 3, default = 3,", to = "max = 3, default = 2," },
         { name = "翻譯缺鍵", file = "I18N_RECIPES", from = '"MDB_UpgradeBagTier3"', to = '"MDB_UpgradeBagTierX"' },
     }

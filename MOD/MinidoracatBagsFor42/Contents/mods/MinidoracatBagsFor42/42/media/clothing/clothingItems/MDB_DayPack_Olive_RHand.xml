@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 日行背包拿在手上（ReplaceInPrimaryHand）：照原版 Bag_HikingBag_RHand，男女共用一個模型 -->
+<clothingItem>
+	<m_MaleModel>media\models_X\Skinned\BackPacks\MDB_DayPack_RHand.X</m_MaleModel>
+	<m_FemaleModel>media\models_X\Skinned\BackPacks\MDB_DayPack_RHand.X</m_FemaleModel>
+	<m_GUID>02aebf11-1231-421e-a90c-0cb991f93352</m_GUID>
+	<m_Static>false</m_Static>
+	<m_AllowRandomHue>false</m_AllowRandomHue>
+	<m_AllowRandomTint>false</m_AllowRandomTint>
+	<m_AttachBone></m_AttachBone>
+	<textureChoices>Clothes\Bag\MDB_DayPack_Olive</textureChoices>
+</clothingItem>

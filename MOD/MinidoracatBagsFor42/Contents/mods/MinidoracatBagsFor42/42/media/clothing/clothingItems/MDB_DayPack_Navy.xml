@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 外觀暫時：模型與貼圖借原版 Bag_HikingBag，自製模型完成後替換 -->
+<!-- 日行背包：自製模型（scripts/blender/bags/build.py 產生），兩種外觀共用模型，只換貼圖 -->
 <clothingItem>
-	<m_MaleModel>skinned\backpacks\m_hikingbag</m_MaleModel>
-	<m_FemaleModel>skinned\backpacks\f_hikingbag</m_FemaleModel>
+	<m_MaleModel>media\models_X\Skinned\BackPacks\MDB_DayPack_M.X</m_MaleModel>
+	<m_FemaleModel>media\models_X\Skinned\BackPacks\MDB_DayPack_F.X</m_FemaleModel>
 	<m_GUID>318b4bd3-70d1-4dec-847f-7a0c6d0d0086</m_GUID>
 	<m_Static>false</m_Static>
 	<m_AllowRandomTint>false</m_AllowRandomTint>
 	<m_AttachBone></m_AttachBone>
-	<textureChoices>clothes\bag\hikingbagblue</textureChoices>
+	<textureChoices>Clothes\Bag\MDB_DayPack_Navy</textureChoices>
 </clothingItem>

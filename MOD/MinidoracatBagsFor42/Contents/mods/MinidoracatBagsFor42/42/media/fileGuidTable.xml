@@ -189,6 +189,22 @@
 		<guid>a915ab6e-97db-4643-ba9e-ef299c80976a</guid>
 	</files>
 	<files>
+		<path>media/clothing/clothingItems/MDB_DayPack_Navy_RHand.xml</path>
+		<guid>245ebf83-6880-4190-b79c-4f7cff7ef23f</guid>
+	</files>
+	<files>
+		<path>media/clothing/clothingItems/MDB_DayPack_Navy_LHand.xml</path>
+		<guid>ce3cb901-289c-4db8-8161-b966345eefab</guid>
+	</files>
+	<files>
+		<path>media/clothing/clothingItems/MDB_DayPack_Olive_RHand.xml</path>
+		<guid>02aebf11-1231-421e-a90c-0cb991f93352</guid>
+	</files>
+	<files>
+		<path>media/clothing/clothingItems/MDB_DayPack_Olive_LHand.xml</path>
+		<guid>334b2e80-4f66-4d18-95f7-76000ba8c775</guid>
+	</files>
+	<files>
 		<path>media/clothing/clothingItems/MDB_ExpeditionPack_Navy.xml</path>
 		<guid>ecaa1ac8-4623-4849-9091-89e5ca413fa9</guid>
 	</files>

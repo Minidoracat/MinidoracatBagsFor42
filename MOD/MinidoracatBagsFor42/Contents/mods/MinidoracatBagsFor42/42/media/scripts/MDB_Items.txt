@@ -1,5 +1,5 @@
 /* MinidoracatBags 新背包：7 款 × S.T.A.R.S.（_Navy）／保護傘（_Olive）。
-   外觀暫時：Icon、WorldStaticModel、手持模型與 ClothingItem 的模型貼圖都先借原版替代款，自製模型完成後替換。
+   外觀：日行背包已用自製模型與貼圖；其餘 6 款的 Icon、WorldStaticModel、手持模型與 ClothingItem 的模型貼圖暫借原版替代款，自製模型完成後替換。
    ClothingItem 名稱一律 MDB_<型號>_<外觀>，不沿用原版名稱（ScriptManager.java:1883-1891 名稱反查會被覆蓋）。 */
 module MinidoracatBags
 {
@@ -184,13 +184,13 @@ module MinidoracatBags
         WorldStaticModel = Satchel_Military_Ground,
     }
 
-    /* 外觀暫時借用原版 Base.Bag_NormalHikingBag */
+    /* 自製模型（scripts/blender/bags/build.py）；欄位照原版 Base.Bag_NormalHikingBag */
     item DayPack_Navy
     {
         DisplayCategory = Bag,
         ItemType = base:container,
         Weight = 0.8,
-        Icon = Hiking_Blue,
+        Icon = MDB_DayPack_Navy,
         CanBeEquipped = base:back,
         CanHaveHoles = false,
         Capacity = 20,
@@ -203,20 +203,20 @@ module MinidoracatBags
         EquipSound = EquipBackpackLarge,
         OpenSound = OpenBag,
         PutInSound = PutItemInBag,
-        ReplaceInPrimaryHand = Bag_HikingBag_RHand holdingbagright,
-        ReplaceInSecondHand = Bag_HikingBag_LHand holdingbagleft,
+        ReplaceInPrimaryHand = MDB_DayPack_Navy_RHand holdingbagright,
+        ReplaceInSecondHand = MDB_DayPack_Navy_LHand holdingbagleft,
         SoundParameter = EquippedBaggageContainer HikingBag,
-        WorldStaticModel = HikingBag_Ground,
+        WorldStaticModel = MinidoracatBags.MDB_DayPack_Ground,
         AttachmentsProvided = BedrollBottom,
     }
 
-    /* 外觀暫時借用原版 Base.Bag_NormalHikingBag */
+    /* 自製模型（scripts/blender/bags/build.py）；欄位照原版 Base.Bag_NormalHikingBag */
     item DayPack_Olive
     {
         DisplayCategory = Bag,
         ItemType = base:container,
         Weight = 0.8,
-        Icon = Hiking_Green,
+        Icon = MDB_DayPack_Olive,
         CanBeEquipped = base:back,
         CanHaveHoles = false,
         Capacity = 20,
@@ -229,10 +229,10 @@ module MinidoracatBags
         EquipSound = EquipBackpackLarge,
         OpenSound = OpenBag,
         PutInSound = PutItemInBag,
-        ReplaceInPrimaryHand = Bag_HikingBag_RHand holdingbagright,
-        ReplaceInSecondHand = Bag_HikingBag_LHand holdingbagleft,
+        ReplaceInPrimaryHand = MDB_DayPack_Olive_RHand holdingbagright,
+        ReplaceInSecondHand = MDB_DayPack_Olive_LHand holdingbagleft,
         SoundParameter = EquippedBaggageContainer HikingBag,
-        WorldStaticModel = HikingBag_Ground,
+        WorldStaticModel = MinidoracatBags.MDB_DayPack_Ground,
         AttachmentsProvided = BedrollBottom,
     }
 
