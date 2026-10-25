@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 遠征框架背包拿在手上（ReplaceInPrimaryHand）：照原版 Bag_BigHikingBag_RHand，男女共用一個模型 -->
+<clothingItem>
+	<m_MaleModel>media\models_X\Skinned\BackPacks\MDB_ExpeditionPack_RHand.X</m_MaleModel>
+	<m_FemaleModel>media\models_X\Skinned\BackPacks\MDB_ExpeditionPack_RHand.X</m_FemaleModel>
+	<m_GUID>764fdf2a-c1d5-4236-a69c-ed1fe53feb33</m_GUID>
+	<m_Static>false</m_Static>
+	<m_AllowRandomHue>false</m_AllowRandomHue>
+	<m_AllowRandomTint>false</m_AllowRandomTint>
+	<m_AttachBone></m_AttachBone>
+	<textureChoices>Clothes\Bag\MDB_ExpeditionPack_Navy</textureChoices>
+</clothingItem>

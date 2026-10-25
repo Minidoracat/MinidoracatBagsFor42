@@ -213,6 +213,22 @@
 		<guid>df00fb24-318d-4d01-bf0c-2a29fdf9dd6b</guid>
 	</files>
 	<files>
+		<path>media/clothing/clothingItems/MDB_ExpeditionPack_Navy_RHand.xml</path>
+		<guid>764fdf2a-c1d5-4236-a69c-ed1fe53feb33</guid>
+	</files>
+	<files>
+		<path>media/clothing/clothingItems/MDB_ExpeditionPack_Navy_LHand.xml</path>
+		<guid>2f603a9d-81a2-4a72-9a8a-3637a9d4bac1</guid>
+	</files>
+	<files>
+		<path>media/clothing/clothingItems/MDB_ExpeditionPack_Olive_RHand.xml</path>
+		<guid>84356d53-870d-461d-a3b1-9fc761f4dd52</guid>
+	</files>
+	<files>
+		<path>media/clothing/clothingItems/MDB_ExpeditionPack_Olive_LHand.xml</path>
+		<guid>c62415e0-4c9e-44e0-9826-d28f851468ff</guid>
+	</files>
+	<files>
 		<path>media/clothing/clothingItems/MDB_ScoutChestRig_Navy.xml</path>
 		<guid>43f74460-443e-4450-a040-a69c5a74050f</guid>
 	</files>

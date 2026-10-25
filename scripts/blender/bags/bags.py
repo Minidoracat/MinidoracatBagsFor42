@@ -42,6 +42,9 @@ BAGS = {
     ),
     # ---- 以下 6 款：原版那半邊先填好；Tripo 那半邊（tripo、place、keep、islands、weight_ref、tris）收到模型才填 ----
     "ExpeditionPack": dict(   # 借 Base.Bag_BigHikingBag
+        tripo=dict(glb=TRIPO_ROOT + "/遠征框架背包(ExpeditionPack)/model/ExpeditionPack.glb",
+                   navy=TRIPO_ROOT + "/遠征框架背包(ExpeditionPack)/model/fbx/tripo_convert_94d7dec8-740a-4873-b5a5-aa9ce4fcf401.fbm/tactical_backpack_3d_model_basecolor.JPEG",
+                   olive=TRIPO_ROOT + "/遠征框架背包(ExpeditionPack)/model/fbx_Umbrella/tactical_backpack_3d_model.fbm/tactical_backpack_3d_model_basecolor.jpg"),
         worn=dict(M="models_X/Skinned/BackPacks/M_BigHikingBag.x", F="models_X/Skinned/BackPacks/F_BigHikingBag.x"),
         alt=None,
         hands=dict(R="models_X/Skinned/BackPacks/BigHikingBag_RHand.x", L="models_X/Skinned/BackPacks/BigHikingBag_LHand.x"),
@@ -50,7 +53,14 @@ BAGS = {
         bones=["Bip01_BackPack", "Bip01_Spine", "Bip01_Spine1", "Bip01_L_Clavicle", "Bip01_R_Clavicle"],
         merge={"Bip01_L_UpperArm": "Bip01_L_Clavicle", "Bip01_R_UpperArm": "Bip01_R_Clavicle"},
         corr="uv", deform="field",
+        # 原版男版三塊：0-353 包身（含 291-306、319-353 繞到前面的腰帶，307-318 背板上的小扣片）、354-428 與 429-508 兩條肩帶（x<0、x>0）
+        keep=[(354, 429), (429, 509)], islands=None,
         keep_tex="textures/Clothes/Bag/BigHikingBagBlue.png",
+        weight_ref=(0, 291),
+        # 底部照原版 0.5235（睡袋 BedrollBottomBig 掛點和一般款同一點，models_characters.txt:364-369），高度到原版頂 0.8974；
+        # 背板起點與後傾先沿用日行包（同一副男性身體）
+        place=dict(mode="back", y0=0.5235, height=0.8974 - 0.5235, back_z=0.083, lean=0.17),
+        tris=400, voxel=0.008, uv_angle=80, body_u=0.86,   # 0.004 時背架細管減面後正反面相疊（面朝外 90%），UV 拆到 613 點
         ground=dict(fbx="models_X/WorldItems/Clothing/BigHikingBag_Ground.fbx", scale=0.4, method="uvfit"),
         clearance="closed", bedroll=0.509,
     ),

@@ -1,12 +1,19 @@
 /* MinidoracatBags 自製模型（scripts/blender/bags/build.py 產生）。
    物品引用寫全名 MinidoracatBags.<model>：getModelScript 遇到不帶點的名字只查 Base（ScriptBucketCollection.java:72-89）。
-   沒寫 texture：物品有 ClothingItem 時地面模型取它的 textureChoices（ItemModelRenderer.java:190-203），照原版 HikingBag_Ground。 */
+   沒寫 texture：物品有 ClothingItem 時地面模型取它的 textureChoices（ItemModelRenderer.java:190-203），照原版 HikingBag_Ground、BigHikingBag_Ground。 */
 module MinidoracatBags
 {
     /* 原版 HikingBag_Ground 同尺寸（同 scale 0.4，models_items.txt:3664-3668） */
     model MDB_DayPack_Ground
     {
         mesh = WorldItems/Clothing/MDB_DayPack_Ground,
+        scale = 0.4,
+    }
+
+    /* 原版 BigHikingBag_Ground 同尺寸（同 scale 0.4，models_items.txt:3601-3605） */
+    model MDB_ExpeditionPack_Ground
+    {
+        mesh = WorldItems/Clothing/MDB_ExpeditionPack_Ground,
         scale = 0.4,
     }
 }
