@@ -1,0 +1,21 @@
+{
+    "app_id": 108600,
+    "published_file_id": null,
+    "owner_steamid64": "76561198033176898",
+    "workshop_root": "MOD/MinidoracatBagsFor42",
+    "mod_info": "MOD/MinidoracatBagsFor42/Contents/mods/MinidoracatBagsFor42/42/mod.info",
+    "preview_gif": null,
+    "changelog": "STEAM_CHANGELOG.md",
+    "titles": {
+        "english": "[B42] Tactical Bags by Minidoracat",
+        "tchinese": "[B42] 戰術背包 Tactical Bags by Minidoracat",
+        "schinese": "[B42] 战术背包 Tactical Bags by Minidoracat",
+        "japanese": "[B42] タクティカルバッグ Tactical Bags by Minidoracat"
+    },
+    "descriptions": {
+        "english": "STEAM_DESCRIPTION_EN.md",
+        "tchinese": "STEAM_DESCRIPTION.md",
+        "schinese": "STEAM_DESCRIPTION_CN.md",
+        "japanese": "STEAM_DESCRIPTION_JP.md"
+    }
+}
