@@ -18,8 +18,7 @@
   skin_push 本體頂點貼進身體超過原版最貼的那點時沿身體法線推出去（stage2）
   clearance closed＝身體頂點不能在封閉本體裡（背在背後的）；skin＝每個頂點沿最近身體頂點法線的距離不比原版差 5 mm 以上（繞身體的）
   bedroll   AttachmentsProvided 的睡袋掛點 y（本體底部要在它上面）
-  emblem    深藍款的 S.T.A.R.S. 隊徽（decal.py）：每個舊徽章一項，seed＝1024 烘焙貼圖上舊金星的一點，h＝隊徽高（.X 單位，約黑底高×0.9）；
-            emblem_alt＝True 時 MOD 貼圖保留舊徽章，隊徽版只輸出到 temp/bags/<款>/alt/ 給人選
+  emblem    深藍款的 S.T.A.R.S. 隊徽（decal.py）：每個舊徽章一項，seed＝1024 烘焙貼圖上舊金星的一點，h＝隊徽高（.X 單位，約黑底高×0.9）
 """
 from common import TRIPO_ROOT
 
@@ -141,8 +140,7 @@ BAGS = {
         tris=300, voxel=0.002, uv_angle=80, body_u=0.86,
         ground=dict(fbx="models_X/WorldItems/Clothing/M_FannyPackFront_Ground.fbx", scale=0.4, method="uvfit"),
         clearance="skin", bedroll=None,
-        emblem=[dict(seed=(289, 925), h=0.036)],   # 黑底 40×39 mm，原本是綠色草藥章
-        emblem_alt=True,   # 2026-10-25 草藥章和隊徽兩版給使用者選；選定前 MOD 保留草藥章
+        emblem=[dict(seed=(289, 925), h=0.036)],   # 黑底 40×39 mm，原本是綠色草藥章（2026-10-25 使用者選隊徽版）
     ),
     "ToolBeltPouch": dict(    # 借 Base.Bag_FannyPackFront
         tripo=dict(glb=TRIPO_ROOT + "/腰掛工具包(ToolBeltPouch)/model/ToolBeltPouch.glb",

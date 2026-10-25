@@ -5,8 +5,7 @@
 - 圖示：Workbench、STUDIO 光、貼圖色，正交 256 px 透明底（items-and-icons.md §4），後製在 build.py。只畫本體：
   肩帶、腰帶是繞過身體的環，留著會把 32 px 圖示裡的包擠小一圈（日行包第一版實機圖示）。
 - 預覽：新低模（兩種貼圖）疊原版身體，正／側／前／俯／3/4，給人看比例。
-- 隊徽（stage2 寫了 emblem.json 的款式）：本體沿第一個隊徽的法線看，整包與特寫各一張，深藍改前（tex_Navy_plain）／改後；
-  醫療包的隊徽候選版（alt/）另出預覽與圖示原圖 icon_raw_NavyAlt。
+- 隊徽（stage2 寫了 emblem.json 的款式）：本體沿第一個隊徽的法線看，整包與特寫各一張，深藍改前（tex_Navy_plain）／改後。
 - 圖示、預覽、隊徽特寫都經 shoot() 拍成實機的左右（Blender 場景是穿戴模型在實機的鏡像，見 shoot）；地面 FBX 在實機和 Blender 同手性，
   地面預覽用 render() 原樣拍。
 """
@@ -248,16 +247,10 @@ if os.path.exists(ej):
     en = X2B.to_3x3() @ Vector(em["normal"])
     en.x = -en.x   # 鏡像後的隊徽法線（shoot 的 direction 是實機那側的方向）
     views = {"Navy": imgs["Navy"], "NavyPlain": bpy.data.images.load(os.path.join(TEMP, "tex_Navy_plain.png"))}
-    alt = os.path.join(TEMP, "alt", f"MDB_{NAME}_Navy.png")
-    if os.path.exists(alt):
-        views["NavyAlt"] = bpy.data.images.load(alt)
     bag.hide_render = body.hide_render = True
     icon_bag.hide_render = False
     for look, im in views.items():
         icon_bag.data.materials[0].node_tree.nodes.active.image = im
         for kind, center, ortho in (("bag", bc, float(np.ptp(Bb, axis=0).max()) * 1.15), ("close", ec, em["size"][1] * 2.2)):
             shoot(f"{TEMP}/emblem_{look}_{kind}.png", center, en, ortho, 512)
-    if "NavyAlt" in views:
-        icon_bag.data.materials[0].node_tree.nodes.active.image = views["NavyAlt"]
-        shoot(f"{TEMP}/icon_raw_NavyAlt.png", bc, idir, io, 256)
 print("stage3 done")

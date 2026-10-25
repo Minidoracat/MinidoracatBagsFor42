@@ -14,6 +14,9 @@ TRIPO_ROOT = "D:/github/tripo-refs/collections/MinidoracatBagsFor42/items"
 # 深藍調色（7 款共用，只放這裡）：Tripo 的藍色布料 飽和度×NAVY_S、亮度×NAVY_V，色相固定 0.625。
 # 2026-10-25 使用者看實機對照（ServerPatch temp/bags-design/ingame/navy/）選「中」；另兩版是 0.70/0.82（太暗近黑）、0.72/1.20
 NAVY_S, NAVY_V = 0.70, 1.00
+# 穿戴貼圖邊長（7 款共用，只放這裡）：2026-10-25 使用者看過隊徽 256／512 對照，深藍款改 512（隊徽在 512 上讀得出 S.T.A.R.S.）；
+# 保護傘款沒被問到，維持 256
+TEX_SIZE = {"Navy": 512, "Olive": 256}
 
 sys.path.insert(0, HERE)
 import xio  # noqa: E402

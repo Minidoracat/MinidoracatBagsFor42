@@ -1,7 +1,7 @@
 """第 2 段（純 Python）：低模本體＋沿用的原版子網格 → 貼圖、權重、男／女（／ALT）／右手／左手 .X。
 輸入 temp/bags/<款>/low_body.npz、bake_*.png（第 1 段）；輸出 temp/bags/<款>/out/media/...（MOD 同結構）與 final_mesh.npz。
-深藍調色參數是 common.NAVY_S／NAVY_V（7 款共用；2026-10-25 使用者選「中」0.70／1.00）。
-深藍款的 S.T.A.R.S. 隊徽（bags.py emblem）在這裡蓋上（decal.py）：改前的 256 貼圖留在 tex_Navy_plain.png、擺放寫 emblem.json，給第 3 段的對照圖。
+深藍調色參數是 common.NAVY_S／NAVY_V（7 款共用；2026-10-25 使用者選「中」0.70／1.00）；貼圖邊長照 common.TEX_SIZE（深藍 512、保護傘 256）。
+深藍款的 S.T.A.R.S. 隊徽（bags.py emblem）在這裡蓋上（decal.py）：蓋之前的深藍貼圖留在 tex_Navy_plain.png、擺放寫 emblem.json，給第 3 段的對照圖。
 uv run --with numpy --with pillow --with scipy python stage2_assemble.py <款>
 """
 import json
@@ -13,9 +13,7 @@ from PIL import Image
 import bags
 import decal
 import emblem
-from common import NAVY_S, NAVY_V, PZ, fit_affine, keep_groups, out, sel, temp, xio
-
-TEX = 256
+from common import NAVY_S, NAVY_V, PZ, TEX_SIZE, fit_affine, keep_groups, out, sel, temp, xio
 
 
 # ---- 原版各版本之間對點 ----
@@ -359,20 +357,16 @@ def main(name):
                             name=f"MDB_{name}")
         print(f"MDB_{name}_{suffix[k]}.X: {len(m['V'])} verts, {len(FF)} tris, bones {list(Wd)}")
 
-    # 貼圖：1024 烘焙 → 調色 → 沿用的原版子網格塗黑 →（深藍）S.T.A.R.S. 隊徽 → 縮 256
+    # 貼圖：1024 烘焙 → 調色 → 沿用的原版子網格塗黑 →（深藍）S.T.A.R.S. 隊徽 → 縮成 TEX_SIZE
     van_tex = Image.open(PZ + "/" + cfg["keep_tex"])
     for look, fix in (("Navy", recolor_navy), ("Olive", lambda i: i.convert("RGB"))):
         img = keep_paint(fix(Image.open(os.path.join(TEMP, f"bake_{look.lower()}.png"))), van_tex, [i[1:] for i in isl])
+        size = (TEX_SIZE[look],) * 2
         if look == "Navy" and cfg.get("emblem"):
-            starred, placed = stars_emblem(cfg, img, meshes["M"]["V"], F, UV, meshes["M"]["N"])
+            img.resize(size, Image.LANCZOS).save(os.path.join(TEMP, "tex_Navy_plain.png"))
+            img, placed = stars_emblem(cfg, img, meshes["M"]["V"], F, UV, meshes["M"]["N"])
             json.dump(placed, open(os.path.join(TEMP, "emblem.json"), "w"), indent=1)
-            img.resize((TEX, TEX), Image.LANCZOS).save(os.path.join(TEMP, "tex_Navy_plain.png"))
-            if cfg.get("emblem_alt"):
-                os.makedirs(os.path.join(TEMP, "alt"), exist_ok=True)
-                starred.resize((TEX, TEX), Image.LANCZOS).save(os.path.join(TEMP, "alt", f"MDB_{name}_Navy.png"))
-            else:
-                img = starred
-        img.resize((TEX, TEX), Image.LANCZOS).save(f"{OUT}/textures/Clothes/Bag/MDB_{name}_{look}.png")
+        img.resize(size, Image.LANCZOS).save(f"{OUT}/textures/Clothes/Bag/MDB_{name}_{look}.png")
         img.save(os.path.join(TEMP, f"tex_{look}_1024.png"))
 
     np.savez(os.path.join(TEMP, "final_mesh.npz"), V=meshes["M"]["V"], N=meshes["M"]["N"], F=FF, UV=UV, nbody=nb)

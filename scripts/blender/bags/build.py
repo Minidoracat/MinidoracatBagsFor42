@@ -42,10 +42,9 @@ def icon(src, dst):
 
 def main(name):
     OUT, TEMP = out(name), temp(name)
-    for p in (OUT, f"{TEMP}/alt"):   # 隊徽候選版、改前貼圖每次重出，拿掉 emblem 設定後不留舊檔
-        if os.path.isdir(p):
-            shutil.rmtree(p)
-    for f in ("emblem.json", "tex_Navy_plain.png", "icon_raw_NavyAlt.png"):
+    if os.path.isdir(OUT):
+        shutil.rmtree(OUT)
+    for f in ("emblem.json", "tex_Navy_plain.png"):   # 拿掉 emblem 設定後不留上一次的隊徽對照
         if os.path.exists(f"{TEMP}/{f}"):
             os.remove(f"{TEMP}/{f}")
     blender("stage1_bake.py", name)
@@ -53,8 +52,6 @@ def main(name):
     blender("stage3_blender.py", name)
     for look in ("Navy", "Olive"):
         icon(f"{TEMP}/icon_raw_{look}.png", f"{OUT}/textures/Item_MDB_{name}_{look}.png")
-    if os.path.exists(f"{TEMP}/icon_raw_NavyAlt.png"):   # 醫療包的隊徽候選版（bags.py emblem_alt）
-        icon(f"{TEMP}/icon_raw_NavyAlt.png", f"{TEMP}/alt/Item_MDB_{name}_Navy.png")
     fail, info = verify_x.check(name, OUT)
     for k, v in info.items():
         print(k, v)

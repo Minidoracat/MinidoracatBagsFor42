@@ -7,7 +7,7 @@ import numpy as np
 from PIL import Image
 
 import bags
-from common import PZ, fbx_node_transforms, out, temp, xio
+from common import PZ, TEX_SIZE, fbx_node_transforms, out, temp, xio
 
 BP = "models_X/Skinned/BackPacks/"
 HAND_BONES = {"RHand": {"Bip01_R_Hand", "Bip01_Prop1"}, "LHand": {"Bip01_L_Hand", "Bip01_Prop2"}}
@@ -124,7 +124,8 @@ def check(name, media):
                               node={k: v for nd in nodes.values() for k, v in nd.items()})
     for look in ("Navy", "Olive"):
         p = f"{media}/textures/Clothes/Bag/MDB_{name}_{look}.png"
-        ok(os.path.exists(p) and Image.open(p).size == (256, 256), f"{look} 貼圖不是 256×256")
+        n = TEX_SIZE[look]
+        ok(os.path.exists(p) and Image.open(p).size == (n, n), f"{look} 貼圖不是 {n}×{n}")
         p = f"{media}/textures/Item_MDB_{name}_{look}.png"
         ok(os.path.exists(p) and Image.open(p).size == (32, 32) and Image.open(p).mode == "RGBA", f"{look} 圖示不是 32×32 RGBA")
     return fail, info
