@@ -7,7 +7,7 @@
 --   setWeightReduction 夾在 0～100（InventoryContainer.java:138-141）。
 -- - sendReplaceItemInContainer 只在伺服器有作用（LuaManager.java:12404-12412）。
 -- - OnTest 對每個符合輸入的候選物品各呼叫一次（CraftRecipeManager.java:781-783）。
--- - 原版 ProceduralDistributions.lua 原樣載入，Events.OnPreDistributionMerge 觸發後檢查清單。
+-- - 原版 ProceduralDistributions.lua 原樣載入，Events.OnPreDistributionMerge（與單機讀檔的 OnInitGlobalModData）觸發後檢查清單。
 -- 執行目錄：repo 根。
 
 local PZ = "D:/SteamLibrary/steamapps/common/ProjectZomboid/media/"
@@ -162,7 +162,7 @@ local SANDBOX_SPEC = {
 -- ===== 假引擎 =====
 local env = {}
 local function resetEnv()
-    env = { server = false, client = false, sent = {}, rand = {}, randCalls = 0, printed = {} }
+    env = { server = false, client = false, sent = {}, rand = {}, randCalls = 0, printed = {}, parsed = 0 }
     Events = setmetatable({}, { __index = function(t, k)
         local e = { handlers = {} }
         function e.Add(f) e.handlers[#e.handlers + 1] = f end
@@ -175,6 +175,7 @@ local function resetEnv()
 end
 function isServer() return env.server end
 function isClient() return env.client end
+ItemPickerJava = { Parse = function() env.parsed = env.parsed + 1 end }
 function sendReplaceItemInContainer(c, a, b) env.sent[#env.sent + 1] = { c, a, b } end
 function instanceof(o, cls) return type(o) == "table" and rawget(o, "__class") == cls end
 function ZombRand(n)
@@ -522,13 +523,16 @@ local function suite()
     check("acceptAmmo: every vanilla ammo Box/Carton rejected", ammoOk)
 
     -- 10. 戰利品
-    local function runLoot(mult)
+    local function loadPD()
         -- 原版清單引用其他分配檔定義的 ClutterTables、BagsAndContainers 等表；這裡只需要它們存在
         local stub = setmetatable({}, { __index = function() return {} end })
         local pdEnv = setmetatable({}, { __index = function(_, k) local v = _G[k]; if v == nil then return stub end; return v end })
         local pdPath = PZ .. "lua/server/Items/ProceduralDistributions.lua"
         assert(loadfile(pdPath, "t", pdEnv))()
         ProceduralDistributions = pdEnv.ProceduralDistributions
+    end
+    local function runLoot(mult)
+        loadPD()
         local before = {}
         for name, l in pairs(ProceduralDistributions.list) do if l.items then before[name] = #l.items end end
         SandboxVars.MinidoracatBags.LootMultiplier = mult
@@ -568,6 +572,54 @@ local function suite()
     local any = false
     for _ in pairs(none) do any = true end
     check("loot x0: nothing added", not any)
+
+    -- 10b. 單機讀檔：merge 時沙盒還是預設值，OnInitGlobalModData 才是存檔值（bags-sandbox-sp-1025c）
+    check("loot: one OnInitGlobalModData handler", #Events.OnInitGlobalModData.handlers == 1)
+    local function session(atMerge, saved, server, client)
+        loadPD()
+        env.server, env.client, env.parsed = server or false, client or false, 0
+        SandboxVars.MinidoracatBags.LootMultiplier = atMerge
+        for _, h in ipairs(Events.OnPreDistributionMerge.handlers) do h() end
+        SandboxVars.MinidoracatBags.LootMultiplier = saved
+        for _, h in ipairs(Events.OnInitGlobalModData.handlers) do h(false) end
+        SandboxVars.MinidoracatBags.LootMultiplier = 1
+        env.server, env.client = false, false
+        local got, n = {}, 0
+        for name, l in pairs(ProceduralDistributions.list) do
+            for i = 1, #(l.items or {}) - 1, 2 do
+                local it = l.items[i]
+                if type(it) == "string" and it:sub(1, 16) == "MinidoracatBags." then
+                    got[name] = got[name] or {}
+                    got[name][it] = l.items[i + 1]
+                    n = n + 1
+                end
+            end
+        end
+        return got, n, env.parsed
+    end
+    local function weightsAre(got, n, mult)
+        local want = 0
+        for _, spec in ipairs(LOOT_SPEC) do
+            for model, wgt in pairs(spec[3]) do
+                want = want + 1
+                local g = got[spec[1]] and got[spec[1]]["MinidoracatBags." .. model .. spec[2]]
+                if mult > 0 and (g == nil or math.abs(g - wgt * mult) > 1e-9) then return false end
+            end
+        end
+        return n == (mult > 0 and want or 0)
+    end
+    local g, n, parsed = session(1, 2)
+    check("loot SP load: merge x1 then saved x2 -> x2, one Parse", weightsAre(g, n, 2) and parsed == 1)
+    g, n, parsed = session(2, 2)
+    check("loot SP new game: x2 stays x2 (not x4), no Parse", weightsAre(g, n, 2) and parsed == 0)
+    g, n, parsed = session(1, 0)
+    check("loot SP load: saved x0 removes entries, one Parse", weightsAre(g, n, 0) and parsed == 1)
+    g, n, parsed = session(0, 3)
+    check("loot SP load: merge x0 then saved x3 -> x3, one Parse", weightsAre(g, n, 3) and parsed == 1)
+    g, n, parsed = session(1, 2, true)
+    check("loot MP server: OnInitGlobalModData does nothing", weightsAre(g, n, 1) and parsed == 0)
+    g, n, parsed = session(1, 2, false, true)
+    check("loot MP client: OnInitGlobalModData does nothing", weightsAre(g, n, 1) and parsed == 0)
 
     -- 11. 殭屍死亡掉落
     check("zombie: one OnZombieDead handler", #Events.OnZombieDead.handlers == 1)
@@ -627,8 +679,13 @@ if arg and arg[1] == "--mutants" then
         { name = "彈藥背帶不收霰彈", file = "FIL", from = "return item:hasTag(ItemTag.AMMO)", to = "return item:hasTag(ItemTag.AMMO) and not item:hasTag(ItemTag.SHOTGUN_SHELL)" },
         { name = "醫療腰包分類錯", file = "FIL", from = '== "FirstAid"', to = '== "Medical"' },
         { name = "警局清單放 Olive", file = "LOOT", from = '{ "PoliceLockers", "_Navy"', to = '{ "PoliceLockers", "_Olive"' },
-        { name = "權重不乘倍率", file = "LOOT", from = "pairsList[j + 1] * mult", to = "pairsList[j + 1]" },
-        { name = "倍率 0 仍加", file = "LOOT", from = "if mult <= 0 then return end", to = "" },
+        { name = "權重不乘倍率", file = "LOOT", from = "table.insert(items, pairsList[j + 1] * mult)", to = "table.insert(items, pairsList[j + 1])" },
+        { name = "倍率 0 仍加", file = "LOOT", from = "                if mult > 0 then", to = "                if true then" },
+        { name = "單機不重算", file = "LOOT", from = "Events.OnInitGlobalModData.Add(MDB.reapplyLoot)", to = "" },
+        { name = "MP 也重算", file = "LOOT", from = "if isClient() or isServer() then return end", to = "" },
+        { name = "沒改也 Parse", file = "LOOT", from = 'if setLoot(MDB.opt("LootMultiplier")) then', to = 'if setLoot(MDB.opt("LootMultiplier")) or true then' },
+        { name = "已相同仍重建", file = "LOOT", from = "if seen[name] or want[name] ~= items[k + 1] then same = false end", to = "same = false" },
+        { name = "有改不 Parse", file = "LOOT", from = "        ItemPickerJava.Parse()", to = "" },
         { name = "放進露營店", file = "LOOT", from = '{ "NurseOutfit"', to = '{ "CampingStoreBackpacks"' },
         { name = "客戶端也掉落", file = "ZD", from = "if isClient() then return end", to = "" },
         { name = "SWAT 掉 Olive", file = "ZD", from = 'Police_SWAT = "_Navy"', to = 'Police_SWAT = "_Olive"' },

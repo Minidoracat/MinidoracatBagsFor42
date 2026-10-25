@@ -67,7 +67,7 @@ for _, dir in ipairs({ "shared", "server", "client" }) do   -- 遊戲也是 shar
 end
 check(loadedCount >= 6, "載入 " .. loadedCount .. " 個 Lua 檔（列目錄失敗時會是 0）")
 
-local ALLOWED = { "OnGameBoot", "OnPreDistributionMerge", "OnZombieDead" }
+local ALLOWED = { "OnGameBoot", "OnPreDistributionMerge", "OnInitGlobalModData", "OnZombieDead" }
 local allowed, seen = {}, {}
 for _, name in ipairs(ALLOWED) do allowed[name] = true end
 for _, r in ipairs(registered) do
@@ -77,7 +77,7 @@ for _, r in ipairs(registered) do
 end
 for _, name in ipairs(ALLOWED) do check(seen[name] == 1, name .. " 剛好掛一次") end
 for _, fn in ipairs({ "acceptLegacy", "acceptFirstAid", "acceptAmmo", "applyTier", "onConvert", "onUpgrade",
-                      "onTestTier1", "onTestTier2", "onTestTier3", "addLoot", "onZombieDead", "warnDuplicates", "opt" }) do
+                      "onTestTier1", "onTestTier2", "onTestTier3", "addLoot", "reapplyLoot", "onZombieDead", "warnDuplicates", "opt" }) do
     check(type(MDB[fn]) == "function", "MDB." .. fn .. " 存在")
 end
 
