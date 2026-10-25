@@ -1,5 +1,6 @@
-"""背包產線共用：路徑、深藍調色參數、仿射擬合。Blender 內外都能 import（只用 numpy）。"""
+"""背包產線共用：路徑、深藍調色參數、仿射擬合、FBX 節點縮放。Blender 內外都能 import（只用 numpy）。"""
 import os
+import struct
 import sys
 
 import numpy as np
@@ -25,6 +26,59 @@ def temp(name):
 
 def out(name):
     return os.path.join(temp(name), "out", "media")
+
+
+def _fbx_nodes(b, pos, end, wide):
+    """二進位 FBX 的節點串：回 [(名稱, 屬性值清單, 子節點)]。只解出純量與字串屬性；陣列屬性（頂點、UV）跳過，回 None。"""
+    res = []
+    hdr = "<QQQB" if wide else "<IIIB"
+    hsz = struct.calcsize(hdr)
+    while pos < end:
+        e, n, plen, nl = struct.unpack_from(hdr, b, pos)
+        if e == 0:
+            break
+        name = b[pos + hsz:pos + hsz + nl].decode("ascii", "replace")
+        p = pos + hsz + nl
+        props = []
+        for _ in range(n):
+            t = chr(b[p]); p += 1
+            if t in "YCIFDL":
+                fmt = {"Y": "<h", "C": "<?", "I": "<i", "F": "<f", "D": "<d", "L": "<q"}[t]
+                props.append(struct.unpack_from(fmt, b, p)[0]); p += struct.calcsize(fmt)
+            elif t in "SR":
+                ln = struct.unpack_from("<I", b, p)[0]
+                props.append(b[p + 4:p + 4 + ln]); p += 4 + ln
+            else:   # f d l i b 陣列
+                _, _, cl = struct.unpack_from("<III", b, p)
+                props.append(None); p += 12 + cl
+        res.append((name, props, _fbx_nodes(b, p, e, wide) if p < e else []))
+        pos = e
+    return res
+
+
+LCL = (b"Lcl Translation", b"Lcl Rotation", b"Lcl Scaling")
+
+
+def fbx_node_transforms(path):
+    """每個 Model 節點的 Lcl Translation／Rotation／Scaling：節點自己的 Properties70 有寫就用它，沒寫用 Definitions 裡 Model（FbxNode）樣板的預設值。
+    回 {節點名: {"Lcl Scaling": (sx, sy, sz), ...}}。只看第一個 P 出現的地方會讀到樣板（原版 HikingBag_Ground 樣板是 1、節點是 1/36）。PZ 讀靜態網格會套節點變換鏈（items-and-icons.md §1），所以這個值直接影響地上大小。"""
+    b = open(path, "rb").read()
+    assert b[:21] == b"Kaydara FBX Binary  \x00", f"{path} 不是二進位 FBX"
+    ver = struct.unpack_from("<I", b, 23)[0]
+    top = _fbx_nodes(b, 27, len(b), ver >= 7500)
+    P70 = lambda node: {q[1][0]: q[1][4:] for q in next((c for c in node[2] if c[0] == "Properties70"), ("", [], []))[2] if q[0] == "P"}
+    default = {k: (1.0, 1.0, 1.0) if k == b"Lcl Scaling" else (0.0, 0.0, 0.0) for k in LCL}
+    for d in next((n for n in top if n[0] == "Definitions"), ("", [], []))[2]:
+        if d[0] == "ObjectType" and d[1] and d[1][0] == b"Model":
+            for tpl in d[2]:
+                if tpl[0] == "PropertyTemplate":
+                    default = {k: tuple(P70(tpl).get(k, v)) for k, v in default.items()}
+    out = {}
+    for m in next((n for n in top if n[0] == "Objects"), ("", [], []))[2]:
+        if m[0] == "Model":
+            own = P70(m)
+            out[m[1][1].split(b"\x00")[0].decode()] = {k.decode(): tuple(float(x) for x in own.get(k, v)) for k, v in default.items()}
+    return out
 
 
 def fit_affine(A, B):

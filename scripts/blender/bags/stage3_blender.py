@@ -36,7 +36,7 @@ def fbx_props(path):
     def walk(e):
         for q in e.elems:
             if q.id == b"P":
-                if q.props[0] in (b"UnitScaleFactor", b"Lcl Scaling", b"Lcl Rotation", b"PreRotation"):
+                if q.props[0] == b"UnitScaleFactor":   # 節點變換在 verify_x（common.fbx_node_transforms）讀，這裡只取單位
                     props.setdefault(q.props[0].decode(), q.props[4:])
             else:
                 walk(q)

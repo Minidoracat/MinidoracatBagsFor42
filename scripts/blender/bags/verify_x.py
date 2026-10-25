@@ -7,7 +7,7 @@ import numpy as np
 from PIL import Image
 
 import bags
-from common import PZ, out, temp, xio
+from common import PZ, fbx_node_transforms, out, temp, xio
 
 BP = "models_X/Skinned/BackPacks/"
 HAND_BONES = {"RHand": {"Bip01_R_Hand", "Bip01_Prop1"}, "LHand": {"Bip01_L_Hand", "Bip01_Prop2"}}
@@ -112,8 +112,16 @@ def check(name, media):
         ok(np.abs((o[1] - o[0])[:2].max() / (v[1] - v[0])[:2].max() - 1) < 0.1,
            f"地面 FBX 長邊 {(o[1] - o[0])[:2].max():.4f} 和原版 {(v[1] - v[0])[:2].max():.4f} 差超過 10%")
         ok(abs(o[0][2]) < 0.005, f"地面 FBX 最低點 {o[0][2]:.4f} 沒有貼地")
-        ok(all(abs(x - y) < 1e-6 for x, y in zip(gj["fbx_props"]["Lcl Scaling"], (1, 1, 1))), "地面 FBX 節點縮放不是 1")
-        info["ground"] = dict(bbox=gj["ours_pz_bbox"], vanilla=gj["vanilla_pz_bbox"], scale=gj["scale"])
+        # 網格節點要是單位矩陣：PZ 讀靜態網格會套節點變換鏈（items-and-icons.md §1），縮放、旋轉不對地上就變大小或翻倒
+        gp = f"{media}/models_X/WorldItems/Clothing/MDB_{name}_Ground.fbx"
+        nodes = fbx_node_transforms(gp) if os.path.exists(gp) else {}
+        ok(len(nodes) == 1, f"地面 FBX 應該只有一個節點，讀到 {list(nodes)}")
+        for nd, tr in nodes.items():
+            ident = {"Lcl Translation": (0, 0, 0), "Lcl Rotation": (0, 0, 0), "Lcl Scaling": (1, 1, 1)}
+            ok(all(abs(a - e) < 1e-6 for k, v in ident.items() for a, e in zip(tr[k], v)),
+               f"地面 FBX 節點 {nd} 不是單位矩陣（節點縮放 {tr['Lcl Scaling']}、旋轉 {tr['Lcl Rotation']}）")
+        info["ground"] = dict(bbox=gj["ours_pz_bbox"], vanilla=gj["vanilla_pz_bbox"], scale=gj["scale"],
+                              node={k: v for nd in nodes.values() for k, v in nd.items()})
     for look in ("Navy", "Olive"):
         p = f"{media}/textures/Clothes/Bag/MDB_{name}_{look}.png"
         ok(os.path.exists(p) and Image.open(p).size == (256, 256), f"{look} 貼圖不是 256×256")
@@ -162,13 +170,16 @@ def _mutate(cfg, p, kind):
 def selftest(name):
     """植入違規：每一種都要被抓到。"""
     cfg = bags.get(name)
-    expect = {"權重": "白名單", "反綁定": "反綁定矩陣", "UV": "UV 超出", "頂點": "頂點 >", "穿模": "穿模"}
+    expect = {"權重": "白名單", "反綁定": "反綁定矩陣", "UV": "UV 超出", "頂點": "頂點 >", "穿模": "穿模", "節點縮放": "不是單位矩陣"}
     if cfg.get("bedroll") is not None:
         expect["底部"] = "本體底部"
     for kind, msg in expect.items():
         tmp = tempfile.mkdtemp()
         shutil.copytree(out(name), tmp, dirs_exist_ok=True)
-        _mutate(cfg, f"{tmp}/{BP}MDB_{name}_M.X", kind)
+        if kind == "節點縮放":   # 換成原版地面 FBX（節點 1/36 或 1/12、轉 90°）
+            shutil.copy(PZ + "/" + cfg["ground"]["fbx"], f"{tmp}/models_X/WorldItems/Clothing/MDB_{name}_Ground.fbx")
+        else:
+            _mutate(cfg, f"{tmp}/{BP}MDB_{name}_M.X", kind)
         fail, _ = check(name, tmp)
         shutil.rmtree(tmp)
         hit = [m for m in fail if msg in m]
