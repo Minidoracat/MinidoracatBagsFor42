@@ -37,4 +37,11 @@ module MinidoracatBags
         mesh = WorldItems/Clothing/MDB_MedicHipPouch_Ground,
         scale = 0.4,
     }
+
+    /* 原版 FannyPack_Ground 同 scale 0.4（models_items.txt:3670-3674） */
+    model MDB_ToolBeltPouch_Ground
+    {
+        mesh = WorldItems/Clothing/MDB_ToolBeltPouch_Ground,
+        scale = 0.4,
+    }
 }

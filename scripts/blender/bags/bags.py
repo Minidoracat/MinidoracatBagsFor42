@@ -11,7 +11,7 @@
   keep_from 沿用子網格在女版／手持的位置：預設逐點取對到的原版點；smooth＝男版位置＋鄰近位移中位數（雙面薄片正反同 UV 的款式）
   keep      沿用的原版子網格（肩帶、腰帶）：每組一個 UV 島，(a, b)＝原版男版頂點區間、("uv", 矩形)＝UV 在矩形內的點（weight_ref、body 同）；islands＝(原版 UV 矩形, 新矩形, 轉 90°)，None＝自動
   weight_ref 本體權重參考的原版頂點區間（不含 keep 和不要的部分）
-  place     Tripo 高模放到 .X 空間的方式：back＝背在背後（底 y0、高、背板 back_z、後傾 lean、背面 back_y）；obb＝對齊原版本體（body）的主軸外框，push＝沿外側法線再推出去，w_frac＝Tripo 寬度裡包身佔的比例，back_y＝Tripo 背面的 y（預設最大 y）；
+  place     Tripo 高模放到 .X 空間的方式：back＝背在背後（底 y0、高、背板 back_z、後傾 lean、背面 back_y；side="front" 改掛肚子前）；obb＝對齊原版本體（body）的主軸外框，push＝沿外側法線再推出去，w_frac＝Tripo 寬度裡包身佔的比例，back_y＝Tripo 背面的 y（預設最大 y）；
             tris／voxel／uv_angle／body_u 見 stage1_bake.py；icon＝圖示相機（center、ortho、dir，沒寫就自動）
   ground    原版地面模型：fbx、腳本 scale；method uvfit＝用同 UV 擬合穿戴→地面；upright＝原版地面直立、UV 另一套時，本體照穿戴主軸立起；
             bbox＝原版地面用別張圖集時，最薄方向朝上擺平
@@ -137,11 +137,23 @@ BAGS = {
         clearance="skin", bedroll=None,
     ),
     "ToolBeltPouch": dict(    # 借 Base.Bag_FannyPackFront
+        tripo=dict(glb=TRIPO_ROOT + "/腰掛工具包(ToolBeltPouch)/model/ToolBeltPouch.glb",
+                   navy=TRIPO_ROOT + "/腰掛工具包(ToolBeltPouch)/model/fbx/tripo_convert_2c72b989-27f5-4774-8dc4-bac21403b63d.fbm/navy_waist_bag_3d_model_basecolor.JPEG",
+                   olive=TRIPO_ROOT + "/腰掛工具包(ToolBeltPouch)/model/fbx_Umbrella/tripo_convert_6d38bd42-33df-468b-a654-2b371e59a9f3.fbm/navy_waist_bag_3d_model_basecolor.JPEG"),
         worn=dict(M="models_X/Skinned/BackPacks/M_FannyPackFront.x", F="models_X/Skinned/BackPacks/F_FannyPackFront.x"),
         alt=None, hands=None, L_from_R=None,
         bones=["Bip01_Pelvis", "Bip01_Spine", "Bip01_Spine1", "Bip01_L_Thigh", "Bip01_R_Thigh"], merge={},
         corr="uv", deform="field",
+        # 原版和醫療腰包同一套 UV：v>0.5 是包身（肚子前），v 0.33-0.48 是繞到背後的腰帶；腰帶沿用
+        keep=[("uv", (0, 0.3, 1, 0.5))], islands=None,
         keep_tex="textures/Clothes/Bag/FannyPack.png",
+        weight_ref=("uv", (0, 0.5, 1, 1)),
+        # 主袋加兩側袋寬 0.84（Tripo 單位）、高 0.455，腰帶在上緣 z 0.27-0.41。縮 0.2 倍：寬 0.17 同原版，
+        # 腰帶中心落在原版腰帶 y≈0.565；背面 y≈0.066（兩側腰帶往身體彎到 0.34），背面放在 z −0.05，肚子再由 skin_push 推出
+        place=dict(mode="back", side="front", y0=0.497, height=0.091, back_z=0.05, lean=0.0, back_y=0.066),
+        icon=dict(dir=(-0.55, 1, 0.45)),   # 看外側（角色正面）
+        thin=True, skin_push=True,
+        tris=360, voxel=0.002, uv_angle=80, body_u=0.86,
         ground=dict(fbx="models_X/WorldItems/Clothing/M_FannyPackFront_Ground.fbx", scale=0.4, method="uvfit"),
         clearance="skin", bedroll=None,
     ),

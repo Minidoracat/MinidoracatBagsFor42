@@ -8,13 +8,13 @@ module MinidoracatBags
         Base
     }
 
-    /* 外觀暫時借用原版 Base.Bag_FannyPackFront */
+    /* 自製模型（scripts/blender/bags/build.py）；欄位照原版 Base.Bag_FannyPackFront */
     item ToolBeltPouch_Navy
     {
         DisplayCategory = Bag,
         ItemType = base:container,
         Weight = 0.3,
-        Icon = FannyPack,
+        Icon = MDB_ToolBeltPouch_Navy,
         CanBeEquipped = base:fannypackfront,
         CanHaveHoles = false,
         Capacity = 3,
@@ -26,16 +26,16 @@ module MinidoracatBags
         EquipSound = EquipFannyPack,
         OpenSound = OpenLeatherBag,
         PutInSound = StoreItemLeatherBag,
-        WorldStaticModel = FannyPack_Ground,
+        WorldStaticModel = MinidoracatBags.MDB_ToolBeltPouch_Ground,
     }
 
-    /* 外觀暫時借用原版 Base.Bag_FannyPackFront */
+    /* 自製模型（scripts/blender/bags/build.py）；欄位照原版 Base.Bag_FannyPackFront */
     item ToolBeltPouch_Olive
     {
         DisplayCategory = Bag,
         ItemType = base:container,
         Weight = 0.3,
-        Icon = FannyPack,
+        Icon = MDB_ToolBeltPouch_Olive,
         CanBeEquipped = base:fannypackfront,
         CanHaveHoles = false,
         Capacity = 3,
@@ -47,7 +47,7 @@ module MinidoracatBags
         EquipSound = EquipFannyPack,
         OpenSound = OpenLeatherBag,
         PutInSound = StoreItemLeatherBag,
-        WorldStaticModel = FannyPack_Ground,
+        WorldStaticModel = MinidoracatBags.MDB_ToolBeltPouch_Ground,
     }
 
     /* 自製模型（scripts/blender/bags/build.py）；欄位照原版 Base.Bag_FannyPackBack */

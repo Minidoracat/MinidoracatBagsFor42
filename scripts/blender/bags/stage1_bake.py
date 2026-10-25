@@ -54,6 +54,8 @@ def place(co):
     c = P["back_z"] + s * P.get("back_y", hi3[1])  # z_X = c − s·y_B：背板（y_B 最大，或 back_y）→ back_z
     M = Matrix(((s, 0, 0, -s * (lo3[0] + hi3[0]) / 2), (0, 0, s, P["y0"] - s * lo3[2]), (0, -s, 0, c), (0, 0, 0, 1)))
     M = Matrix(((1, 0, 0, 0), (0, 1, 0, 0), (0, P["lean"], 1, -P["lean"] * P["y0"]), (0, 0, 0, 1))) @ M
+    if P.get("side") == "front":   # 掛在肚子前（工具腰包）：繞 y 轉 180°，背面落在 z=−back_z
+        M = Matrix(((-1, 0, 0, 0), (0, 1, 0, 0), (0, 0, -1, 0), (0, 0, 0, 1))) @ M
     print(f"scale {s:.5f}; Tripo bbox {lo3.round(4)} {hi3.round(4)}")
     return M, s
 
