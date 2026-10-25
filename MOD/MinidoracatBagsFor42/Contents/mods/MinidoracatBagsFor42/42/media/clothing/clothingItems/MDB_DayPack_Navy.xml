@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 外觀暫時：模型與貼圖借原版 Bag_HikingBag，自製模型完成後替換 -->
+<clothingItem>
+	<m_MaleModel>skinned\backpacks\m_hikingbag</m_MaleModel>
+	<m_FemaleModel>skinned\backpacks\f_hikingbag</m_FemaleModel>
+	<m_GUID>318b4bd3-70d1-4dec-847f-7a0c6d0d0086</m_GUID>
+	<m_Static>false</m_Static>
+	<m_AllowRandomTint>false</m_AllowRandomTint>
+	<m_AttachBone></m_AttachBone>
+	<textureChoices>clothes\bag\hikingbagblue</textureChoices>
+</clothingItem>

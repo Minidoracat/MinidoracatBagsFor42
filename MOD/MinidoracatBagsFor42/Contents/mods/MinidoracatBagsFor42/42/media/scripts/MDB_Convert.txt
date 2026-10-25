@@ -1,0 +1,130 @@
+/* 舊 Plus 背包改裝成新背包：舊背包要清空、不能穿著；不設技能門檻；產出直接給最高階（MDB.onConvert）。
+   back 組→遠征框架背包、satchel 組→信差側背包、fanny 組→腰掛工具包；每組兩種外觀各一條。水瓶不在這裡。 */
+
+module MinidoracatBags
+{
+    imports
+    {
+        Base
+    }
+
+    craftRecipe MDB_ConvertLegacyBack_Navy
+    {
+        timedAction = SewingCloth,
+        time = 100,
+        AllowBatchCraft = false,
+        Tags = AnySurfaceCraft,
+        category = Tailoring,
+        OnCreate = MDB.onConvert,
+        inputs
+        {
+            item 1 [BagUpgradePlus.ALICEpackPlus;BagUpgradePlus.ALICEpack_CamoPlus;BagUpgradePlus.ALICEpack_DesertCamoPlus;BagUpgradePlus.DuffelPlus;BagUpgradePlus.MedicalPlus;BagUpgradePlus.MilitaryPlus;BagUpgradePlus.PolicePlus;BagUpgradePlus.SheriffPlus;BagUpgradePlus.SWATPlus;BagUpgradePlus.BreakdownBagPlus;BagUpgradePlus.BurglarBagPlus;BagUpgradePlus.BaseballBagPlus;BagUpgradePlus.TennisBagPlus;BagUpgradePlus.WeaponBagPlus;BagUpgradePlus.InmateEscapedBagPlus;BagUpgradePlus.MoneyBagPlus;BagUpgradePlus.WorkerBagPlus;BagUpgradePlus.ShotgunBagPlus;BagUpgradePlus.ShotgunSawnoffBagPlus;BagUpgradePlus.ShotgunDblBagPlus;BagUpgradePlus.ShotgunDblSawnoffBagPlus;BagUpgradePlus.FoodCannedPlus;BagUpgradePlus.FoodSnacksPlus;BagUpgradePlus.ToolBagPlus;BagUpgradePlus.HydrationBackpackPlus;BagUpgradePlus.HydrationBackpackPlus_Camo;BagUpgradePlus.HikingBagPlus;BagUpgradePlus.BigHikingBagplus;BagUpgradePlus.BigHikingBagPlus_Travel;BagUpgradePlus.SchoolbagPlus;Base.SheetSlingBagPlus;ExtraCraft.SheetSlingBagPlus] flags[IsEmpty;IsNotWorn],
+            item 1 tags[base:sewingneedle] mode:keep,
+            item 2 tags[base:thread],
+        }
+        outputs
+        {
+            item 1 MinidoracatBags.ExpeditionPack_Navy,
+        }
+    }
+
+    craftRecipe MDB_ConvertLegacyBack_Olive
+    {
+        timedAction = SewingCloth,
+        time = 100,
+        AllowBatchCraft = false,
+        Tags = AnySurfaceCraft,
+        category = Tailoring,
+        OnCreate = MDB.onConvert,
+        inputs
+        {
+            item 1 [BagUpgradePlus.ALICEpackPlus;BagUpgradePlus.ALICEpack_CamoPlus;BagUpgradePlus.ALICEpack_DesertCamoPlus;BagUpgradePlus.DuffelPlus;BagUpgradePlus.MedicalPlus;BagUpgradePlus.MilitaryPlus;BagUpgradePlus.PolicePlus;BagUpgradePlus.SheriffPlus;BagUpgradePlus.SWATPlus;BagUpgradePlus.BreakdownBagPlus;BagUpgradePlus.BurglarBagPlus;BagUpgradePlus.BaseballBagPlus;BagUpgradePlus.TennisBagPlus;BagUpgradePlus.WeaponBagPlus;BagUpgradePlus.InmateEscapedBagPlus;BagUpgradePlus.MoneyBagPlus;BagUpgradePlus.WorkerBagPlus;BagUpgradePlus.ShotgunBagPlus;BagUpgradePlus.ShotgunSawnoffBagPlus;BagUpgradePlus.ShotgunDblBagPlus;BagUpgradePlus.ShotgunDblSawnoffBagPlus;BagUpgradePlus.FoodCannedPlus;BagUpgradePlus.FoodSnacksPlus;BagUpgradePlus.ToolBagPlus;BagUpgradePlus.HydrationBackpackPlus;BagUpgradePlus.HydrationBackpackPlus_Camo;BagUpgradePlus.HikingBagPlus;BagUpgradePlus.BigHikingBagplus;BagUpgradePlus.BigHikingBagPlus_Travel;BagUpgradePlus.SchoolbagPlus;Base.SheetSlingBagPlus;ExtraCraft.SheetSlingBagPlus] flags[IsEmpty;IsNotWorn],
+            item 1 tags[base:sewingneedle] mode:keep,
+            item 2 tags[base:thread],
+        }
+        outputs
+        {
+            item 1 MinidoracatBags.ExpeditionPack_Olive,
+        }
+    }
+
+    craftRecipe MDB_ConvertLegacySatchel_Navy
+    {
+        timedAction = SewingCloth,
+        time = 100,
+        AllowBatchCraft = false,
+        Tags = AnySurfaceCraft,
+        category = Tailoring,
+        OnCreate = MDB.onConvert,
+        inputs
+        {
+            item 1 [BagUpgradePlus.SatchelPlus;BagUpgradePlus.Satchel_FishingPlus;BagUpgradePlus.Satchel_MedicalPlus;BagUpgradePlus.Satchel_MilitaryPlus] flags[IsEmpty;IsNotWorn],
+            item 1 tags[base:sewingneedle] mode:keep,
+            item 2 tags[base:thread],
+        }
+        outputs
+        {
+            item 1 MinidoracatBags.CourierSatchel_Navy,
+        }
+    }
+
+    craftRecipe MDB_ConvertLegacySatchel_Olive
+    {
+        timedAction = SewingCloth,
+        time = 100,
+        AllowBatchCraft = false,
+        Tags = AnySurfaceCraft,
+        category = Tailoring,
+        OnCreate = MDB.onConvert,
+        inputs
+        {
+            item 1 [BagUpgradePlus.SatchelPlus;BagUpgradePlus.Satchel_FishingPlus;BagUpgradePlus.Satchel_MedicalPlus;BagUpgradePlus.Satchel_MilitaryPlus] flags[IsEmpty;IsNotWorn],
+            item 1 tags[base:sewingneedle] mode:keep,
+            item 2 tags[base:thread],
+        }
+        outputs
+        {
+            item 1 MinidoracatBags.CourierSatchel_Olive,
+        }
+    }
+
+    craftRecipe MDB_ConvertLegacyFanny_Navy
+    {
+        timedAction = SewingCloth,
+        time = 100,
+        AllowBatchCraft = false,
+        Tags = AnySurfaceCraft,
+        category = Tailoring,
+        OnCreate = MDB.onConvert,
+        inputs
+        {
+            item 1 [BagUpgradePlus.FannyPackFrontPlus;BagUpgradePlus.FannyPackBackPlus] flags[IsEmpty;IsNotWorn],
+            item 1 tags[base:sewingneedle] mode:keep,
+            item 2 tags[base:thread],
+        }
+        outputs
+        {
+            item 1 MinidoracatBags.ToolBeltPouch_Navy,
+        }
+    }
+
+    craftRecipe MDB_ConvertLegacyFanny_Olive
+    {
+        timedAction = SewingCloth,
+        time = 100,
+        AllowBatchCraft = false,
+        Tags = AnySurfaceCraft,
+        category = Tailoring,
+        OnCreate = MDB.onConvert,
+        inputs
+        {
+            item 1 [BagUpgradePlus.FannyPackFrontPlus;BagUpgradePlus.FannyPackBackPlus] flags[IsEmpty;IsNotWorn],
+            item 1 tags[base:sewingneedle] mode:keep,
+            item 2 tags[base:thread],
+        }
+        outputs
+        {
+            item 1 MinidoracatBags.ToolBeltPouch_Olive,
+        }
+    }
+}

@@ -1,0 +1,15 @@
+{
+    "Sandbox_MinidoracatBags": "Taktik Çantalar",
+    "Sandbox_MinidoracatBagsLockLegacyBags": "Eski Bag Upgrade Plus çantalarını kilitle",
+    "Sandbox_MinidoracatBagsLockLegacyBags_tooltip": "Açıkken (varsayılan), Bag Upgrade Plus kayıtlarından kalan eski çantalardan yalnızca eşya alınabilir. İçlerine hiçbir şey konulamaz. Oyuncular bunları dikiş tarifiyle yeni çantalara dönüştürür.\nKapatılırsa yeniden normal çanta gibi kullanılabilirler.",
+    "Sandbox_MinidoracatBagsMaxTier": "En yüksek geliştirme seviyesi",
+    "Sandbox_MinidoracatBagsMaxTier_tooltip": "Bir çantanın Çantayı Güçlendir tarifleriyle ulaşabileceği en yüksek seviye. 0 geliştirmeyi kapatır.\nDönüştürülen eski çantalar bu seviyede başlar.",
+    "Sandbox_MinidoracatBagsCapacityStepPercent": "Seviye başına kapasite artışı (yüzde)",
+    "Sandbox_MinidoracatBagsCapacityStepPercent_tooltip": "Her seviye, çantanın orijinal kapasitesinin bu yüzdesi kadar ekler ve en yakın tam sayıya yuvarlar. Kapasite hiçbir zaman 50 eksi çantanın kendi ağırlığını aşmaz.\nDeğişiklikten sonra geliştirilen çantalara uygulanır.",
+    "Sandbox_MinidoracatBagsWeightReductionStep": "Seviye başına ağırlık azaltma artışı",
+    "Sandbox_MinidoracatBagsWeightReductionStep_tooltip": "Her seviye bu kadar ağırlık azaltma ekler; aşağıdaki en yüksek ağırlık azaltma değerine kadar.\nDeğişiklikten sonra geliştirilen çantalara uygulanır.",
+    "Sandbox_MinidoracatBagsMaxWeightReduction": "En yüksek ağırlık azaltma",
+    "Sandbox_MinidoracatBagsMaxWeightReduction_tooltip": "Geliştirilen ve dönüştürülen çantalar bu ağırlık azaltma değerini asla aşmaz.",
+    "Sandbox_MinidoracatBagsLootMultiplier": "Ganimet ve zombi düşürme çarpanı",
+    "Sandbox_MinidoracatBagsLootMultiplier_tooltip": "Yeni çantaların polis, askeri ve tıbbi konteynerlerde ne sıklıkla çıkacağını ve polis, asker ve sağlık görevlisi zombilerin ne sıklıkla çanta düşüreceğini ayarlar. 0 ikisini de kapatır.\nKonteyner ganimeti bu değeri dünya yüklenirken okur."
+}

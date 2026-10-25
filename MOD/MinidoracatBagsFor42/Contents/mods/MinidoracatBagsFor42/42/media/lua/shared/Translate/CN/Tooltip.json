@@ -1,0 +1,6 @@
+{
+    "Tooltip_MDB_UpgradeBagTier1": "背包要在第 0 阶，而且不能穿在身上，里面的东西不用拿出来。最高阶由服务器设定。",
+    "Tooltip_MDB_UpgradeBagTier2": "背包要在第 1 阶，而且不能穿在身上，里面的东西不用拿出来。最高阶由服务器设定。",
+    "Tooltip_MDB_UpgradeBagTier3": "背包要在第 2 阶，而且不能穿在身上，里面的东西不用拿出来。最高阶由服务器设定。",
+    "Tooltip_MDB_LegacyBag": "旧 Plus 背包：东西只能取出、不能放入。清空后，可以用针和线改装成新背包。"
+}

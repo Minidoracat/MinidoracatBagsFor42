@@ -1,0 +1,424 @@
+/* MinidoracatBags 配方：14 條製作、3 條升級。改裝舊背包的配方在 Legacy 的檔案。
+   線材照原版寫 tags[base:thread]，只扣用量；布捲同原版 SewClothSatchel（recipes_tailoring.txt:100）按用量扣。 */
+module MinidoracatBags
+{
+    imports
+    {
+        Base
+    }
+
+    craftRecipe MDB_MakeToolBeltPouch_Navy
+    {
+        timedAction = SewingCloth,
+        time = 200,
+        xpAward = Tailoring:15,
+        AllowBatchCraft = false,
+        Tags = AnySurfaceCraft,
+        category = Tailoring,
+        SkillRequired = Tailoring:2,
+        inputs
+        {
+            item 1 tags[base:scissors] mode:keep flags[IsNotDull;MayDegradeLight],
+            item 1 tags[base:sewingneedle] mode:keep flags[MayDegradeLight],
+            item 2 tags[base:thread],
+            item 2 [Base.FabricRoll_DenimBlack;Base.FabricRoll_DenimDarkBlue],
+            item 1 [Base.Buckle],
+        }
+        outputs
+        {
+            item 1 MinidoracatBags.ToolBeltPouch_Navy,
+        }
+    }
+
+    craftRecipe MDB_MakeToolBeltPouch_Olive
+    {
+        timedAction = SewingCloth,
+        time = 200,
+        xpAward = Tailoring:15,
+        AllowBatchCraft = false,
+        Tags = AnySurfaceCraft,
+        category = Tailoring,
+        SkillRequired = Tailoring:2,
+        inputs
+        {
+            item 1 tags[base:scissors] mode:keep flags[IsNotDull;MayDegradeLight],
+            item 1 tags[base:sewingneedle] mode:keep flags[MayDegradeLight],
+            item 2 tags[base:thread],
+            item 2 [Base.TarpPiece],
+            item 1 [Base.Buckle],
+        }
+        outputs
+        {
+            item 1 MinidoracatBags.ToolBeltPouch_Olive,
+        }
+    }
+
+    craftRecipe MDB_MakeMedicHipPouch_Navy
+    {
+        timedAction = SewingCloth,
+        time = 200,
+        xpAward = Tailoring:15,
+        AllowBatchCraft = false,
+        Tags = AnySurfaceCraft,
+        category = Tailoring,
+        SkillRequired = Tailoring:2,
+        inputs
+        {
+            item 1 tags[base:scissors] mode:keep flags[IsNotDull;MayDegradeLight],
+            item 1 tags[base:sewingneedle] mode:keep flags[MayDegradeLight],
+            item 2 tags[base:thread],
+            item 2 [Base.FabricRoll_DenimBlack;Base.FabricRoll_DenimDarkBlue],
+            item 2 [Base.Button],
+        }
+        outputs
+        {
+            item 1 MinidoracatBags.MedicHipPouch_Navy,
+        }
+    }
+
+    craftRecipe MDB_MakeMedicHipPouch_Olive
+    {
+        timedAction = SewingCloth,
+        time = 200,
+        xpAward = Tailoring:15,
+        AllowBatchCraft = false,
+        Tags = AnySurfaceCraft,
+        category = Tailoring,
+        SkillRequired = Tailoring:2,
+        inputs
+        {
+            item 1 tags[base:scissors] mode:keep flags[IsNotDull;MayDegradeLight],
+            item 1 tags[base:sewingneedle] mode:keep flags[MayDegradeLight],
+            item 2 tags[base:thread],
+            item 2 [Base.TarpPiece],
+            item 2 [Base.Button],
+        }
+        outputs
+        {
+            item 1 MinidoracatBags.MedicHipPouch_Olive,
+        }
+    }
+
+    craftRecipe MDB_MakeCourierSatchel_Navy
+    {
+        timedAction = SewingCloth,
+        time = 200,
+        xpAward = Tailoring:20,
+        AllowBatchCraft = false,
+        Tags = AnySurfaceCraft,
+        category = Tailoring,
+        SkillRequired = Tailoring:3,
+        inputs
+        {
+            item 1 tags[base:scissors] mode:keep flags[IsNotDull;MayDegradeLight],
+            item 1 tags[base:sewingneedle] mode:keep flags[MayDegradeLight],
+            item 2 tags[base:thread],
+            item 3 [Base.FabricRoll_DenimBlack;Base.FabricRoll_DenimDarkBlue],
+            item 2 [Base.Buckle],
+        }
+        outputs
+        {
+            item 1 MinidoracatBags.CourierSatchel_Navy,
+        }
+    }
+
+    craftRecipe MDB_MakeCourierSatchel_Olive
+    {
+        timedAction = SewingCloth,
+        time = 200,
+        xpAward = Tailoring:20,
+        AllowBatchCraft = false,
+        Tags = AnySurfaceCraft,
+        category = Tailoring,
+        SkillRequired = Tailoring:3,
+        inputs
+        {
+            item 1 tags[base:scissors] mode:keep flags[IsNotDull;MayDegradeLight],
+            item 1 tags[base:sewingneedle] mode:keep flags[MayDegradeLight],
+            item 2 tags[base:thread],
+            item 3 [Base.TarpPiece],
+            item 2 [Base.Buckle],
+        }
+        outputs
+        {
+            item 1 MinidoracatBags.CourierSatchel_Olive,
+        }
+    }
+
+    craftRecipe MDB_MakeAmmoBandolier_Navy
+    {
+        timedAction = SewingCloth,
+        time = 300,
+        xpAward = Tailoring:25,
+        AllowBatchCraft = false,
+        Tags = AnySurfaceCraft,
+        category = Tailoring,
+        SkillRequired = Tailoring:3,
+        inputs
+        {
+            item 1 tags[base:scissors] mode:keep flags[IsNotDull;MayDegradeLight],
+            item 1 tags[base:sewingneedle] mode:keep flags[MayDegradeLight],
+            item 3 tags[base:thread],
+            item 2 [Base.FabricRoll_DenimBlack;Base.FabricRoll_DenimDarkBlue],
+            item 2 [Base.Buckle],
+            item 3 [Base.DenimStrips],
+        }
+        outputs
+        {
+            item 1 MinidoracatBags.AmmoBandolier_Navy,
+        }
+    }
+
+    craftRecipe MDB_MakeAmmoBandolier_Olive
+    {
+        timedAction = SewingCloth,
+        time = 300,
+        xpAward = Tailoring:25,
+        AllowBatchCraft = false,
+        Tags = AnySurfaceCraft,
+        category = Tailoring,
+        SkillRequired = Tailoring:3,
+        inputs
+        {
+            item 1 tags[base:scissors] mode:keep flags[IsNotDull;MayDegradeLight],
+            item 1 tags[base:sewingneedle] mode:keep flags[MayDegradeLight],
+            item 3 tags[base:thread],
+            item 2 [Base.TarpPiece],
+            item 2 [Base.Buckle],
+            item 3 [Base.DenimStrips],
+        }
+        outputs
+        {
+            item 1 MinidoracatBags.AmmoBandolier_Olive,
+        }
+    }
+
+    craftRecipe MDB_MakeScoutChestRig_Navy
+    {
+        timedAction = SewingCloth,
+        time = 200,
+        xpAward = Tailoring:35,
+        AllowBatchCraft = false,
+        Tags = AnySurfaceCraft,
+        category = Tailoring,
+        SkillRequired = Tailoring:4,
+        inputs
+        {
+            item 1 tags[base:scissors] mode:keep flags[IsNotDull;MayDegradeLight],
+            item 1 tags[base:sewingneedle] mode:keep flags[MayDegradeLight],
+            item 4 tags[base:thread],
+            item 3 [Base.FabricRoll_DenimBlack;Base.FabricRoll_DenimDarkBlue],
+            item 3 [Base.Buckle],
+            item 3 [Base.DenimStrips],
+        }
+        outputs
+        {
+            item 1 MinidoracatBags.ScoutChestRig_Navy,
+        }
+    }
+
+    craftRecipe MDB_MakeScoutChestRig_Olive
+    {
+        timedAction = SewingCloth,
+        time = 200,
+        xpAward = Tailoring:35,
+        AllowBatchCraft = false,
+        Tags = AnySurfaceCraft,
+        category = Tailoring,
+        SkillRequired = Tailoring:4,
+        inputs
+        {
+            item 1 tags[base:scissors] mode:keep flags[IsNotDull;MayDegradeLight],
+            item 1 tags[base:sewingneedle] mode:keep flags[MayDegradeLight],
+            item 4 tags[base:thread],
+            item 3 [Base.TarpPiece],
+            item 3 [Base.Buckle],
+            item 3 [Base.DenimStrips],
+        }
+        outputs
+        {
+            item 1 MinidoracatBags.ScoutChestRig_Olive,
+        }
+    }
+
+    craftRecipe MDB_MakeDayPack_Navy
+    {
+        timedAction = SewingCloth,
+        time = 200,
+        xpAward = Tailoring:40,
+        AllowBatchCraft = false,
+        Tags = AnySurfaceCraft,
+        category = Tailoring,
+        SkillRequired = Tailoring:4,
+        inputs
+        {
+            item 1 tags[base:scissors] mode:keep flags[IsNotDull;MayDegradeLight],
+            item 1 tags[base:sewingneedle] mode:keep flags[MayDegradeLight],
+            item 4 tags[base:thread],
+            item 4 [Base.FabricRoll_DenimBlack;Base.FabricRoll_DenimDarkBlue],
+            item 3 [Base.Buckle],
+            item 4 [Base.DenimStrips],
+        }
+        outputs
+        {
+            item 1 MinidoracatBags.DayPack_Navy,
+        }
+    }
+
+    craftRecipe MDB_MakeDayPack_Olive
+    {
+        timedAction = SewingCloth,
+        time = 200,
+        xpAward = Tailoring:40,
+        AllowBatchCraft = false,
+        Tags = AnySurfaceCraft,
+        category = Tailoring,
+        SkillRequired = Tailoring:4,
+        inputs
+        {
+            item 1 tags[base:scissors] mode:keep flags[IsNotDull;MayDegradeLight],
+            item 1 tags[base:sewingneedle] mode:keep flags[MayDegradeLight],
+            item 4 tags[base:thread],
+            item 4 [Base.TarpPiece],
+            item 3 [Base.Buckle],
+            item 4 [Base.DenimStrips],
+        }
+        outputs
+        {
+            item 1 MinidoracatBags.DayPack_Olive,
+        }
+    }
+
+    craftRecipe MDB_MakeExpeditionPack_Navy
+    {
+        timedAction = SewingCloth,
+        time = 300,
+        xpAward = Tailoring:55,
+        AllowBatchCraft = false,
+        Tags = AnySurfaceCraft,
+        category = Tailoring,
+        SkillRequired = Tailoring:5,
+        inputs
+        {
+            item 1 tags[base:scissors] mode:keep flags[IsNotDull;MayDegradeLight],
+            item 1 tags[base:sewingneedle] mode:keep flags[MayDegradeLight],
+            item 1 tags[base:awl] mode:keep flags[MayDegradeLight],
+            item 6 tags[base:thread],
+            item 6 [Base.FabricRoll_DenimBlack;Base.FabricRoll_DenimDarkBlue],
+            item 4 [Base.Buckle],
+            item 4 [Base.LeatherStrips],
+            item 1 [Base.PackFrame],
+        }
+        outputs
+        {
+            item 1 MinidoracatBags.ExpeditionPack_Navy,
+        }
+    }
+
+    craftRecipe MDB_MakeExpeditionPack_Olive
+    {
+        timedAction = SewingCloth,
+        time = 300,
+        xpAward = Tailoring:55,
+        AllowBatchCraft = false,
+        Tags = AnySurfaceCraft,
+        category = Tailoring,
+        SkillRequired = Tailoring:5,
+        inputs
+        {
+            item 1 tags[base:scissors] mode:keep flags[IsNotDull;MayDegradeLight],
+            item 1 tags[base:sewingneedle] mode:keep flags[MayDegradeLight],
+            item 1 tags[base:awl] mode:keep flags[MayDegradeLight],
+            item 6 tags[base:thread],
+            item 6 [Base.TarpPiece],
+            item 4 [Base.Buckle],
+            item 4 [Base.LeatherStrips],
+            item 1 [Base.PackFrame],
+        }
+        outputs
+        {
+            item 1 MinidoracatBags.ExpeditionPack_Olive,
+        }
+    }
+
+    /* 升級：背包當 keep 輸入（不能穿著），只消耗材料；OnTest 只放行「目前階級＝本階減 1」且本階不超過 MaxTier 的背包。
+       背包清單＝原版所有可穿戴、沒有 AcceptItemFunction 的容器（不含 ManPackRadio），加上 14 件新背包；舊 BUP 外殼不在內。 */
+    craftRecipe MDB_UpgradeBagTier1
+    {
+        timedAction = SewingCloth,
+        time = 200,
+        xpAward = Tailoring:15,
+        AllowBatchCraft = false,
+        Tags = AnySurfaceCraft,
+        category = Tailoring,
+        SkillRequired = Tailoring:2,
+        Tooltip = Tooltip_MDB_UpgradeBagTier1,
+        OnTest = MDB.onTestTier1,
+        OnCreate = MDB.onUpgrade,
+        inputs
+        {
+            item 1 [Base.Bag_ALICE_BeltSus;Base.Bag_ALICE_BeltSus_Camo;Base.Bag_ALICE_BeltSus_Green;Base.Bag_ALICEpack;Base.Bag_ALICEpack_Army;Base.Bag_ALICEpack_DesertCamo;Base.Bag_BaseballBag;Base.Bag_BigHikingBag;Base.Bag_BigHikingBag_Travel;Base.Bag_BreakdownBag;Base.Bag_BurglarBag;Base.Bag_ChestRig;Base.Bag_ChestRig_Tarp;Base.Bag_ClothSatchel_Burlap;Base.Bag_ClothSatchel_Cotton;Base.Bag_ClothSatchel_Denim;Base.Bag_ClothSatchel_DenimBlack;Base.Bag_ClothSatchel_DenimLight;Base.Bag_CraftedFramepack_Large;Base.Bag_CraftedFramepack_Large2;Base.Bag_CraftedFramepack_Large3;Base.Bag_CraftedFramepack_Small;Base.Bag_CrudeLeatherBag;Base.Bag_CrudeTarpBag;Base.Bag_DuffelBag;Base.Bag_DuffelBagTINT;Base.Bag_FannyPackBack;Base.Bag_FannyPackBack_Hide;Base.Bag_FannyPackBack_Tarp;Base.Bag_FannyPackFront;Base.Bag_FannyPackFront_Hide;Base.Bag_FannyPackFront_Tarp;Base.Bag_FishingBasket;Base.Bag_FoodCanned;Base.Bag_FoodSnacks;Base.Bag_GolfBag;Base.Bag_GolfBag_Melee;Base.Bag_HideSatchel;Base.Bag_HideSlingBag;Base.Bag_HikingBag_Travel;Base.Bag_HydrationBackpack;Base.Bag_HydrationBackpack_Camo;Base.Bag_InmateEscapedBag;Base.Bag_MedicalBag;Base.Bag_Military;Base.Bag_MoneyBag;Base.Bag_NormalHikingBag;Base.Bag_Police;Base.Bag_RifleCaseCloth;Base.Bag_RifleCaseCloth2;Base.Bag_RifleCaseClothCamo;Base.Bag_SWAT;Base.Bag_Satchel;Base.Bag_SatchelPhoto;Base.Bag_Satchel_Fishing;Base.Bag_Satchel_Leather;Base.Bag_Satchel_Mail;Base.Bag_Satchel_Medical;Base.Bag_Satchel_Military;Base.Bag_Schoolbag;Base.Bag_Schoolbag_Kids;Base.Bag_Schoolbag_Medical;Base.Bag_Schoolbag_Patches;Base.Bag_Schoolbag_Travel;Base.Bag_SheetSlingBag;Base.Bag_Sheriff;Base.Bag_ShotgunBag;Base.Bag_ShotgunCaseCloth;Base.Bag_ShotgunCaseCloth2;Base.Bag_ShotgunDblBag;Base.Bag_ShotgunDblSawnoffBag;Base.Bag_ShotgunSawnoffBag;Base.Bag_SurvivorBag;Base.Bag_TarpFramepack_Large;Base.Bag_TarpFramepack_Small;Base.Bag_TarpSlingBag;Base.Bag_TennisBag;Base.Bag_ToolBag;Base.Bag_WeaponBag;Base.Bag_WorkerBag;MinidoracatBags.ToolBeltPouch_Navy;MinidoracatBags.ToolBeltPouch_Olive;MinidoracatBags.MedicHipPouch_Navy;MinidoracatBags.MedicHipPouch_Olive;MinidoracatBags.AmmoBandolier_Navy;MinidoracatBags.AmmoBandolier_Olive;MinidoracatBags.CourierSatchel_Navy;MinidoracatBags.CourierSatchel_Olive;MinidoracatBags.DayPack_Navy;MinidoracatBags.DayPack_Olive;MinidoracatBags.ExpeditionPack_Navy;MinidoracatBags.ExpeditionPack_Olive;MinidoracatBags.ScoutChestRig_Navy;MinidoracatBags.ScoutChestRig_Olive] mode:keep flags[IsNotWorn],
+            item 1 tags[base:scissors] mode:keep flags[IsNotDull;MayDegradeLight],
+            item 1 tags[base:sewingneedle] mode:keep flags[MayDegradeLight],
+            item 2 tags[base:thread],
+            item 4 [Base.DenimStrips],
+        }
+        outputs
+        {
+        }
+    }
+
+    craftRecipe MDB_UpgradeBagTier2
+    {
+        timedAction = SewingCloth,
+        time = 200,
+        xpAward = Tailoring:25,
+        AllowBatchCraft = false,
+        Tags = AnySurfaceCraft,
+        category = Tailoring,
+        SkillRequired = Tailoring:3,
+        Tooltip = Tooltip_MDB_UpgradeBagTier2,
+        OnTest = MDB.onTestTier2,
+        OnCreate = MDB.onUpgrade,
+        inputs
+        {
+            item 1 [Base.Bag_ALICE_BeltSus;Base.Bag_ALICE_BeltSus_Camo;Base.Bag_ALICE_BeltSus_Green;Base.Bag_ALICEpack;Base.Bag_ALICEpack_Army;Base.Bag_ALICEpack_DesertCamo;Base.Bag_BaseballBag;Base.Bag_BigHikingBag;Base.Bag_BigHikingBag_Travel;Base.Bag_BreakdownBag;Base.Bag_BurglarBag;Base.Bag_ChestRig;Base.Bag_ChestRig_Tarp;Base.Bag_ClothSatchel_Burlap;Base.Bag_ClothSatchel_Cotton;Base.Bag_ClothSatchel_Denim;Base.Bag_ClothSatchel_DenimBlack;Base.Bag_ClothSatchel_DenimLight;Base.Bag_CraftedFramepack_Large;Base.Bag_CraftedFramepack_Large2;Base.Bag_CraftedFramepack_Large3;Base.Bag_CraftedFramepack_Small;Base.Bag_CrudeLeatherBag;Base.Bag_CrudeTarpBag;Base.Bag_DuffelBag;Base.Bag_DuffelBagTINT;Base.Bag_FannyPackBack;Base.Bag_FannyPackBack_Hide;Base.Bag_FannyPackBack_Tarp;Base.Bag_FannyPackFront;Base.Bag_FannyPackFront_Hide;Base.Bag_FannyPackFront_Tarp;Base.Bag_FishingBasket;Base.Bag_FoodCanned;Base.Bag_FoodSnacks;Base.Bag_GolfBag;Base.Bag_GolfBag_Melee;Base.Bag_HideSatchel;Base.Bag_HideSlingBag;Base.Bag_HikingBag_Travel;Base.Bag_HydrationBackpack;Base.Bag_HydrationBackpack_Camo;Base.Bag_InmateEscapedBag;Base.Bag_MedicalBag;Base.Bag_Military;Base.Bag_MoneyBag;Base.Bag_NormalHikingBag;Base.Bag_Police;Base.Bag_RifleCaseCloth;Base.Bag_RifleCaseCloth2;Base.Bag_RifleCaseClothCamo;Base.Bag_SWAT;Base.Bag_Satchel;Base.Bag_SatchelPhoto;Base.Bag_Satchel_Fishing;Base.Bag_Satchel_Leather;Base.Bag_Satchel_Mail;Base.Bag_Satchel_Medical;Base.Bag_Satchel_Military;Base.Bag_Schoolbag;Base.Bag_Schoolbag_Kids;Base.Bag_Schoolbag_Medical;Base.Bag_Schoolbag_Patches;Base.Bag_Schoolbag_Travel;Base.Bag_SheetSlingBag;Base.Bag_Sheriff;Base.Bag_ShotgunBag;Base.Bag_ShotgunCaseCloth;Base.Bag_ShotgunCaseCloth2;Base.Bag_ShotgunDblBag;Base.Bag_ShotgunDblSawnoffBag;Base.Bag_ShotgunSawnoffBag;Base.Bag_SurvivorBag;Base.Bag_TarpFramepack_Large;Base.Bag_TarpFramepack_Small;Base.Bag_TarpSlingBag;Base.Bag_TennisBag;Base.Bag_ToolBag;Base.Bag_WeaponBag;Base.Bag_WorkerBag;MinidoracatBags.ToolBeltPouch_Navy;MinidoracatBags.ToolBeltPouch_Olive;MinidoracatBags.MedicHipPouch_Navy;MinidoracatBags.MedicHipPouch_Olive;MinidoracatBags.AmmoBandolier_Navy;MinidoracatBags.AmmoBandolier_Olive;MinidoracatBags.CourierSatchel_Navy;MinidoracatBags.CourierSatchel_Olive;MinidoracatBags.DayPack_Navy;MinidoracatBags.DayPack_Olive;MinidoracatBags.ExpeditionPack_Navy;MinidoracatBags.ExpeditionPack_Olive;MinidoracatBags.ScoutChestRig_Navy;MinidoracatBags.ScoutChestRig_Olive] mode:keep flags[IsNotWorn],
+            item 1 tags[base:scissors] mode:keep flags[IsNotDull;MayDegradeLight],
+            item 1 tags[base:sewingneedle] mode:keep flags[MayDegradeLight],
+            item 4 tags[base:thread],
+            item 4 [Base.LeatherStrips],
+            item 1 [Base.Buckle],
+        }
+        outputs
+        {
+        }
+    }
+
+    craftRecipe MDB_UpgradeBagTier3
+    {
+        timedAction = SewingCloth,
+        time = 200,
+        xpAward = Tailoring:40,
+        AllowBatchCraft = false,
+        Tags = AnySurfaceCraft,
+        category = Tailoring,
+        SkillRequired = Tailoring:4,
+        Tooltip = Tooltip_MDB_UpgradeBagTier3,
+        OnTest = MDB.onTestTier3,
+        OnCreate = MDB.onUpgrade,
+        inputs
+        {
+            item 1 [Base.Bag_ALICE_BeltSus;Base.Bag_ALICE_BeltSus_Camo;Base.Bag_ALICE_BeltSus_Green;Base.Bag_ALICEpack;Base.Bag_ALICEpack_Army;Base.Bag_ALICEpack_DesertCamo;Base.Bag_BaseballBag;Base.Bag_BigHikingBag;Base.Bag_BigHikingBag_Travel;Base.Bag_BreakdownBag;Base.Bag_BurglarBag;Base.Bag_ChestRig;Base.Bag_ChestRig_Tarp;Base.Bag_ClothSatchel_Burlap;Base.Bag_ClothSatchel_Cotton;Base.Bag_ClothSatchel_Denim;Base.Bag_ClothSatchel_DenimBlack;Base.Bag_ClothSatchel_DenimLight;Base.Bag_CraftedFramepack_Large;Base.Bag_CraftedFramepack_Large2;Base.Bag_CraftedFramepack_Large3;Base.Bag_CraftedFramepack_Small;Base.Bag_CrudeLeatherBag;Base.Bag_CrudeTarpBag;Base.Bag_DuffelBag;Base.Bag_DuffelBagTINT;Base.Bag_FannyPackBack;Base.Bag_FannyPackBack_Hide;Base.Bag_FannyPackBack_Tarp;Base.Bag_FannyPackFront;Base.Bag_FannyPackFront_Hide;Base.Bag_FannyPackFront_Tarp;Base.Bag_FishingBasket;Base.Bag_FoodCanned;Base.Bag_FoodSnacks;Base.Bag_GolfBag;Base.Bag_GolfBag_Melee;Base.Bag_HideSatchel;Base.Bag_HideSlingBag;Base.Bag_HikingBag_Travel;Base.Bag_HydrationBackpack;Base.Bag_HydrationBackpack_Camo;Base.Bag_InmateEscapedBag;Base.Bag_MedicalBag;Base.Bag_Military;Base.Bag_MoneyBag;Base.Bag_NormalHikingBag;Base.Bag_Police;Base.Bag_RifleCaseCloth;Base.Bag_RifleCaseCloth2;Base.Bag_RifleCaseClothCamo;Base.Bag_SWAT;Base.Bag_Satchel;Base.Bag_SatchelPhoto;Base.Bag_Satchel_Fishing;Base.Bag_Satchel_Leather;Base.Bag_Satchel_Mail;Base.Bag_Satchel_Medical;Base.Bag_Satchel_Military;Base.Bag_Schoolbag;Base.Bag_Schoolbag_Kids;Base.Bag_Schoolbag_Medical;Base.Bag_Schoolbag_Patches;Base.Bag_Schoolbag_Travel;Base.Bag_SheetSlingBag;Base.Bag_Sheriff;Base.Bag_ShotgunBag;Base.Bag_ShotgunCaseCloth;Base.Bag_ShotgunCaseCloth2;Base.Bag_ShotgunDblBag;Base.Bag_ShotgunDblSawnoffBag;Base.Bag_ShotgunSawnoffBag;Base.Bag_SurvivorBag;Base.Bag_TarpFramepack_Large;Base.Bag_TarpFramepack_Small;Base.Bag_TarpSlingBag;Base.Bag_TennisBag;Base.Bag_ToolBag;Base.Bag_WeaponBag;Base.Bag_WorkerBag;MinidoracatBags.ToolBeltPouch_Navy;MinidoracatBags.ToolBeltPouch_Olive;MinidoracatBags.MedicHipPouch_Navy;MinidoracatBags.MedicHipPouch_Olive;MinidoracatBags.AmmoBandolier_Navy;MinidoracatBags.AmmoBandolier_Olive;MinidoracatBags.CourierSatchel_Navy;MinidoracatBags.CourierSatchel_Olive;MinidoracatBags.DayPack_Navy;MinidoracatBags.DayPack_Olive;MinidoracatBags.ExpeditionPack_Navy;MinidoracatBags.ExpeditionPack_Olive;MinidoracatBags.ScoutChestRig_Navy;MinidoracatBags.ScoutChestRig_Olive] mode:keep flags[IsNotWorn],
+            item 1 tags[base:scissors] mode:keep flags[IsNotDull;MayDegradeLight],
+            item 1 tags[base:sewingneedle] mode:keep flags[MayDegradeLight],
+            item 6 tags[base:thread],
+            item 6 [Base.LeatherStrips],
+            item 2 [Base.Buckle],
+            item 2 [Base.Button],
+        }
+        outputs
+        {
+        }
+    }
+
+}

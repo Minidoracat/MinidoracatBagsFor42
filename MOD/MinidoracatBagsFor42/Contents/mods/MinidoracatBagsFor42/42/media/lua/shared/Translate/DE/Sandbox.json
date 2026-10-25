@@ -1,0 +1,15 @@
+{
+    "Sandbox_MinidoracatBags": "Taktische Taschen",
+    "Sandbox_MinidoracatBagsLockLegacyBags": "Alte Taschen aus Bag Upgrade Plus sperren",
+    "Sandbox_MinidoracatBagsLockLegacyBags_tooltip": "Wenn aktiv (Standard), kann man aus alten Taschen aus Spielständen mit Bag Upgrade Plus nur Gegenstände herausnehmen. Hineinlegen geht nicht. Spieler bauen sie mit einem Nährezept zu neuen Taschen um.\nDeaktiviere die Option, um sie wieder als normale Taschen zu nutzen.",
+    "Sandbox_MinidoracatBagsMaxTier": "Höchste Ausbaustufe",
+    "Sandbox_MinidoracatBagsMaxTier_tooltip": "Höchste Stufe, die eine Tasche mit den Verstärkungsrezepten erreichen kann. 0 schaltet das Verstärken ab.\nUmgebaute alte Taschen starten direkt auf dieser Stufe.",
+    "Sandbox_MinidoracatBagsCapacityStepPercent": "Kapazitätszuwachs pro Stufe (Prozent)",
+    "Sandbox_MinidoracatBagsCapacityStepPercent_tooltip": "Jede Stufe fügt diesen Prozentsatz des ursprünglichen Fassungsvermögens der Tasche hinzu, auf eine ganze Zahl gerundet. Das Fassungsvermögen liegt nie über 50 minus dem Eigengewicht der Tasche.\nGilt für Taschen, die nach der Änderung verstärkt werden.",
+    "Sandbox_MinidoracatBagsWeightReductionStep": "Gewichtsreduktion pro Stufe",
+    "Sandbox_MinidoracatBagsWeightReductionStep_tooltip": "Jede Stufe fügt so viel Gewichtsreduktion hinzu, bis zur maximalen Gewichtsreduktion unten.\nGilt für Taschen, die nach der Änderung verstärkt werden.",
+    "Sandbox_MinidoracatBagsMaxWeightReduction": "Maximale Gewichtsreduktion",
+    "Sandbox_MinidoracatBagsMaxWeightReduction_tooltip": "Verstärkte und umgebaute Taschen kommen nie über diese Gewichtsreduktion.",
+    "Sandbox_MinidoracatBagsLootMultiplier": "Multiplikator für Beute und Zombie-Drops",
+    "Sandbox_MinidoracatBagsLootMultiplier_tooltip": "Legt fest, wie oft die neuen Taschen in Polizei-, Militär- und Sanitätsbehältern auftauchen und wie oft Polizei-, Soldaten- und Sanitäter-Zombies eine fallen lassen. 0 schaltet beides ab.\nDie Behälterbeute liest diesen Wert beim Laden der Welt."
+}

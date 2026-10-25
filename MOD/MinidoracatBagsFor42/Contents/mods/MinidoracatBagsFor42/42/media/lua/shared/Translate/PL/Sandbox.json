@@ -1,0 +1,15 @@
+{
+    "Sandbox_MinidoracatBags": "Torby taktyczne",
+    "Sandbox_MinidoracatBagsLockLegacyBags": "Zablokuj stare torby Bag Upgrade Plus",
+    "Sandbox_MinidoracatBagsLockLegacyBags_tooltip": "Gdy włączone (domyślnie), ze starych toreb z zapisów z Bag Upgrade Plus można tylko wyjmować przedmioty. Nie da się nic do nich włożyć. Gracze przerabiają je na nowe torby przepisem krawieckim.\nWyłącz, aby znów używać ich jak zwykłych toreb.",
+    "Sandbox_MinidoracatBagsMaxTier": "Najwyższy poziom ulepszenia",
+    "Sandbox_MinidoracatBagsMaxTier_tooltip": "Najwyższy poziom, jaki torba może osiągnąć dzięki przepisom Wzmocnij torbę. 0 wyłącza ulepszanie.\nPrzerobione stare torby od razu mają ten poziom.",
+    "Sandbox_MinidoracatBagsCapacityStepPercent": "Przyrost pojemności na poziom (procent)",
+    "Sandbox_MinidoracatBagsCapacityStepPercent_tooltip": "Każdy poziom dodaje ten procent pierwotnej pojemności torby, zaokrąglony do najbliższej liczby całkowitej. Pojemność nigdy nie przekracza 50 minus waga samej torby.\nDotyczy toreb ulepszonych po zmianie.",
+    "Sandbox_MinidoracatBagsWeightReductionStep": "Przyrost redukcji obciążenia na poziom",
+    "Sandbox_MinidoracatBagsWeightReductionStep_tooltip": "Każdy poziom dodaje tyle redukcji obciążenia, aż do maksymalnej redukcji obciążenia poniżej.\nDotyczy toreb ulepszonych po zmianie.",
+    "Sandbox_MinidoracatBagsMaxWeightReduction": "Maksymalna redukcja obciążenia",
+    "Sandbox_MinidoracatBagsMaxWeightReduction_tooltip": "Ulepszone i przerobione torby nigdy nie przekraczają tej redukcji obciążenia.",
+    "Sandbox_MinidoracatBagsLootMultiplier": "Mnożnik łupów i przedmiotów z zombie",
+    "Sandbox_MinidoracatBagsLootMultiplier_tooltip": "Określa, jak często nowe torby pojawiają się w policyjnych, wojskowych i medycznych pojemnikach oraz jak często zombie policjantów, żołnierzy i medyków je upuszczają. 0 wyłącza jedno i drugie.\nŁupy w pojemnikach odczytują tę wartość przy wczytywaniu świata."
+}

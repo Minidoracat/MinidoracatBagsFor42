@@ -1,0 +1,333 @@
+/* MinidoracatBags 新背包：7 款 × S.T.A.R.S.（_Navy）／保護傘（_Olive）。
+   外觀暫時：Icon、WorldStaticModel、手持模型與 ClothingItem 的模型貼圖都先借原版替代款，自製模型完成後替換。
+   ClothingItem 名稱一律 MDB_<型號>_<外觀>，不沿用原版名稱（ScriptManager.java:1883-1891 名稱反查會被覆蓋）。 */
+module MinidoracatBags
+{
+    imports
+    {
+        Base
+    }
+
+    /* 外觀暫時借用原版 Base.Bag_FannyPackFront */
+    item ToolBeltPouch_Navy
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        Weight = 0.3,
+        Icon = FannyPack,
+        CanBeEquipped = base:fannypackfront,
+        CanHaveHoles = false,
+        Capacity = 3,
+        WeightReduction = 80,
+        RunSpeedModifier = 0.98,
+        ClothingItem = MDB_ToolBeltPouch_Navy,
+        BodyLocation = base:fannypackfront,
+        CloseSound = CloseLeatherBag,
+        EquipSound = EquipFannyPack,
+        OpenSound = OpenLeatherBag,
+        PutInSound = StoreItemLeatherBag,
+        WorldStaticModel = FannyPack_Ground,
+    }
+
+    /* 外觀暫時借用原版 Base.Bag_FannyPackFront */
+    item ToolBeltPouch_Olive
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        Weight = 0.3,
+        Icon = FannyPack,
+        CanBeEquipped = base:fannypackfront,
+        CanHaveHoles = false,
+        Capacity = 3,
+        WeightReduction = 80,
+        RunSpeedModifier = 0.98,
+        ClothingItem = MDB_ToolBeltPouch_Olive,
+        BodyLocation = base:fannypackfront,
+        CloseSound = CloseLeatherBag,
+        EquipSound = EquipFannyPack,
+        OpenSound = OpenLeatherBag,
+        PutInSound = StoreItemLeatherBag,
+        WorldStaticModel = FannyPack_Ground,
+    }
+
+    /* 外觀暫時借用原版 Base.Bag_FannyPackBack */
+    item MedicHipPouch_Navy
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        Weight = 0.3,
+        Icon = FannyPack,
+        CanBeEquipped = base:fannypackback,
+        CanHaveHoles = false,
+        Capacity = 4,
+        WeightReduction = 85,
+        RunSpeedModifier = 0.99,
+        ClothingItem = MDB_MedicHipPouch_Navy,
+        BodyLocation = base:fannypackback,
+        CloseSound = CloseLeatherBag,
+        EquipSound = EquipFannyPack,
+        OpenSound = OpenLeatherBag,
+        PutInSound = StoreItemLeatherBag,
+        WorldStaticModel = FannyPack_Ground,
+        AcceptItemFunction = MDB.acceptFirstAid,
+    }
+
+    /* 外觀暫時借用原版 Base.Bag_FannyPackBack */
+    item MedicHipPouch_Olive
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        Weight = 0.3,
+        Icon = FannyPack,
+        CanBeEquipped = base:fannypackback,
+        CanHaveHoles = false,
+        Capacity = 4,
+        WeightReduction = 85,
+        RunSpeedModifier = 0.99,
+        ClothingItem = MDB_MedicHipPouch_Olive,
+        BodyLocation = base:fannypackback,
+        CloseSound = CloseLeatherBag,
+        EquipSound = EquipFannyPack,
+        OpenSound = OpenLeatherBag,
+        PutInSound = StoreItemLeatherBag,
+        WorldStaticModel = FannyPack_Ground,
+        AcceptItemFunction = MDB.acceptFirstAid,
+    }
+
+    /* 外觀暫時借用原版 Base.AmmoStrap_Shells */
+    item AmmoBandolier_Navy
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        Weight = 0.3,
+        Icon = AmmoStrap,
+        CanBeEquipped = base:ammostrap,
+        CanHaveHoles = false,
+        Capacity = 4,
+        WeightReduction = 85,
+        RunSpeedModifier = 0.98,
+        ClothingItem = MDB_AmmoBandolier_Navy,
+        BodyLocation = base:ammostrap,
+        CloseSound = CloseShellsBandolier,
+        OpenSound = OpenShellsBandolier,
+        PutInSound = StoreItemShellsBandolier,
+        WorldStaticModel = AmmoStrap_Ground_Shells,
+        AcceptItemFunction = MDB.acceptAmmo,
+        Tags = base:reloadfastbullets;base:reloadfastmagazines;base:reloadfastshells,
+    }
+
+    /* 外觀暫時借用原版 Base.AmmoStrap_Shells */
+    item AmmoBandolier_Olive
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        Weight = 0.3,
+        Icon = AmmoStrap,
+        CanBeEquipped = base:ammostrap,
+        CanHaveHoles = false,
+        Capacity = 4,
+        WeightReduction = 85,
+        RunSpeedModifier = 0.98,
+        ClothingItem = MDB_AmmoBandolier_Olive,
+        BodyLocation = base:ammostrap,
+        CloseSound = CloseShellsBandolier,
+        OpenSound = OpenShellsBandolier,
+        PutInSound = StoreItemShellsBandolier,
+        WorldStaticModel = AmmoStrap_Ground_Shells,
+        AcceptItemFunction = MDB.acceptAmmo,
+        Tags = base:reloadfastbullets;base:reloadfastmagazines;base:reloadfastshells,
+    }
+
+    /* 外觀暫時借用原版 Base.Bag_Satchel_Military */
+    item CourierSatchel_Navy
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        Weight = 0.6,
+        Icon = Satchel_Military,
+        CanBeEquipped = base:satchel,
+        CanHaveHoles = false,
+        Capacity = 14,
+        WeightReduction = 70,
+        RunSpeedModifier = 0.99,
+        ClothingItem = MDB_CourierSatchel_Navy,
+        BloodLocation = Bag,
+        CloseSound = CloseSatchelMilitary,
+        EquipSound = EquipSatchel,
+        OpenSound = OpenSatchelMilitary,
+        PutInSound = StoreItemSatchelMilitary,
+        ReplaceInPrimaryHand = Bag_Satchel_Military_RHand holdingbagright,
+        ReplaceInSecondHand = Bag_Satchel_Military_LHand holdingbagleft,
+        WorldStaticModel = Satchel_Military_Ground,
+    }
+
+    /* 外觀暫時借用原版 Base.Bag_Satchel_Military */
+    item CourierSatchel_Olive
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        Weight = 0.6,
+        Icon = Satchel_Military,
+        CanBeEquipped = base:satchel,
+        CanHaveHoles = false,
+        Capacity = 14,
+        WeightReduction = 70,
+        RunSpeedModifier = 0.99,
+        ClothingItem = MDB_CourierSatchel_Olive,
+        BloodLocation = Bag,
+        CloseSound = CloseSatchelMilitary,
+        EquipSound = EquipSatchel,
+        OpenSound = OpenSatchelMilitary,
+        PutInSound = StoreItemSatchelMilitary,
+        ReplaceInPrimaryHand = Bag_Satchel_Military_RHand holdingbagright,
+        ReplaceInSecondHand = Bag_Satchel_Military_LHand holdingbagleft,
+        WorldStaticModel = Satchel_Military_Ground,
+    }
+
+    /* 外觀暫時借用原版 Base.Bag_NormalHikingBag */
+    item DayPack_Navy
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        Weight = 0.8,
+        Icon = Hiking_Blue,
+        CanBeEquipped = base:back,
+        CanHaveHoles = false,
+        Capacity = 20,
+        WeightReduction = 75,
+        RunSpeedModifier = 0.97,
+        ClothingItem = MDB_DayPack_Navy,
+        AttachmentReplacement = Bag,
+        BloodLocation = Bag,
+        CloseSound = CloseBag,
+        EquipSound = EquipBackpackLarge,
+        OpenSound = OpenBag,
+        PutInSound = PutItemInBag,
+        ReplaceInPrimaryHand = Bag_HikingBag_RHand holdingbagright,
+        ReplaceInSecondHand = Bag_HikingBag_LHand holdingbagleft,
+        SoundParameter = EquippedBaggageContainer HikingBag,
+        WorldStaticModel = HikingBag_Ground,
+        AttachmentsProvided = BedrollBottom,
+    }
+
+    /* 外觀暫時借用原版 Base.Bag_NormalHikingBag */
+    item DayPack_Olive
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        Weight = 0.8,
+        Icon = Hiking_Green,
+        CanBeEquipped = base:back,
+        CanHaveHoles = false,
+        Capacity = 20,
+        WeightReduction = 75,
+        RunSpeedModifier = 0.97,
+        ClothingItem = MDB_DayPack_Olive,
+        AttachmentReplacement = Bag,
+        BloodLocation = Bag,
+        CloseSound = CloseBag,
+        EquipSound = EquipBackpackLarge,
+        OpenSound = OpenBag,
+        PutInSound = PutItemInBag,
+        ReplaceInPrimaryHand = Bag_HikingBag_RHand holdingbagright,
+        ReplaceInSecondHand = Bag_HikingBag_LHand holdingbagleft,
+        SoundParameter = EquippedBaggageContainer HikingBag,
+        WorldStaticModel = HikingBag_Ground,
+        AttachmentsProvided = BedrollBottom,
+    }
+
+    /* 外觀暫時借用原版 Base.Bag_BigHikingBag */
+    item ExpeditionPack_Navy
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        Weight = 1.2,
+        Icon = BigHiking_Blue,
+        CanBeEquipped = base:back,
+        CanHaveHoles = false,
+        Capacity = 30,
+        WeightReduction = 80,
+        RunSpeedModifier = 0.95,
+        ClothingItem = MDB_ExpeditionPack_Navy,
+        AttachmentReplacement = Bag,
+        BloodLocation = Bag,
+        CloseSound = CloseBag,
+        EquipSound = EquipBackpackLarge,
+        OpenSound = OpenBag,
+        PutInSound = PutItemInBag,
+        ReplaceInPrimaryHand = Bag_BigHikingBag_RHand holdingbagright,
+        ReplaceInSecondHand = Bag_BigHikingBag_LHand holdingbagleft,
+        SoundParameter = EquippedBaggageContainer HikingBag,
+        WorldStaticModel = BigHikingBag_Ground,
+        AttachmentsProvided = BedrollBottomBig,
+    }
+
+    /* 外觀暫時借用原版 Base.Bag_BigHikingBag */
+    item ExpeditionPack_Olive
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        Weight = 1.2,
+        Icon = BigHiking_Green,
+        CanBeEquipped = base:back,
+        CanHaveHoles = false,
+        Capacity = 30,
+        WeightReduction = 80,
+        RunSpeedModifier = 0.95,
+        ClothingItem = MDB_ExpeditionPack_Olive,
+        AttachmentReplacement = Bag,
+        BloodLocation = Bag,
+        CloseSound = CloseBag,
+        EquipSound = EquipBackpackLarge,
+        OpenSound = OpenBag,
+        PutInSound = PutItemInBag,
+        ReplaceInPrimaryHand = Bag_BigHikingBag_RHand holdingbagright,
+        ReplaceInSecondHand = Bag_BigHikingBag_LHand holdingbagleft,
+        SoundParameter = EquippedBaggageContainer HikingBag,
+        WorldStaticModel = BigHikingBag_Ground,
+        AttachmentsProvided = BedrollBottomBig,
+    }
+
+    /* 外觀暫時借用原版 Base.Bag_ChestRig */
+    item ScoutChestRig_Navy
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        Weight = 0.5,
+        Icon = ChestRig,
+        CanBeEquipped = base:webbing,
+        CanHaveHoles = false,
+        Capacity = 6,
+        WeightReduction = 85,
+        RunSpeedModifier = 0.98,
+        ClothingItem = MDB_ScoutChestRig_Navy,
+        BodyLocation = base:webbing,
+        CloseSound = CloseCargoVest,
+        OpenSound = OpenCargoVest,
+        PutInSound = StoreItemCargoVest,
+        WorldStaticModel = ChestRig_Ground,
+        MaxItemSize = 1.3,
+    }
+
+    /* 外觀暫時借用原版 Base.Bag_ChestRig */
+    item ScoutChestRig_Olive
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        Weight = 0.5,
+        Icon = ChestRig,
+        CanBeEquipped = base:webbing,
+        CanHaveHoles = false,
+        Capacity = 6,
+        WeightReduction = 85,
+        RunSpeedModifier = 0.98,
+        ClothingItem = MDB_ScoutChestRig_Olive,
+        BodyLocation = base:webbing,
+        CloseSound = CloseCargoVest,
+        OpenSound = OpenCargoVest,
+        PutInSound = StoreItemCargoVest,
+        WorldStaticModel = ChestRig_Ground,
+        MaxItemSize = 1.3,
+    }
+
+}

@@ -1,0 +1,15 @@
+{
+    "Sandbox_MinidoracatBags": "タクティカルバッグ",
+    "Sandbox_MinidoracatBagsLockLegacyBags": "旧 Bag Upgrade Plus のバッグをロックする",
+    "Sandbox_MinidoracatBagsLockLegacyBags_tooltip": "オン（初期値）の間、Bag Upgrade Plus のセーブに残った旧バッグは中身を取り出すことしかできず、何も入れられません。プレイヤーは裁縫レシピで新しいバッグに改造できます。\nオフにすると通常のバッグとして使えるようになります。",
+    "Sandbox_MinidoracatBagsMaxTier": "最高強化段階",
+    "Sandbox_MinidoracatBagsMaxTier_tooltip": "「バッグを強化」レシピで到達できる最高段階です。0 にすると強化できなくなります。\n改造した旧バッグは最初からこの段階になります。",
+    "Sandbox_MinidoracatBagsCapacityStepPercent": "段階ごとの容量増加（パーセント）",
+    "Sandbox_MinidoracatBagsCapacityStepPercent_tooltip": "1 段階ごとに、バッグ本来の容量のこの割合が加わり、整数に四捨五入されます。容量は 50 からバッグ自身の重さを引いた値を超えません。\n変更後に強化したバッグにだけ適用されます。",
+    "Sandbox_MinidoracatBagsWeightReductionStep": "段階ごとの負荷軽減の増加",
+    "Sandbox_MinidoracatBagsWeightReductionStep_tooltip": "1 段階ごとに負荷軽減がこの値だけ増え、下の「負荷軽減の上限」まで上がります。\n変更後に強化したバッグにだけ適用されます。",
+    "Sandbox_MinidoracatBagsMaxWeightReduction": "負荷軽減の上限",
+    "Sandbox_MinidoracatBagsMaxWeightReduction_tooltip": "強化・改造したバッグの負荷軽減はこの値を超えません。",
+    "Sandbox_MinidoracatBagsLootMultiplier": "戦利品・ゾンビドロップ倍率",
+    "Sandbox_MinidoracatBagsLootMultiplier_tooltip": "警察・軍事・医療関連のコンテナに新しいバッグが出る頻度と、警官・兵士・医療従事者のゾンビがバッグを落とす頻度を調整します。0 にすると両方オフになります。\nコンテナの戦利品はワールド読み込み時にこの値を読みます。"
+}

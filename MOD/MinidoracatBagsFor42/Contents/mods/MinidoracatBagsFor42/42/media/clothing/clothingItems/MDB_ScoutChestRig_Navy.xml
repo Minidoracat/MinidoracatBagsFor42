@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 外觀暫時：模型與貼圖借原版 Bag_ChestRig，自製模型完成後替換 -->
+<clothingItem>
+	<m_GUID>43f74460-443e-4450-a040-a69c5a74050f</m_GUID>
+	<m_MaleModel>media\models_X\Skinned\Clothes\Bob_ChestRig.x</m_MaleModel>
+	<m_FemaleModel>media\models_X\Skinned\Clothes\Kate_ChestRig.x</m_FemaleModel>
+	<m_AltMaleModel>media\models_X\Skinned\Clothes\Bob_ChestRig_ALT.x</m_AltMaleModel>
+	<m_AltFemaleModel>media\models_X\Skinned\Clothes\Kate_ChestRig_ALT.x</m_AltFemaleModel>
+	<m_Static>false</m_Static>
+	<m_AllowRandomHue>false</m_AllowRandomHue>
+	<m_AllowRandomTint>false</m_AllowRandomTint>
+	<m_AttachBone></m_AttachBone>
+	<m_MasksFolder>none</m_MasksFolder>
+	<textureChoices>clothes\bag\chestrig</textureChoices>
+</clothingItem>

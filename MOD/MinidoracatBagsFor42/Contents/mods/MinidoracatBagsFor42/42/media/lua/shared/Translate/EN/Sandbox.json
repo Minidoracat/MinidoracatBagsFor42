@@ -1,0 +1,15 @@
+{
+    "Sandbox_MinidoracatBags": "Tactical Bags",
+    "Sandbox_MinidoracatBagsLockLegacyBags": "Lock old Bag Upgrade Plus bags",
+    "Sandbox_MinidoracatBagsLockLegacyBags_tooltip": "When on (default), old bags from Bag Upgrade Plus saves only let you take items out. Nothing can be put in. Players turn them into new bags with a sewing recipe.\nTurn off to use them as normal bags again.",
+    "Sandbox_MinidoracatBagsMaxTier": "Highest upgrade tier",
+    "Sandbox_MinidoracatBagsMaxTier_tooltip": "Highest tier a bag can reach with the Reinforce Bag recipes. 0 turns upgrading off.\nConverted old bags start at this tier.",
+    "Sandbox_MinidoracatBagsCapacityStepPercent": "Capacity gain per tier (percent)",
+    "Sandbox_MinidoracatBagsCapacityStepPercent_tooltip": "Each tier adds this percentage of the bag's original capacity, rounded to the nearest whole number. Capacity never goes above 50 minus the bag's own weight.\nApplies to bags upgraded after the change.",
+    "Sandbox_MinidoracatBagsWeightReductionStep": "Encumbrance Reduction gain per tier",
+    "Sandbox_MinidoracatBagsWeightReductionStep_tooltip": "Each tier adds this much Encumbrance Reduction, up to the maximum Encumbrance Reduction below.\nApplies to bags upgraded after the change.",
+    "Sandbox_MinidoracatBagsMaxWeightReduction": "Maximum Encumbrance Reduction",
+    "Sandbox_MinidoracatBagsMaxWeightReduction_tooltip": "Upgraded and converted bags never go above this Encumbrance Reduction.",
+    "Sandbox_MinidoracatBagsLootMultiplier": "Loot and zombie drop multiplier",
+    "Sandbox_MinidoracatBagsLootMultiplier_tooltip": "Scales how often the new bags appear in police, military and medical containers, and how often police, soldier and medic zombies drop one. 0 turns both off.\nContainer loot reads this value when the world loads."
+}

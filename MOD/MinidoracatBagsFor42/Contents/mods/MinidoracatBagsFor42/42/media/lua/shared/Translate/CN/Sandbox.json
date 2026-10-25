@@ -1,0 +1,15 @@
+{
+    "Sandbox_MinidoracatBags": "战术背包",
+    "Sandbox_MinidoracatBagsLockLegacyBags": "锁住旧 Bag Upgrade Plus 背包",
+    "Sandbox_MinidoracatBagsLockLegacyBags_tooltip": "默认开启。开启时，Bag Upgrade Plus 留下的旧背包只能取出物品，不能再放入。玩家可以用缝纫配方把旧背包改成新背包。\n关闭后旧背包恢复成普通背包。",
+    "Sandbox_MinidoracatBagsMaxTier": "最高升级阶级",
+    "Sandbox_MinidoracatBagsMaxTier_tooltip": "背包用强化背包配方最高能升到第几阶。设成 0 就不能升级。\n旧背包改装后直接是这一阶。",
+    "Sandbox_MinidoracatBagsCapacityStepPercent": "每阶增加的容量百分比",
+    "Sandbox_MinidoracatBagsCapacityStepPercent_tooltip": "每升一阶，增加背包原本容量的这个百分比，四舍五入到整数。容量不会超过 50 减背包本身的重量。\n改了之后，只影响之后升级的背包。",
+    "Sandbox_MinidoracatBagsWeightReductionStep": "每阶增加的减重率",
+    "Sandbox_MinidoracatBagsWeightReductionStep_tooltip": "每升一阶增加这么多减重率，最多到下面的减重率上限。\n改了之后，只影响之后升级的背包。",
+    "Sandbox_MinidoracatBagsMaxWeightReduction": "减重率上限",
+    "Sandbox_MinidoracatBagsMaxWeightReduction_tooltip": "升级或改装后的背包，减重率不会超过这个值。",
+    "Sandbox_MinidoracatBagsLootMultiplier": "战利品与僵尸掉落倍率",
+    "Sandbox_MinidoracatBagsLootMultiplier_tooltip": "调整新背包出现在警局、军事与医疗地点容器的概率，以及警察、军人、医护僵尸掉落新背包的概率。设成 0 两者都关闭。\n容器战利品在加载世界时读取这个值。"
+}

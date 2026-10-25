@@ -1,0 +1,612 @@
+-- 離線測試：新背包（物品腳本、製作與升級配方、升級 Lua、放入限制、戰利品、殭屍死亡掉落、沙盒選項、翻譯鍵）。
+--   lua scripts/test_newbags.lua             行為與腳本不變式
+--   lua scripts/test_newbags.lua --mutants   另對 MOD 檔案植入錯誤，確認測試抓得到
+-- 用假的 PZ 全域載入真正的 MOD Lua；腳本不變式直接解析 MOD 的 .txt 與原版 media/scripts、clothing、fileGuidTable。
+-- 引擎模擬：
+-- - InventoryContainer.getCapacity＝min(容量, 50, (int)(50－背包重量))（InventoryContainer.java:79-86、ItemContainer.java:158-170）；
+--   setWeightReduction 夾在 0～100（InventoryContainer.java:138-141）。
+-- - sendReplaceItemInContainer 只在伺服器有作用（LuaManager.java:12404-12412）。
+-- - OnTest 對每個符合輸入的候選物品各呼叫一次（CraftRecipeManager.java:781-783）。
+-- - 原版 ProceduralDistributions.lua 原樣載入，Events.OnPreDistributionMerge 觸發後檢查清單。
+-- 執行目錄：repo 根。
+
+local PZ = "D:/SteamLibrary/steamapps/common/ProjectZomboid/media/"
+local MEDIA = "MOD/MinidoracatBagsFor42/Contents/mods/MinidoracatBagsFor42/42/media/"
+local TRANSLATE = MEDIA .. "lua/shared/Translate/"
+local F = {
+    UPG = MEDIA .. "lua/shared/MDB_Upgrade.lua",
+    FIL = MEDIA .. "lua/shared/MDB_Filters.lua",
+    LOOT = MEDIA .. "lua/server/MDB_Loot.lua",
+    ZD = MEDIA .. "lua/server/MDB_ZombieDrops.lua",
+    ITEMS = MEDIA .. "scripts/MDB_Items.txt",
+    RECIPES = MEDIA .. "scripts/MDB_Recipes.txt",
+    SANDBOX = MEDIA .. "sandbox-options.txt",
+    GUIDTABLE = MEDIA .. "fileGuidTable.xml",
+    I18N_RECIPES = TRANSLATE .. "EN/Recipes.json",
+}
+-- conventions.md「介面語系」：12 種語言＋ES 的 AR／ES_CL／ES_MX、PTBR 的 PT
+local LANGS = { "AR", "CH", "CN", "DE", "EN", "ES", "ES_CL", "ES_MX", "FR", "JP", "KO", "PL", "PT", "PTBR", "RU", "TR" }
+
+local MUTATION
+local function readFile(path, optional)
+    local fh = io.open(path, "rb")
+    if not fh then
+        if optional then return nil end
+        error("找不到檔案：" .. path)
+    end
+    local text = fh:read("*a")
+    fh:close()
+    if MUTATION and F[MUTATION.file] == path then
+        local s, e = text:find(MUTATION.from, 1, true)
+        if not s then error("突變片段不在原始碼中：" .. MUTATION.name) end
+        text = text:sub(1, s - 1) .. MUTATION.to .. text:sub(e + 1)
+    end
+    return text
+end
+local function listFiles(dir, pattern)
+    local out = {}
+    local p = io.popen('dir /s /b "' .. dir:gsub("/", "\\") .. pattern .. '" 2>nul')
+    for line in p:lines() do out[#out + 1] = line end
+    p:close()
+    return out
+end
+
+local pass, fail = 0, 0
+local quiet = false
+local function check(name, cond)
+    if cond then pass = pass + 1 else fail = fail + 1 end
+    if not quiet then io.write((cond and "  PASS  " or "  FAIL  ") .. name .. "\n") end
+end
+
+-- ===== 腳本解析 =====
+local function stripComments(s) return (s:gsub("/%*.-%*/", "")) end
+local function blockEnd(text, open)
+    local depth, pos = 0, open
+    while true do
+        local s, _, c = text:find("([{}])", pos)
+        if not s then return #text end
+        depth = depth + (c == "{" and 1 or -1)
+        if depth == 0 then return s end
+        pos = s + 1
+    end
+end
+-- 回傳 { name, module, fields（第一層 key = value）, lines（內層各行，含所屬區段） }
+local function parseBlocks(text, kind)
+    text = stripComments(text)
+    local modules = {}
+    for mpos, mname in text:gmatch("()module%s+([%w_]+)") do modules[#modules + 1] = { mpos, mname } end
+    local out = {}
+    for spos, name, open in text:gmatch("()%f[%w]" .. kind .. "%s+([%w_]+)%s*(){") do
+        local body = text:sub(open + 1, blockEnd(text, open) - 1)
+        local module
+        for _, m in ipairs(modules) do if m[1] < spos then module = m[2] end end
+        local b = { name = name, module = module, fields = {}, lines = {} }
+        local depth, section = 0, nil
+        for line in (body .. "\n"):gmatch("([^\n]*)\n") do
+            if depth == 0 then
+                local k, v = line:match("^%s*([%w_]+)%s*=%s*(.-)%s*,?%s*$")
+                if k then b.fields[k] = v end
+                local sec = line:match("^%s*(%a+)%s*$")
+                if sec then section = sec end
+            elseif depth == 1 and line:match("%S") and not line:match("^%s*[{}]%s*$") then
+                b.lines[#b.lines + 1] = { section = section, text = line:match("^%s*(.-)%s*,?%s*$") }
+            end
+            local _, opens = line:gsub("{", "")
+            local _, closes = line:gsub("}", "")
+            depth = depth + opens - closes
+        end
+        out[#out + 1] = b
+    end
+    return out
+end
+
+-- 原版（不突變，只解析一次）
+local VAN = { items = {}, tags = {}, clothing = {}, guids = {}, outfits = {} }
+for _, path in ipairs(listFiles(PZ .. "scripts/", "*.txt")) do
+    local fh = io.open(path, "rb"); local text = fh:read("*a"); fh:close()
+    for _, b in ipairs(parseBlocks(text, "item")) do
+        VAN.items[(b.module or "Base") .. "." .. b.name] = b
+        for t in (b.fields.Tags or ""):gmatch("[^;]+") do VAN.tags[t:lower()] = true end
+    end
+end
+for _, path in ipairs(listFiles(PZ .. "clothing/clothingItems/", "*.xml")) do
+    VAN.clothing[path:match("([^\\/]+)%.xml$")] = true
+end
+do
+    local fh = io.open(PZ .. "fileGuidTable.xml", "rb"); local t = fh:read("*a"); fh:close()
+    for g in t:gmatch("<guid>%s*(.-)%s*</guid>") do VAN.guids[g:lower()] = true end
+    fh = io.open(PZ .. "clothing/clothing.xml", "rb"); t = fh:read("*a"); fh:close()
+    for n in t:gmatch("<m_Name>(.-)</m_Name>") do VAN.outfits[n] = true end
+end
+
+-- ===== 規格（AGENTS.md「設計定案」的表） =====
+local MODELS = {
+    ToolBeltPouch = { eq = "base:fannypackfront", cap = { 3, 4 }, wr = { 80, 95 }, w = 0.3, run = 0.98 },
+    MedicHipPouch = { eq = "base:fannypackback", cap = { 4, 6 }, wr = { 85, 95 }, w = 0.3, run = 0.99, accept = "MDB.acceptFirstAid" },
+    AmmoBandolier = { eq = "base:ammostrap", cap = { 4, 6 }, wr = { 85, 95 }, w = 0.3, run = 0.98, accept = "MDB.acceptAmmo",
+        tags = "base:reloadfastbullets;base:reloadfastmagazines;base:reloadfastshells" },
+    CourierSatchel = { eq = "base:satchel", cap = { 14, 20 }, wr = { 70, 85 }, w = 0.6, run = 0.99 },
+    DayPack = { eq = "base:back", cap = { 20, 29 }, wr = { 75, 90 }, w = 0.8, run = 0.97, attach = "BedrollBottom" },
+    ExpeditionPack = { eq = "base:back", cap = { 30, 44 }, wr = { 80, 95 }, w = 1.2, run = 0.95, attach = "BedrollBottomBig" },
+    ScoutChestRig = { eq = "base:webbing", cap = { 6, 9 }, wr = { 85, 95 }, w = 0.5, run = 0.98, maxSize = "1.3" },
+}
+local SKINS = { "Navy", "Olive" }
+local LOOT_SPEC = {
+    { "PoliceStorageArmor", "_Navy", { DayPack = 1, CourierSatchel = 1, ScoutChestRig = 1, ToolBeltPouch = 1.5, AmmoBandolier = 1, MedicHipPouch = 0.5, ExpeditionPack = 0.3 } },
+    { "PoliceStorageGuns", "_Navy", { AmmoBandolier = 3, ScoutChestRig = 1.5, ToolBeltPouch = 1.5, DayPack = 1, CourierSatchel = 1, ExpeditionPack = 0.2 } },
+    { "PoliceLockers", "_Navy", { ToolBeltPouch = 1.5, MedicHipPouch = 0.2, CourierSatchel = 0.2, DayPack = 0.2, ScoutChestRig = 0.2, AmmoBandolier = 0.2, ExpeditionPack = 0.05 } },
+    { "PoliceStorageOutfit", "_Navy", { DayPack = 0.1, CourierSatchel = 0.1, ToolBeltPouch = 0.2 } },
+    { "ArmySurplusBackpacks", "_Olive", { DayPack = 10, CourierSatchel = 10, ScoutChestRig = 6, ToolBeltPouch = 6, MedicHipPouch = 6, AmmoBandolier = 4, ExpeditionPack = 4 } },
+    { "ArmyStorageOutfit", "_Olive", { DayPack = 0.3, CourierSatchel = 0.3, ToolBeltPouch = 0.3, ScoutChestRig = 0.2, AmmoBandolier = 0.2, MedicHipPouch = 0.1, ExpeditionPack = 0.05 } },
+    { "LockerArmyBedroom", "_Olive", { DayPack = 0.1, ScoutChestRig = 0.1, CourierSatchel = 0.1, ExpeditionPack = 0.03 } },
+    { "ArmyBunkerLockers", "_Olive", { DayPack = 0.03, ScoutChestRig = 0.02, ExpeditionPack = 0.01 } },
+    { "ArmyStorageMedical", "_Olive", { MedicHipPouch = 0.3 } },
+    { "HospitalLockers", "_Olive", { MedicHipPouch = 1, DayPack = 0.2, CourierSatchel = 0.1 } },
+    { "HospitalRoomShelves", "_Olive", { MedicHipPouch = 0.5 } },
+    { "NurseOutfit", "_Olive", { MedicHipPouch = 1 } },
+}
+local OUTFIT_SPEC = {
+    Police = "_Navy", PoliceRiot = "_Navy", PoliceState = "_Navy", Police_SWAT = "_Navy", Sheriff_Deputy = "_Navy",
+    ArmyCamoDesert = "_Olive", ArmyCamoGreen = "_Olive", ArmyInstructor = "_Olive", ArmyServiceUniform = "_Olive",
+    Doctor = "medic", Nurse = "medic", AmbulanceDriver = "medic",
+}
+local SANDBOX_SPEC = {
+    LockLegacyBags = { "boolean", "true" }, MaxTier = { "integer", "3", "0", "3" },
+    CapacityStepPercent = { "integer", "15", "0", "50" }, WeightReductionStep = { "integer", "5", "0", "20" },
+    MaxWeightReduction = { "integer", "95", "50", "100" }, LootMultiplier = { "double", "1.0", "0.0", "10.0" },
+}
+
+-- ===== 假引擎 =====
+local env = {}
+local function resetEnv()
+    env = { server = false, client = false, sent = {}, rand = {}, randCalls = 0, printed = {} }
+    Events = setmetatable({}, { __index = function(t, k)
+        local e = { handlers = {} }
+        function e.Add(f) e.handlers[#e.handlers + 1] = f end
+        rawset(t, k, e)
+        return e
+    end })
+    MDB = nil
+    SandboxVars = { MinidoracatBags = { LockLegacyBags = true, MaxTier = 3, CapacityStepPercent = 15,
+        WeightReductionStep = 5, MaxWeightReduction = 95, LootMultiplier = 1 } }
+end
+function isServer() return env.server end
+function isClient() return env.client end
+function sendReplaceItemInContainer(c, a, b) env.sent[#env.sent + 1] = { c, a, b } end
+function instanceof(o, cls) return type(o) == "table" and rawget(o, "__class") == cls end
+function ZombRand(n)
+    env.randCalls = env.randCalls + 1
+    local v = table.remove(env.rand, 1) or 0
+    assert(v < n, "ZombRand stub value out of range")
+    return v
+end
+ItemTag = setmetatable({ AMMO = "base:ammo", SHOTGUN_SHELL = "base:shotgunshell" },
+    { __index = function(_, k) error("unknown ItemTag " .. tostring(k)) end })
+local rawPrint = print
+function print(...) env.printed[#env.printed + 1] = table.concat({ ... }, " ") end
+
+local function diag(line) if not quiet then rawPrint(line) end end
+
+local function loadLua(key) assert(load(readFile(F[key]), "@" .. F[key]))() end
+local function loadAll()
+    resetEnv()
+    loadLua("FIL"); loadLua("UPG"); loadLua("LOOT"); loadLua("ZD")
+end
+local function resolve(path)
+    local v = _G
+    for part in path:gmatch("[^.]+") do
+        if type(v) ~= "table" then return nil end
+        v = v[part]
+    end
+    return v
+end
+
+local CONTAINER = { name = "playerInv" }
+local function newBag(cap, wr, weight)
+    local b = { __class = "InventoryContainer", cap = cap, wr = wr, weight = weight, md = {}, container = CONTAINER }
+    function b:getModData() return self.md end
+    function b:getCapacity() return math.min(self.cap, 50, math.floor(50 - self.weight)) end
+    function b:setCapacity(c) self.cap = c end
+    function b:getWeightReduction() return self.wr end
+    function b:setWeightReduction(w) self.wr = math.max(0, math.min(100, w)) end
+    function b:getActualWeight() return self.weight end
+    function b:getContainer() return self.container end
+    return b
+end
+local function vanillaItem(fullType)
+    local b = VAN.items[fullType]
+    assert(b, "vanilla item missing: " .. fullType)
+    local tags = {}
+    for t in (b.fields.Tags or ""):gmatch("[^;]+") do tags[t:lower()] = true end
+    return {
+        getDisplayCategory = function() return b.fields.DisplayCategory end,
+        hasTag = function(_, tag) assert(tag ~= nil, "hasTag(nil)"); return tags[tag] == true end,
+    }
+end
+local function javaList(arr)
+    return { size = function() return #arr end, get = function(_, i) return arr[i + 1] end }
+end
+
+-- ===== 套件 =====
+local function suite()
+    local items = {}
+    for _, b in ipairs(parseBlocks(readFile(F.ITEMS), "item")) do items[b.module .. "." .. b.name] = b end
+    local recipes = {}
+    for _, b in ipairs(parseBlocks(readFile(F.RECIPES), "craftRecipe")) do recipes[b.name] = b end
+    local function exists(full)
+        return items[full] ~= nil or VAN.items[full] ~= nil
+    end
+
+    -- 1. 物品欄位
+    local count = 0
+    for _ in pairs(items) do count = count + 1 end
+    check("items: exactly 14", count == 14)
+    for k, s in pairs(MODELS) do
+        for _, skin in ipairs(SKINS) do
+            local full = "MinidoracatBags." .. k .. "_" .. skin
+            local b = items[full]
+            local f = b and b.fields or {}
+            check(full .. ": fields match table", b ~= nil and f.CanBeEquipped == s.eq and tonumber(f.Capacity) == s.cap[1]
+                and tonumber(f.WeightReduction) == s.wr[1] and tonumber(f.Weight) == s.w and tonumber(f.RunSpeedModifier) == s.run
+                and f.ItemType == "base:container" and f.AcceptItemFunction == s.accept and f.AttachmentsProvided == s.attach
+                and f.MaxItemSize == s.maxSize and f.ClothingItem == "MDB_" .. k .. "_" .. skin)
+            if s.tags then check(full .. ": tags exact, no base:ammocase", f.Tags == s.tags) end
+        end
+    end
+
+    -- 2. ClothingItem：不與原版同名、有 XML、GUID 對得上且不重複
+    local guidOf = {}
+    for path, g in readFile(F.GUIDTABLE):gmatch("<path>%s*(.-)%s*</path>%s*<guid>%s*(.-)%s*</guid>") do guidOf[path] = g:lower() end
+    local seenGuid, clothingOk, dupOk = {}, true, true
+    for full, b in pairs(items) do
+        local ci = b.fields.ClothingItem
+        local xmlPath = "media/clothing/clothingItems/" .. tostring(ci) .. ".xml"
+        local xml = readFile(MEDIA .. "clothing/clothingItems/" .. tostring(ci) .. ".xml", true)
+        local g = xml and xml:match("<m_GUID>%s*(.-)%s*</m_GUID>")
+        local ok = ci and not VAN.clothing[ci] and xml and g and guidOf[xmlPath] == g:lower() and not VAN.guids[g:lower()]
+        if not ok then clothingOk = false; diag("    clothing problem: " .. full .. " " .. tostring(ci)) end
+        if g then
+            if seenGuid[g:lower()] then dupOk = false end
+            seenGuid[g:lower()] = true
+        end
+    end
+    check("clothing: unique non-vanilla names, XML present, GUID registered", clothingOk)
+    check("clothing: GUIDs unique and not vanilla", dupOk)
+
+    -- 3. 配方
+    local expectNames = { MDB_UpgradeBagTier1 = true, MDB_UpgradeBagTier2 = true, MDB_UpgradeBagTier3 = true }
+    for k in pairs(MODELS) do for _, s in ipairs(SKINS) do expectNames["MDB_Make" .. k .. "_" .. s] = true end end
+    local namesOk = true
+    for n in pairs(expectNames) do if not recipes[n] then namesOk = false end end
+    for n in pairs(recipes) do if not expectNames[n] then namesOk = false end end
+    check("recipes: exactly the 17 expected names", namesOk)
+    local refsOk, threadOk = true, true
+    for name, r in pairs(recipes) do
+        for _, l in ipairs(r.lines) do
+            local list = l.text:match("^item%s+%d+%s+%[(.-)%]")
+            if list then
+                for full in list:gmatch("[^;]+") do
+                    if not exists(full) then refsOk = false; diag("    missing item: " .. name .. " " .. full) end
+                end
+            end
+            local tags = l.text:match("tags%[(.-)%]")
+            if tags then
+                for t in tags:gmatch("[^;]+") do
+                    if not VAN.tags[t:lower()] then refsOk = false; diag("    unknown tag: " .. name .. " " .. t) end
+                end
+            end
+            local out = l.section == "outputs" and l.text:match("^item%s+%d+%s+([%w_.]+)")
+            if out and not exists(out) then refsOk = false; diag("    missing output: " .. name .. " " .. out) end
+            if l.text:find("Thread", 1, true) or (l.text:find("base:thread", 1, true) and l.text:find("mode:destroy", 1, true)) then
+                threadOk = false
+            end
+        end
+    end
+    check("recipes: every input/output item and tag exists", refsOk)
+    check("recipes: thread only as tags[base:thread] without destroy", threadOk)
+    for k in pairs(MODELS) do
+        local fabric = {}
+        for _, s in ipairs(SKINS) do
+            local r = recipes["MDB_Make" .. k .. "_" .. s]
+            local outOk = false
+            for _, l in ipairs(r and r.lines or {}) do
+                if l.section == "outputs" and l.text == "item 1 MinidoracatBags." .. k .. "_" .. s then outOk = true end
+                if l.text:find("FabricRoll", 1, true) or l.text:find("TarpPiece", 1, true) then fabric[s] = l.text:match("%[(.-)%]") end
+            end
+            check("MDB_Make" .. k .. "_" .. s .. ": outputs its own bag", outOk)
+        end
+        check("MDB_Make" .. k .. ": Navy and Olive use different fabric", fabric.Navy and fabric.Olive and fabric.Navy ~= fabric.Olive)
+    end
+    -- 升級配方：背包清單＝原版可穿戴、無 AcceptItemFunction 的容器＋14 件新背包
+    local expectBags = {}
+    for full, b in pairs(VAN.items) do
+        if b.fields.ItemType == "base:container" and b.fields.CanBeEquipped and not b.fields.AcceptItemFunction then expectBags[full] = true end
+    end
+    for k in pairs(MODELS) do for _, s in ipairs(SKINS) do expectBags["MinidoracatBags." .. k .. "_" .. s] = true end end
+    for t = 1, 3 do
+        local r = recipes["MDB_UpgradeBagTier" .. t]
+        local bagLine, outputs = nil, 0
+        for _, l in ipairs(r and r.lines or {}) do
+            if l.section == "inputs" and l.text:find("Bag_Schoolbag", 1, true) then bagLine = l.text end
+            if l.section == "outputs" then outputs = outputs + 1 end
+        end
+        local got, setOk = {}, bagLine ~= nil
+        for full in (bagLine and bagLine:match("%[(.-)%]") or ""):gmatch("[^;]+") do got[full] = true end
+        for full in pairs(expectBags) do if not got[full] then setOk = false; diag("    upgrade missing: " .. full) end end
+        for full in pairs(got) do if not expectBags[full] then setOk = false; diag("    upgrade extra: " .. full) end end
+        check("MDB_UpgradeBagTier" .. t .. ": bag list = wearable vanilla containers + 14 new", setOk)
+        check("MDB_UpgradeBagTier" .. t .. ": bag is keep + IsNotWorn, outputs empty", bagLine ~= nil
+            and bagLine:find("mode:keep", 1, true) and bagLine:find("flags[IsNotWorn]", 1, true) and outputs == 0)
+        check("MDB_UpgradeBagTier" .. t .. ": Tailoring " .. (t + 1) .. ", hooks wired", r ~= nil
+            and r.fields.SkillRequired == "Tailoring:" .. (t + 1) and r.fields.OnTest == "MDB.onTestTier" .. t
+            and r.fields.OnCreate == "MDB.onUpgrade")
+    end
+
+    -- 4. 沙盒選項
+    local sb = stripComments(readFile(F.SANDBOX))
+    local sbOk = sb:find("VERSION = 1,", 1, true) ~= nil
+    for k, spec in pairs(SANDBOX_SPEC) do
+        local body = sb:match("option MinidoracatBags%." .. k .. "%s*(%b{})")
+        local want = body and body:find("type = " .. spec[1], 1, true) and body:find("default = " .. spec[2] .. ",", 1, true)
+            and body:find("page = MinidoracatBags,", 1, true) and body:find("translation = MinidoracatBags" .. k .. ",", 1, true)
+        if spec[3] then want = want and body:find("min = " .. spec[3] .. ",", 1, true) and body:find("max = " .. spec[4] .. ",", 1, true) end
+        if not want then sbOk = false; diag("    sandbox option wrong: " .. k) end
+    end
+    check("sandbox: 6 options with spec type/default/range", sbOk)
+
+    -- 5. 翻譯：每個鍵在 16 個語言的正式檔、而且在對的檔（引擎依檔名分表，Translator.java:137-146）
+    local want = { Sandbox = { "Sandbox_MinidoracatBags" }, ItemName = {}, Recipes = {}, Tooltip = {} }
+    for k in pairs(SANDBOX_SPEC) do
+        want.Sandbox[#want.Sandbox + 1] = "Sandbox_MinidoracatBags" .. k
+        want.Sandbox[#want.Sandbox + 1] = "Sandbox_MinidoracatBags" .. k .. "_tooltip"
+    end
+    for full in pairs(items) do want.ItemName[#want.ItemName + 1] = full end
+    for n in pairs(expectNames) do want.Recipes[#want.Recipes + 1] = n end
+    for _, r in pairs(recipes) do if r.fields.Tooltip then want.Tooltip[#want.Tooltip + 1] = r.fields.Tooltip end end
+    local i18nOk = true
+    for _, lang in ipairs(LANGS) do
+        for file, keys in pairs(want) do
+            local have = {}
+            for k in (readFile(TRANSLATE .. lang .. "/" .. file .. ".json", true) or ""):gmatch('\n%s*"([^"]+)"%s*:') do have[k] = true end
+            for _, k in ipairs(keys) do
+                if not have[k] then i18nOk = false; diag("    i18n missing: " .. lang .. "/" .. file .. ".json " .. k) end
+            end
+        end
+    end
+    check("i18n: items, recipes, tooltips, sandbox keys in all 16 Translate folders", i18nOk)
+
+    -- 6. Lua 載入與函式名解析
+    loadAll()
+    local fnOk = true
+    local function want(path)
+        if path and type(resolve(path)) ~= "function" then fnOk = false; diag("    unresolved: " .. path) end
+    end
+    for _, b in pairs(items) do want(b.fields.AcceptItemFunction) end
+    for _, r in pairs(recipes) do want(r.fields.OnTest); want(r.fields.OnCreate) end
+    check("every AcceptItemFunction/OnTest/OnCreate resolves to a function", fnOk)
+
+    -- 7. applyTier：7 款 0～3 階
+    for k, s in pairs(MODELS) do
+        local f = items["MinidoracatBags." .. k .. "_Navy"].fields
+        local base, baseWr, w = tonumber(f.Capacity), tonumber(f.WeightReduction), tonumber(f.Weight)
+        local seq = newBag(base, baseWr, w)
+        local ok = true
+        for t = 0, 3 do
+            local fresh = newBag(base, baseWr, w)
+            MDB.applyTier(fresh, t)
+            MDB.applyTier(seq, t)
+            local cap = math.floor((base * (100 + 15 * t) + 50) / 100)
+            local wr = math.min(baseWr + 5 * t, 95)
+            if fresh.cap ~= cap or fresh.wr ~= wr or seq.cap ~= cap or seq.wr ~= wr or fresh.md.MDB_tier ~= t then ok = false end
+        end
+        local fresh3 = newBag(base, baseWr, w); MDB.applyTier(fresh3, 3)
+        check(k .. ": tiers 0-3 match table " .. s.cap[1] .. "->" .. s.cap[2] .. " / " .. s.wr[1] .. "->" .. s.wr[2],
+            ok and seq.cap == s.cap[2] and seq.wr == s.wr[2] and seq.md.MDB_cap == s.cap[1] and seq.md.MDB_wr == s.wr[1]
+            and fresh3.cap == s.cap[2])
+    end
+    local big = newBag(45, 85, 1.2)
+    MDB.applyTier(big, 3)
+    check("applyTier: capacity capped at 50 - bag weight", big.cap == 48)
+    SandboxVars.MinidoracatBags.CapacityStepPercent = 50
+    local exp = newBag(30, 80, 1.2); MDB.applyTier(exp, 3)
+    check("applyTier: big step also capped", exp.cap == 48)
+    SandboxVars.MinidoracatBags.CapacityStepPercent = 15
+    SandboxVars.MinidoracatBags.MaxWeightReduction = 90
+    local fanny = newBag(4, 85, 0.3); MDB.applyTier(fanny, 1)
+    local exp2 = newBag(30, 80, 1.2); MDB.applyTier(exp2, 3)
+    check("applyTier: MaxWeightReduction caps", fanny.wr == 90 and exp2.wr == 90)
+    SandboxVars.MinidoracatBags.MaxWeightReduction = 95
+    env.sent = {}
+    local sp = newBag(20, 75, 0.8); MDB.applyTier(sp, 1)
+    check("applyTier: single player sends nothing", #env.sent == 0)
+    env.server = true
+    local sv = newBag(20, 75, 0.8); MDB.applyTier(sv, 1)
+    check("applyTier: server resends whole item", #env.sent == 1 and env.sent[1][1] == CONTAINER
+        and env.sent[1][2] == sv and env.sent[1][3] == sv)
+    local floor = newBag(20, 75, 0.8); floor.container = nil
+    check("applyTier: no container on server does not error", pcall(MDB.applyTier, floor, 1) and #env.sent == 1)
+    env.server = false
+
+    -- 8. OnTest 與 onUpgrade
+    local tool = { __class = "HandWeapon" }
+    local b0, b1, b2 = newBag(20, 75, 0.8), newBag(20, 75, 0.8), newBag(20, 75, 0.8)
+    b1.md.MDB_tier = 1; b2.md.MDB_tier = 2
+    check("OnTest: non-bag inputs pass all tiers", MDB.onTestTier1(tool) and MDB.onTestTier2(tool) and MDB.onTestTier3(tool))
+    check("OnTest: tier gate (0->1 only)", MDB.onTestTier1(b0) and not MDB.onTestTier2(b0) and not MDB.onTestTier3(b0))
+    check("OnTest: tier gate (1->2, 2->3)", MDB.onTestTier2(b1) and not MDB.onTestTier1(b1) and MDB.onTestTier3(b2) and not MDB.onTestTier2(b2))
+    SandboxVars.MinidoracatBags.MaxTier = 2
+    check("OnTest: MaxTier 2 blocks tier 3", not MDB.onTestTier3(b2) and MDB.onTestTier2(b1))
+    SandboxVars.MinidoracatBags.MaxTier = 0
+    check("OnTest: MaxTier 0 blocks all, tools still pass", not MDB.onTestTier1(b0) and MDB.onTestTier1(tool))
+    SandboxVars.MinidoracatBags.MaxTier = 3
+    local ub = newBag(30, 80, 1.2)
+    local data = { getAllKeepInputItems = function() return javaList({ tool, ub }) end }
+    MDB.onUpgrade(data, nil)
+    check("onUpgrade: first keep bag goes 0 -> 1", ub.md.MDB_tier == 1 and ub.cap == 35 and ub.wr == 85)
+    MDB.onUpgrade(data, nil); MDB.onUpgrade(data, nil)
+    check("onUpgrade: reaches tier 3 = 44/95", ub.md.MDB_tier == 3 and ub.cap == 44 and ub.wr == 95)
+    MDB.onUpgrade(data, nil)
+    check("onUpgrade: never above MaxTier", ub.md.MDB_tier == 3)
+
+    -- 9. 放入限制（原版物品的真實 tag 與分類）
+    check("acceptFirstAid: bandage, disinfectant, pills accepted", MDB.acceptFirstAid(nil, vanillaItem("Base.Bandage"))
+        and MDB.acceptFirstAid(nil, vanillaItem("Base.Disinfectant")) and MDB.acceptFirstAid(nil, vanillaItem("Base.Pills")))
+    check("acceptFirstAid: hammer, ammo, first aid kit container rejected", not MDB.acceptFirstAid(nil, vanillaItem("Base.Hammer"))
+        and not MDB.acceptFirstAid(nil, vanillaItem("Base.Bullets9mm")) and not MDB.acceptFirstAid(nil, vanillaItem("Base.FirstAidKit_Military")))
+    check("acceptAmmo: loose bullets and shells accepted", MDB.acceptAmmo(nil, vanillaItem("Base.Bullets9mm"))
+        and MDB.acceptAmmo(nil, vanillaItem("Base.ShotgunShells")) and MDB.acceptAmmo(nil, vanillaItem("Base.308Bullets")))
+    check("acceptAmmo: ammo boxes and cartons rejected", not MDB.acceptAmmo(nil, vanillaItem("Base.Bullets9mmBox"))
+        and not MDB.acceptAmmo(nil, vanillaItem("Base.ShotgunShellsBox")) and not MDB.acceptAmmo(nil, vanillaItem("Base.Bullets9mmCarton"))
+        and not MDB.acceptAmmo(nil, vanillaItem("Base.Hammer")))
+    local ammoOk = true
+    for full, b in pairs(VAN.items) do
+        if b.fields.DisplayCategory == "Ammo" and (full:find("Box", 1, true) or full:find("Carton", 1, true)) then
+            if MDB.acceptAmmo(nil, vanillaItem(full)) then ammoOk = false; diag("    ammo box accepted: " .. full) end
+        end
+    end
+    check("acceptAmmo: every vanilla ammo Box/Carton rejected", ammoOk)
+
+    -- 10. 戰利品
+    local function runLoot(mult)
+        -- 原版清單引用其他分配檔定義的 ClutterTables、BagsAndContainers 等表；這裡只需要它們存在
+        local stub = setmetatable({}, { __index = function() return {} end })
+        local pdEnv = setmetatable({}, { __index = function(_, k) local v = _G[k]; if v == nil then return stub end; return v end })
+        local pdPath = PZ .. "lua/server/Items/ProceduralDistributions.lua"
+        assert(loadfile(pdPath, "t", pdEnv))()
+        ProceduralDistributions = pdEnv.ProceduralDistributions
+        local before = {}
+        for name, l in pairs(ProceduralDistributions.list) do if l.items then before[name] = #l.items end end
+        SandboxVars.MinidoracatBags.LootMultiplier = mult
+        for _, h in ipairs(Events.OnPreDistributionMerge.handlers) do h() end
+        local added = {}
+        for name, l in pairs(ProceduralDistributions.list) do
+            if l.items and #l.items ~= before[name] then
+                added[name] = {}
+                for i = before[name] + 1, #l.items, 2 do added[name][l.items[i]] = l.items[i + 1] end
+            end
+        end
+        SandboxVars.MinidoracatBags.LootMultiplier = 1
+        return added
+    end
+    check("loot: one OnPreDistributionMerge handler", #Events.OnPreDistributionMerge.handlers == 1)
+    for _, mult in ipairs({ 1, 2 }) do
+        local added = runLoot(mult)
+        local ok = true
+        for _, spec in ipairs(LOOT_SPEC) do
+            local got = added[spec[1]] or {}
+            local n = 0
+            for _ in pairs(got) do n = n + 1 end
+            local m = 0
+            for model, wgt in pairs(spec[3]) do
+                m = m + 1
+                local full = "MinidoracatBags." .. model .. spec[2]
+                if not items[full] or math.abs((got[full] or -1) - wgt * mult) > 1e-9 then ok = false; diag("    loot wrong: " .. spec[1] .. " " .. full) end
+            end
+            if n ~= m then ok = false; diag("    loot extra entries: " .. spec[1]) end
+        end
+        local lists = 0
+        for _ in pairs(added) do lists = lists + 1 end
+        check("loot x" .. mult .. ": right lists, suffix and weights; nothing else touched", ok and lists == #LOOT_SPEC
+            and added.CampingStoreBackpacks == nil)
+    end
+    local none = runLoot(0)
+    local any = false
+    for _ in pairs(none) do any = true end
+    check("loot x0: nothing added", not any)
+
+    -- 11. 殭屍死亡掉落
+    check("zombie: one OnZombieDead handler", #Events.OnZombieDead.handlers == 1)
+    local function kill(outfit, rands)
+        local added = {}
+        env.rand = rands or { 0, 0 }
+        env.randCalls = 0
+        local z = { getOutfitName = function() return outfit end,
+            getInventory = function() return { AddItem = function(_, n) added[#added + 1] = n end } end }
+        Events.OnZombieDead.handlers[1](z)
+        return added
+    end
+    local clsOk = true
+    for outfit, kind in pairs(OUTFIT_SPEC) do
+        if not VAN.outfits[outfit] then clsOk = false; diag("    outfit not in clothing.xml: " .. outfit) end
+        for idx = 0, 6 do
+            local got = kill(outfit, { 0, idx })
+            local name = got[1]
+            local good = #got == 1 and items[name] ~= nil
+            if kind == "medic" then good = good and name == "MinidoracatBags.MedicHipPouch_Olive"
+            else good = good and name:sub(-#kind) == kind end
+            if not good then clsOk = false; diag("    zombie drop wrong: " .. outfit .. " " .. tostring(name)) end
+        end
+    end
+    check("zombie: police -> _Navy, army -> _Olive, medics -> MedicHipPouch_Olive", clsOk)
+    check("zombie: civilian and nil outfits drop nothing", #kill("Tourist") == 0 and #kill(nil) == 0)
+    check("zombie: 3% roll boundary", #kill("Police", { 299, 0 }) == 1 and #kill("Police", { 300 }) == 0)
+    SandboxVars.MinidoracatBags.LootMultiplier = 2
+    local doubled = #kill("Police", { 599, 0 }) == 1 and #kill("Police", { 600 }) == 0
+    SandboxVars.MinidoracatBags.LootMultiplier = 0
+    local off = #kill("Police", { 0, 0 }) == 0
+    SandboxVars.MinidoracatBags.LootMultiplier = 1
+    check("zombie: LootMultiplier scales chance; 0 turns off", doubled and off)
+    env.client = true
+    local cl = kill("Police", { 0, 0 })
+    check("zombie: MP client does nothing (no roll, no item)", #cl == 0 and env.randCalls == 0)
+    env.client = false
+end
+
+rawPrint("== 新背包")
+suite()
+
+if arg and arg[1] == "--mutants" then
+    local mutants = {
+        { name = "容量不四捨五入", file = "UPG", from = " + 50) / 100)", to = ") / 100)" },
+        { name = "不截 50 減重量", file = "UPG", from = "cap = math.min(cap, math.floor(50 - bag:getActualWeight()))", to = "" },
+        { name = "負重減輕不封頂", file = "UPG", from = ', MDB.opt("MaxWeightReduction"))', to = ", 999)" },
+        { name = "每次重讀 base", file = "UPG", from = "if md.MDB_cap == nil then", to = "if true then" },
+        { name = "不記階級", file = "UPG", from = "md.MDB_tier = tier", to = "" },
+        { name = "伺服器不重送", file = "UPG", from = "sendReplaceItemInContainer(container, bag, bag)", to = "" },
+        { name = "單機也重送", file = "UPG", from = "if isServer() and container then", to = "if container then" },
+        { name = "非背包輸入被擋", file = "UPG", from = 'if not instanceof(item, "InventoryContainer") then return true end', to = 'if not instanceof(item, "InventoryContainer") then return false end' },
+        { name = "OnTest 不看 MaxTier", file = "UPG", from = 'return tier <= MDB.opt("MaxTier") and', to = "return" },
+        { name = "OnTest 階級差一", file = "UPG", from = "tierOf(item) == tier - 1", to = "tierOf(item) <= tier - 1" },
+        { name = "onUpgrade 不看 MaxTier", file = "UPG", from = 'if tier <= MDB.opt("MaxTier") then', to = "if true then" },
+        { name = "彈藥背帶收彈藥盒", file = "FIL", from = "return item:hasTag(ItemTag.AMMO)", to = 'return item:getDisplayCategory() == "Ammo"' },
+        { name = "彈藥背帶不收霰彈", file = "FIL", from = "return item:hasTag(ItemTag.AMMO)", to = "return item:hasTag(ItemTag.AMMO) and not item:hasTag(ItemTag.SHOTGUN_SHELL)" },
+        { name = "醫療腰包分類錯", file = "FIL", from = '== "FirstAid"', to = '== "Medical"' },
+        { name = "警局清單放 Olive", file = "LOOT", from = '{ "PoliceLockers", "_Navy"', to = '{ "PoliceLockers", "_Olive"' },
+        { name = "權重不乘倍率", file = "LOOT", from = "pairsList[j + 1] * mult", to = "pairsList[j + 1]" },
+        { name = "倍率 0 仍加", file = "LOOT", from = "if mult <= 0 then return end", to = "" },
+        { name = "放進露營店", file = "LOOT", from = '{ "NurseOutfit"', to = '{ "CampingStoreBackpacks"' },
+        { name = "客戶端也掉落", file = "ZD", from = "if isClient() then return end", to = "" },
+        { name = "SWAT 掉 Olive", file = "ZD", from = 'Police_SWAT = "_Navy"', to = 'Police_SWAT = "_Olive"' },
+        { name = "醫護沒分類", file = "ZD", from = 'Nurse = "medic", ', to = "" },
+        { name = "掉落不乘倍率", file = "ZD", from = 'CHANCE_BP * MDB.opt("LootMultiplier")', to = "CHANCE_BP" },
+        { name = "ClothingItem 沿用原版名", file = "ITEMS", from = "ClothingItem = MDB_ScoutChestRig_Navy,", to = "ClothingItem = Bag_ChestRig," },
+        { name = "AcceptItemFunction 拼錯", file = "ITEMS", from = "AcceptItemFunction = MDB.acceptAmmo,", to = "AcceptItemFunction = MDB.acceptAmmos," },
+        { name = "彈藥背帶加 ammocase", file = "ITEMS", from = "base:reloadfastshells,", to = "base:reloadfastshells;base:ammocase," },
+        { name = "容量和表不符", file = "ITEMS", from = "Capacity = 30,", to = "Capacity = 31," },
+        { name = "配方輸入不存在", file = "RECIPES", from = "item 1 [Base.Buckle],", to = "item 1 [Base.Buckel]," },
+        { name = "升級清單漏原版背包", file = "RECIPES", from = "Base.Bag_ALICEpack;", to = "" },
+        { name = "升級可用穿著中的背包", file = "RECIPES", from = "mode:keep flags[IsNotWorn],", to = "mode:keep," },
+        { name = "OnTest 名稱拼錯", file = "RECIPES", from = "OnTest = MDB.onTestTier2,", to = "OnTest = MDB.onTestTeir2," },
+        { name = "線材整捲銷毀", file = "RECIPES", from = "item 2 tags[base:thread],", to = "item 2 [Base.Thread] mode:destroy," },
+        { name = "fileGuidTable 對不上", file = "GUIDTABLE", from = "MDB_ToolBeltPouch_Navy.xml</path>", to = "MDB_ToolBeltPouch_NavyX.xml</path>" },
+        { name = "沙盒預設值錯", file = "SANDBOX", from = "max = 3, default = 3,", to = "max = 3, default = 2," },
+        { name = "翻譯缺鍵", file = "I18N_RECIPES", from = '"MDB_UpgradeBagTier3"', to = '"MDB_UpgradeBagTierX"' },
+    }
+    rawPrint("== 突變（每個都應至少讓一項 FAIL）")
+    local survived = 0
+    for _, m in ipairs(mutants) do
+        local keepPass, keepFail = pass, fail
+        MUTATION, quiet = m, true
+        pass, fail = 0, 0
+        local ok, err = pcall(suite)
+        local killed = (not ok) or fail > 0
+        rawPrint(string.format("  %s  %s（%s）", killed and "KILLED " or "SURVIVED", m.name,
+            ok and (fail .. " 項 FAIL") or ("錯誤：" .. tostring(err))))
+        if not killed then survived = survived + 1 end
+        pass, fail, MUTATION, quiet = keepPass, keepFail, nil, false
+    end
+    check("所有突變都被抓到", survived == 0)
+end
+
+rawPrint(string.format("結果：%d PASS，%d FAIL", pass, fail))
+os.exit(fail == 0 and 0 or 1)

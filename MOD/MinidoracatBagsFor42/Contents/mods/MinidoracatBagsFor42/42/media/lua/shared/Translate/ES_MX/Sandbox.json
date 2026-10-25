@@ -1,0 +1,15 @@
+{
+    "Sandbox_MinidoracatBags": "Bolsas tácticas",
+    "Sandbox_MinidoracatBagsLockLegacyBags": "Bloquear bolsas antiguas de Bag Upgrade Plus",
+    "Sandbox_MinidoracatBagsLockLegacyBags_tooltip": "Si está activado (por defecto), las bolsas antiguas de partidas con Bag Upgrade Plus solo permiten sacar objetos. No se puede meter nada. Los jugadores las convierten en bolsas nuevas con una receta de costura.\nDesactívalo para volver a usarlas como bolsas normales.",
+    "Sandbox_MinidoracatBagsMaxTier": "Nivel máximo de mejora",
+    "Sandbox_MinidoracatBagsMaxTier_tooltip": "Nivel más alto que puede alcanzar una bolsa con las recetas de Reforzar bolsa. 0 desactiva las mejoras.\nLas bolsas antiguas convertidas empiezan en este nivel.",
+    "Sandbox_MinidoracatBagsCapacityStepPercent": "Aumento de capacidad por nivel (porcentaje)",
+    "Sandbox_MinidoracatBagsCapacityStepPercent_tooltip": "Cada nivel añade este porcentaje de la capacidad original de la bolsa, redondeado al entero más cercano. La capacidad nunca supera 50 menos el peso propio de la bolsa.\nSe aplica a las bolsas mejoradas después del cambio.",
+    "Sandbox_MinidoracatBagsWeightReductionStep": "Aumento de reducción de carga por nivel",
+    "Sandbox_MinidoracatBagsWeightReductionStep_tooltip": "Cada nivel añade esta reducción de carga, hasta la reducción de carga máxima de abajo.\nSe aplica a las bolsas mejoradas después del cambio.",
+    "Sandbox_MinidoracatBagsMaxWeightReduction": "Reducción de carga máxima",
+    "Sandbox_MinidoracatBagsMaxWeightReduction_tooltip": "Las bolsas mejoradas y convertidas nunca superan esta reducción de carga.",
+    "Sandbox_MinidoracatBagsLootMultiplier": "Multiplicador de botín y de objetos de zombis",
+    "Sandbox_MinidoracatBagsLootMultiplier_tooltip": "Ajusta la frecuencia con la que las bolsas nuevas aparecen en contenedores de policía, militares y médicos, y con la que los zombis policías, soldados y médicos sueltan una. 0 desactiva ambas cosas.\nEl botín de los contenedores lee este valor al cargar el mundo."
+}

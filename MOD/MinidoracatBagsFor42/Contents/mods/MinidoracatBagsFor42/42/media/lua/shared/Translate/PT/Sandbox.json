@@ -1,0 +1,15 @@
+{
+    "Sandbox_MinidoracatBags": "Bolsas Táticas",
+    "Sandbox_MinidoracatBagsLockLegacyBags": "Travar bolsas antigas do Bag Upgrade Plus",
+    "Sandbox_MinidoracatBagsLockLegacyBags_tooltip": "Quando ativado (padrão), as bolsas antigas de jogos salvos com Bag Upgrade Plus só permitem tirar itens. Nada pode ser colocado. Os jogadores as convertem em bolsas novas com uma receita de costura.\nDesative para usá-las de novo como bolsas normais.",
+    "Sandbox_MinidoracatBagsMaxTier": "Nível máximo de melhoria",
+    "Sandbox_MinidoracatBagsMaxTier_tooltip": "Nível mais alto que uma bolsa pode alcançar com as receitas de Reforçar Bolsa. 0 desativa as melhorias.\nBolsas antigas convertidas já começam neste nível.",
+    "Sandbox_MinidoracatBagsCapacityStepPercent": "Aumento de capacidade por nível (porcentagem)",
+    "Sandbox_MinidoracatBagsCapacityStepPercent_tooltip": "Cada nível adiciona esta porcentagem da capacidade original da bolsa, arredondada para o inteiro mais próximo. A capacidade nunca passa de 50 menos o peso da própria bolsa.\nVale para bolsas melhoradas depois da mudança.",
+    "Sandbox_MinidoracatBagsWeightReductionStep": "Aumento de redução de sobrecarga por nível",
+    "Sandbox_MinidoracatBagsWeightReductionStep_tooltip": "Cada nível adiciona esta redução de sobrecarga, até a redução de sobrecarga máxima abaixo.\nVale para bolsas melhoradas depois da mudança.",
+    "Sandbox_MinidoracatBagsMaxWeightReduction": "Redução de sobrecarga máxima",
+    "Sandbox_MinidoracatBagsMaxWeightReduction_tooltip": "Bolsas melhoradas e convertidas nunca passam desta redução de sobrecarga.",
+    "Sandbox_MinidoracatBagsLootMultiplier": "Multiplicador de saque e de drop de zumbis",
+    "Sandbox_MinidoracatBagsLootMultiplier_tooltip": "Ajusta a frequência com que as bolsas novas aparecem em contêineres policiais, militares e médicos, e com que zumbis policiais, soldados e médicos deixam cair uma. 0 desativa os dois.\nO saque dos contêineres lê este valor quando o mundo carrega."
+}

@@ -1,0 +1,15 @@
+{
+    "Sandbox_MinidoracatBags": "전술 가방",
+    "Sandbox_MinidoracatBagsLockLegacyBags": "구 Bag Upgrade Plus 가방 잠그기",
+    "Sandbox_MinidoracatBagsLockLegacyBags_tooltip": "켜져 있으면(기본값) Bag Upgrade Plus 저장 파일에 남은 구 가방에서 물건을 꺼낼 수만 있고 넣을 수는 없습니다. 플레이어는 재봉 레시피로 새 가방으로 개조할 수 있습니다.\n끄면 다시 일반 가방처럼 쓸 수 있습니다.",
+    "Sandbox_MinidoracatBagsMaxTier": "최고 강화 단계",
+    "Sandbox_MinidoracatBagsMaxTier_tooltip": "가방 강화 레시피로 올릴 수 있는 최고 단계입니다. 0이면 강화할 수 없습니다.\n개조한 구 가방은 이 단계로 시작합니다.",
+    "Sandbox_MinidoracatBagsCapacityStepPercent": "단계별 용량 증가(퍼센트)",
+    "Sandbox_MinidoracatBagsCapacityStepPercent_tooltip": "단계마다 가방 원래 용량의 이 비율만큼 늘어나며, 정수로 반올림합니다. 용량은 50에서 가방 자체 무게를 뺀 값을 넘지 않습니다.\n변경 후에 강화한 가방에만 적용됩니다.",
+    "Sandbox_MinidoracatBagsWeightReductionStep": "단계별 무게 감소율 증가",
+    "Sandbox_MinidoracatBagsWeightReductionStep_tooltip": "단계마다 무게 감소율이 이만큼 늘어나며, 아래의 최대 무게 감소율까지 올라갑니다.\n변경 후에 강화한 가방에만 적용됩니다.",
+    "Sandbox_MinidoracatBagsMaxWeightReduction": "최대 무게 감소율",
+    "Sandbox_MinidoracatBagsMaxWeightReduction_tooltip": "강화하거나 개조한 가방의 무게 감소율은 이 값을 넘지 않습니다.",
+    "Sandbox_MinidoracatBagsLootMultiplier": "전리품 및 좀비 드롭 배율",
+    "Sandbox_MinidoracatBagsLootMultiplier_tooltip": "경찰, 군사, 의료 장소의 컨테이너에 새 가방이 나오는 빈도와 경찰, 군인, 의료진 좀비가 가방을 떨어뜨리는 빈도를 조절합니다. 0이면 둘 다 꺼집니다.\n컨테이너 전리품은 월드를 불러올 때 이 값을 읽습니다."
+}

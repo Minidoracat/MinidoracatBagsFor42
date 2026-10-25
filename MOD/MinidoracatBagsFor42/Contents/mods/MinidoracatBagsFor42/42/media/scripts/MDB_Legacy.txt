@@ -1,0 +1,1044 @@
+/* 舊 Bag Upgrade Plus 背包的外殼：保留存檔裡的舊全名，數值與外觀照原版同款。
+   只能取出（MDB.acceptLegacy），清空後用 MDB_Convert.txt 改裝。不出現在戰利品、殭屍或配方產出。 */
+
+module BagUpgradePlus
+{
+    imports
+    {
+        Base
+    }
+
+    item ALICEpackPlus
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        Weight = 2.0,
+        Icon = AliceBag,
+        AttachmentReplacement = Bag,
+        BloodLocation = Bag,
+        CanBeEquipped = base:back,
+        CanHaveHoles = false,
+        Capacity = 28,
+        CloseSound = CloseBag,
+        ClothingItem = Bag_ALICEpackPlus,
+        EquipSound = EquipBackpackLarge,
+        OpenSound = OpenBag,
+        PutInSound = PutItemInBag,
+        ReplaceInPrimaryHand = Bag_ALICEpack_RHand holdingbagright,
+        ReplaceInSecondHand = Bag_ALICEpack_LHand holdingbagleft,
+        RunSpeedModifier = 0.94,
+        WeightReduction = 85,
+        WorldStaticModel = ALICE_Pack_Ground,
+        AttachmentsProvided = BedrollBottomALICE,
+        AcceptItemFunction = MDB.acceptLegacy,
+        Tooltip = Tooltip_MDB_LegacyBag,
+        Tags = base:ignorezombiedensity;base:isfirefuel;base:isfiretinder,
+    }
+
+    item ALICEpack_CamoPlus
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        Weight = 2.0,
+        Icon = AliceBag_Camo,
+        AttachmentReplacement = Bag,
+        BloodLocation = Bag,
+        CanBeEquipped = base:back,
+        CanHaveHoles = false,
+        Capacity = 28,
+        CloseSound = CloseBag,
+        ClothingItem = Bag_ALICEpack_CamoPlus,
+        EquipSound = EquipBackpackLarge,
+        OpenSound = OpenBag,
+        PutInSound = PutItemInBag,
+        ReplaceInPrimaryHand = Bag_ALICEpack_Army_RHand holdingbagright,
+        ReplaceInSecondHand = Bag_ALICEpack_Army_LHand holdingbagleft,
+        RunSpeedModifier = 0.94,
+        WeightReduction = 85,
+        WorldStaticModel = ALICE_Pack_Ground,
+        AttachmentsProvided = BedrollBottomALICE,
+        AcceptItemFunction = MDB.acceptLegacy,
+        Tooltip = Tooltip_MDB_LegacyBag,
+        Tags = base:ignorezombiedensity;base:isfirefuel;base:isfiretinder,
+    }
+
+    item ALICEpack_DesertCamoPlus
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        Weight = 2.0,
+        Icon = AliceBag_SandCamo,
+        AttachmentReplacement = Bag,
+        BloodLocation = Bag,
+        CanBeEquipped = base:back,
+        CanHaveHoles = false,
+        Capacity = 28,
+        CloseSound = CloseBag,
+        ClothingItem = Bag_ALICEpack_DesertCamoPlus,
+        EquipSound = EquipBackpackLarge,
+        OpenSound = OpenBag,
+        PutInSound = PutItemInBag,
+        ReplaceInPrimaryHand = Bag_ALICEpack_DesertCamo_RHand holdingbagright,
+        ReplaceInSecondHand = Bag_ALICEpack_DesertCamo_LHand holdingbagleft,
+        RunSpeedModifier = 0.94,
+        WeightReduction = 85,
+        WorldStaticModel = ALICE_Pack_Ground,
+        AttachmentsProvided = BedrollBottomALICE,
+        AcceptItemFunction = MDB.acceptLegacy,
+        Tooltip = Tooltip_MDB_LegacyBag,
+        Tags = base:ignorezombiedensity;base:isfirefuel;base:isfiretinder,
+    }
+
+    item DuffelPlus
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        Weight = 1.0,
+        IconsForTexture = Duffelbag;DuffelBag_Green;DuffelBag_Grey;DuffelBagBlue;DuffelBagRed;Duffelbag_Sport;Duffelbag_Sport2,
+        CanBeEquipped = base:back,
+        CanHaveHoles = false,
+        Capacity = 18,
+        CloseSound = CloseBag,
+        ClothingItem = Bag_DuffelPlus,
+        EquipSound = EquipDuffleBag,
+        OpenSound = OpenBag,
+        PutInSound = PutItemInBag,
+        ReplaceInPrimaryHand = Bag_DuffelBag_RHand holdingbagright,
+        ReplaceInSecondHand = Bag_DuffelBag_LHand holdingbagleft,
+        RunSpeedModifier = 0.95,
+        SoundParameter = EquippedBaggageContainer DuffleBag,
+        WeightReduction = 65,
+        WorldStaticModel = DuffelBag_Ground,
+        AcceptItemFunction = MDB.acceptLegacy,
+        Tooltip = Tooltip_MDB_LegacyBag,
+        Tags = base:isfirefuel;base:isfiretinder,
+    }
+
+    item MedicalPlus
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        ClothingItem = Bag_MedicalPlus,
+        CanBeEquipped = base:back,
+        WeightReduction = 65,
+        Weight = 1.0,
+        Capacity = 18,
+        Icon = DuffelbagMedical,
+        OpenSound = OpenBag,
+        CloseSound = CloseBag,
+        PutInSound = PutItemInBag,
+        RunSpeedModifier = 0.95,
+        CanHaveHoles = false,
+        ReplaceInSecondHand = Bag_DuffelBag_LHandMedical holdingbagleft,
+        ReplaceInPrimaryHand = Bag_DuffelBag_RHandMedical holdingbagright,
+        WorldStaticModel = DuffelBag_Ground,
+        AcceptItemFunction = MDB.acceptLegacy,
+        Tooltip = Tooltip_MDB_LegacyBag,
+        Tags = base:ignorezombiedensity;base:isfirefuel;base:isfiretinder,
+    }
+
+    item MilitaryPlus
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        ClothingItem = Bag_MilitaryPlus,
+        CanBeEquipped = base:back,
+        WeightReduction = 65,
+        Weight = 1.0,
+        Capacity = 18,
+        Icon = DuffelbagMilitary,
+        OpenSound = OpenBag,
+        CloseSound = CloseBag,
+        PutInSound = PutItemInBag,
+        RunSpeedModifier = 0.95,
+        CanHaveHoles = false,
+        ReplaceInSecondHand = Bag_DuffelBag_LHandMilitary holdingbagleft,
+        ReplaceInPrimaryHand = Bag_DuffelBag_RHandMilitary holdingbagright,
+        WorldStaticModel = DuffelBag_Ground,
+        AcceptItemFunction = MDB.acceptLegacy,
+        Tooltip = Tooltip_MDB_LegacyBag,
+        Tags = base:ignorezombiedensity;base:isfirefuel;base:isfiretinder,
+    }
+
+    item PolicePlus
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        Weight = 1.0,
+        Icon = DuffelbagPolice,
+        CanBeEquipped = base:back,
+        CanHaveHoles = false,
+        Capacity = 18,
+        CloseSound = CloseBag,
+        ClothingItem = Bag_PolicePlus,
+        EquipSound = EquipDuffleBag,
+        OpenSound = OpenBag,
+        PutInSound = PutItemInBag,
+        ReplaceInPrimaryHand = Bag_DuffelBag_RHandPolice holdingbagright,
+        ReplaceInSecondHand = Bag_DuffelBag_LHandPolice holdingbagleft,
+        RunSpeedModifier = 0.95,
+        SoundParameter = EquippedBaggageContainer DuffleBag,
+        WeightReduction = 65,
+        WorldStaticModel = DuffelBag_Ground,
+        AcceptItemFunction = MDB.acceptLegacy,
+        Tooltip = Tooltip_MDB_LegacyBag,
+        Tags = base:ignorezombiedensity;base:duffelbag;base:neverempty;base:isfirefuel;base:isfiretinder,
+    }
+
+    item SheriffPlus
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        Weight = 1.0,
+        Icon = DuffelbagSheriff,
+        CanBeEquipped = base:back,
+        CanHaveHoles = false,
+        Capacity = 18,
+        CloseSound = CloseBag,
+        ClothingItem = Bag_SheriffPlus,
+        EquipSound = EquipDuffleBag,
+        OpenSound = OpenBag,
+        PutInSound = PutItemInBag,
+        ReplaceInPrimaryHand = Bag_DuffelBag_RHandSheriff holdingbagright,
+        ReplaceInSecondHand = Bag_DuffelBag_LHandSheriff holdingbagleft,
+        RunSpeedModifier = 0.95,
+        SoundParameter = EquippedBaggageContainer DuffleBag,
+        WeightReduction = 65,
+        WorldStaticModel = DuffelBag_Ground,
+        AcceptItemFunction = MDB.acceptLegacy,
+        Tooltip = Tooltip_MDB_LegacyBag,
+        Tags = base:ignorezombiedensity;base:duffelbag;base:neverempty;base:isfirefuel;base:isfiretinder,
+    }
+
+    item SWATPlus
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        Weight = 1.0,
+        Icon = DuffelbagSWAT,
+        CanBeEquipped = base:back,
+        CanHaveHoles = false,
+        Capacity = 18,
+        CloseSound = CloseBag,
+        ClothingItem = Bag_SWATPlus,
+        EquipSound = EquipDuffleBag,
+        OpenSound = OpenBag,
+        PutInSound = PutItemInBag,
+        ReplaceInPrimaryHand = Bag_DuffelBag_RHandSWAT holdingbagright,
+        ReplaceInSecondHand = Bag_DuffelBag_LHandSWAT holdingbagleft,
+        RunSpeedModifier = 0.95,
+        SoundParameter = EquippedBaggageContainer DuffleBag,
+        WeightReduction = 65,
+        WorldStaticModel = DuffelBag_Ground,
+        AcceptItemFunction = MDB.acceptLegacy,
+        Tooltip = Tooltip_MDB_LegacyBag,
+        Tags = base:bagsfillexception;base:ignorezombiedensity;base:duffelbag;base:neverempty;base:isfirefuel;base:isfiretinder,
+    }
+
+    item BreakdownBagPlus
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        Weight = 1.0,
+        IconsForTexture = Duffelbag;DuffelBag_Green;DuffelBag_Grey;DuffelBagBlue;DuffelBagRed;Duffelbag_Sport;Duffelbag_Sport2,
+        CanBeEquipped = base:back,
+        CanHaveHoles = false,
+        Capacity = 18,
+        CloseSound = CloseBag,
+        ClothingItem = Bag_BreakdownBagPlus,
+        EquipSound = EquipDuffleBag,
+        OpenSound = OpenBag,
+        PutInSound = PutItemInBag,
+        ReplaceInPrimaryHand = Bag_DuffelBag_RHand holdingbagright,
+        ReplaceInSecondHand = Bag_DuffelBag_LHand holdingbagleft,
+        RunSpeedModifier = 0.95,
+        SoundParameter = EquippedBaggageContainer DuffleBag,
+        WeightReduction = 65,
+        WorldStaticModel = DuffelBag_Ground,
+        AcceptItemFunction = MDB.acceptLegacy,
+        Tooltip = Tooltip_MDB_LegacyBag,
+        Tags = base:isfirefuel;base:isfiretinder,
+    }
+
+    item BurglarBagPlus
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        ClothingItem = Bag_BurglarBagPlus,
+        CanBeEquipped = base:back,
+        WeightReduction = 65,
+        Weight = 1.0,
+        CanHaveHoles = false,
+        Capacity = 18,
+        Icon = Duffelbag,
+        OpenSound = OpenBag,
+        CloseSound = CloseBag,
+        PutInSound = PutItemInBag,
+        RunSpeedModifier = 0.95,
+        ReplaceInSecondHand = Bag_DuffelBag_LHandTINT holdingbagleft,
+        ReplaceInPrimaryHand = Bag_DuffelBag_RHandTINT holdingbagright,
+        WorldStaticModel = DuffelBag_Ground,
+        AcceptItemFunction = MDB.acceptLegacy,
+        Tooltip = Tooltip_MDB_LegacyBag,
+        Tags = base:neverempty;base:duffelbag;base:isfirefuel;base:isfiretinder,
+    }
+
+    item BaseballBagPlus
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        ClothingItem = Bag_BaseballBagPlus,
+        CanBeEquipped = base:back,
+        WeightReduction = 65,
+        Weight = 1.0,
+        Capacity = 18,
+        IconsForTexture = Duffelbag_Sport;Duffelbag_Sport2,
+        OpenSound = OpenBag,
+        CloseSound = CloseBag,
+        PutInSound = PutItemInBag,
+        RunSpeedModifier = 0.95,
+        CanHaveHoles = false,
+        ReplaceInSecondHand = Bag_BaseballBag_LHand holdingbagleft,
+        ReplaceInPrimaryHand = Bag_BaseballBag_RHand holdingbagright,
+        WorldStaticModel = DuffelBag_Ground,
+        AcceptItemFunction = MDB.acceptLegacy,
+        Tooltip = Tooltip_MDB_LegacyBag,
+        Tags = base:isfirefuel;base:isfiretinder,
+    }
+
+    item TennisBagPlus
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        ClothingItem = Bag_TennisBagPlus,
+        CanBeEquipped = base:back,
+        WeightReduction = 65,
+        Weight = 1.0,
+        Capacity = 18,
+        IconsForTexture = Duffelbag_Sport;Duffelbag_Sport2,
+        OpenSound = OpenBag,
+        CloseSound = CloseBag,
+        PutInSound = PutItemInBag,
+        RunSpeedModifier = 0.95,
+        CanHaveHoles = false,
+        ReplaceInSecondHand = Bag_BaseballBag_LHand holdingbagleft,
+        ReplaceInPrimaryHand = Bag_BaseballBag_RHand holdingbagright,
+        WorldStaticModel = DuffelBag_Ground,
+        AcceptItemFunction = MDB.acceptLegacy,
+        Tooltip = Tooltip_MDB_LegacyBag,
+        Tags = base:isfirefuel;base:isfiretinder,
+    }
+
+    item WeaponBagPlus
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        Weight = 1.0,
+        Icon = Duffelbag,
+        CanBeEquipped = base:back,
+        CanHaveHoles = false,
+        Capacity = 18,
+        CloseSound = CloseBag,
+        ClothingItem = Bag_WeaponBagPlus,
+        EquipSound = EquipDuffleBag,
+        OpenSound = OpenBag,
+        PutInSound = PutItemInBag,
+        ReplaceInPrimaryHand = Bag_DuffelBag_RHandTINT holdingbagright,
+        ReplaceInSecondHand = Bag_DuffelBag_LHandTINT holdingbagleft,
+        RunSpeedModifier = 0.95,
+        WeightReduction = 65,
+        WorldStaticModel = DuffelBag_Ground,
+        AcceptItemFunction = MDB.acceptLegacy,
+        Tooltip = Tooltip_MDB_LegacyBag,
+        Tags = base:bagsfillexception;base:isfirefuel;base:isfiretinder,
+    }
+
+    item InmateEscapedBagPlus
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        Weight = 1.0,
+        Icon = Duffelbag,
+        CanBeEquipped = base:back,
+        CanHaveHoles = false,
+        Capacity = 18,
+        CloseSound = CloseBag,
+        ClothingItem = Bag_InmateEscapedBagPlus,
+        EquipSound = EquipDuffleBag,
+        OpenSound = OpenBag,
+        PutInSound = PutItemInBag,
+        ReplaceInPrimaryHand = Bag_DuffelBag_RHandTINT holdingbagright,
+        ReplaceInSecondHand = Bag_DuffelBag_LHandTINT holdingbagleft,
+        RunSpeedModifier = 0.95,
+        WeightReduction = 65,
+        WorldStaticModel = DuffelBag_Ground,
+        AcceptItemFunction = MDB.acceptLegacy,
+        Tooltip = Tooltip_MDB_LegacyBag,
+        Tags = base:isfirefuel;base:isfiretinder,
+    }
+
+    item MoneyBagPlus
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        Weight = 1.0,
+        Icon = DuffelBagWhite,
+        CanBeEquipped = base:back,
+        CanHaveHoles = false,
+        Capacity = 18,
+        CloseSound = CloseBag,
+        ClothingItem = Bag_MoneyBagPlus,
+        EquipSound = EquipDuffleBag,
+        OpenSound = OpenBag,
+        PutInSound = PutItemInBag,
+        ReplaceInPrimaryHand = Bag_DuffelBag_RHandTINT holdingbagright,
+        ReplaceInSecondHand = Bag_DuffelBag_LHandTINT holdingbagleft,
+        RunSpeedModifier = 0.95,
+        WeightReduction = 65,
+        WorldStaticModel = DuffelBag_Ground,
+        AcceptItemFunction = MDB.acceptLegacy,
+        Tooltip = Tooltip_MDB_LegacyBag,
+        Tags = base:isfirefuel;base:isfiretinder;base:neverempty,
+    }
+
+    item WorkerBagPlus
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        Weight = 1.0,
+        Icon = Duffelbag,
+        CanBeEquipped = base:back,
+        CanHaveHoles = false,
+        Capacity = 18,
+        CloseSound = CloseBag,
+        ClothingItem = Bag_WorkerBagPlus,
+        EquipSound = EquipDuffleBag,
+        OpenSound = OpenBag,
+        PutInSound = PutItemInBag,
+        ReplaceInPrimaryHand = Bag_DuffelBag_RHandTINT holdingbagright,
+        ReplaceInSecondHand = Bag_DuffelBag_LHandTINT holdingbagleft,
+        RunSpeedModifier = 0.95,
+        WeightReduction = 65,
+        WorldStaticModel = DuffelBag_Ground,
+        AcceptItemFunction = MDB.acceptLegacy,
+        Tooltip = Tooltip_MDB_LegacyBag,
+        Tags = base:isfirefuel;base:isfiretinder,
+    }
+
+    item ShotgunBagPlus
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        Weight = 1.0,
+        IconsForTexture = Duffelbag;DuffelBag_Green;DuffelBag_Grey;DuffelBagBlue;DuffelBagRed;Duffelbag_Sport;Duffelbag_Sport2,
+        CanBeEquipped = base:back,
+        CanHaveHoles = false,
+        Capacity = 18,
+        CloseSound = CloseBag,
+        ClothingItem = Bag_ShotgunBagPlus,
+        OpenSound = OpenBag,
+        PutInSound = PutItemInBag,
+        ReplaceInPrimaryHand = Bag_DuffelBag_RHand holdingbagright,
+        ReplaceInSecondHand = Bag_DuffelBag_LHand holdingbagleft,
+        RunSpeedModifier = 0.95,
+        WeightReduction = 65,
+        WorldStaticModel = DuffelBag_Ground,
+        AcceptItemFunction = MDB.acceptLegacy,
+        Tooltip = Tooltip_MDB_LegacyBag,
+        Tags = base:neverempty;base:isfiretinder;base:isfirefuel,
+    }
+
+    item ShotgunSawnoffBagPlus
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        Weight = 1.0,
+        IconsForTexture = Duffelbag;DuffelBag_Green;DuffelBag_Grey;DuffelBagBlue;DuffelBagRed;Duffelbag_Sport;Duffelbag_Sport2,
+        CanBeEquipped = base:back,
+        CanHaveHoles = false,
+        Capacity = 18,
+        CloseSound = CloseBag,
+        ClothingItem = Bag_ShotgunSawnoffBagPlus,
+        OpenSound = OpenBag,
+        PutInSound = PutItemInBag,
+        ReplaceInPrimaryHand = Bag_DuffelBag_RHand holdingbagright,
+        ReplaceInSecondHand = Bag_DuffelBag_LHand holdingbagleft,
+        RunSpeedModifier = 0.95,
+        WeightReduction = 65,
+        WorldStaticModel = DuffelBag_Ground,
+        AcceptItemFunction = MDB.acceptLegacy,
+        Tooltip = Tooltip_MDB_LegacyBag,
+        Tags = base:neverempty;base:isfiretinder;base:isfirefuel,
+    }
+
+    item ShotgunDblBagPlus
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        Weight = 1.0,
+        IconsForTexture = Duffelbag;DuffelBag_Green;DuffelBag_Grey;DuffelBagBlue;DuffelBagRed;Duffelbag_Sport;Duffelbag_Sport2,
+        CanBeEquipped = base:back,
+        CanHaveHoles = false,
+        Capacity = 18,
+        CloseSound = CloseBag,
+        ClothingItem = Bag_ShotgunDblBagPlus,
+        OpenSound = OpenBag,
+        PutInSound = PutItemInBag,
+        ReplaceInPrimaryHand = Bag_DuffelBag_RHand holdingbagright,
+        ReplaceInSecondHand = Bag_DuffelBag_LHand holdingbagleft,
+        RunSpeedModifier = 0.95,
+        WeightReduction = 65,
+        WorldStaticModel = DuffelBag_Ground,
+        AcceptItemFunction = MDB.acceptLegacy,
+        Tooltip = Tooltip_MDB_LegacyBag,
+        Tags = base:neverempty;base:isfiretinder;base:isfirefuel,
+    }
+
+    item ShotgunDblSawnoffBagPlus
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        Weight = 1.0,
+        IconsForTexture = Duffelbag;DuffelBag_Green;DuffelBag_Grey;DuffelBagBlue;DuffelBagRed;Duffelbag_Sport;Duffelbag_Sport2,
+        CanBeEquipped = base:back,
+        CanHaveHoles = false,
+        Capacity = 18,
+        CloseSound = CloseBag,
+        ClothingItem = Bag_ShotgunDblSawnoffBagPlus,
+        OpenSound = OpenBag,
+        PutInSound = PutItemInBag,
+        ReplaceInPrimaryHand = Bag_DuffelBag_RHand holdingbagright,
+        ReplaceInSecondHand = Bag_DuffelBag_LHand holdingbagleft,
+        RunSpeedModifier = 0.95,
+        WeightReduction = 65,
+        WorldStaticModel = DuffelBag_Ground,
+        AcceptItemFunction = MDB.acceptLegacy,
+        Tooltip = Tooltip_MDB_LegacyBag,
+        Tags = base:neverempty;base:isfiretinder;base:isfirefuel,
+    }
+
+    item FoodCannedPlus
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        ClothingItem = Bag_FoodCannedPlus,
+        CanBeEquipped = base:back,
+        WeightReduction = 65,
+        Weight = 1.0,
+        Capacity = 18,
+        Icon = Duffelbag,
+        OpenSound = OpenBag,
+        CloseSound = CloseBag,
+        PutInSound = PutItemInBag,
+        RunSpeedModifier = 0.95,
+        CanHaveHoles = false,
+        ReplaceInSecondHand = Bag_DuffelBag_LHandTINT holdingbagleft,
+        ReplaceInPrimaryHand = Bag_DuffelBag_RHandTINT holdingbagright,
+        WorldStaticModel = DuffelBag_Ground,
+        AcceptItemFunction = MDB.acceptLegacy,
+        Tooltip = Tooltip_MDB_LegacyBag,
+        Tags = base:neverempty;base:isfirefuel;base:isfiretinder,
+    }
+
+    item FoodSnacksPlus
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        ClothingItem = Bag_FoodSnacksPlus,
+        CanBeEquipped = base:back,
+        WeightReduction = 65,
+        Weight = 1.0,
+        Capacity = 18,
+        Icon = Duffelbag,
+        OpenSound = OpenBag,
+        CloseSound = CloseBag,
+        PutInSound = PutItemInBag,
+        RunSpeedModifier = 0.95,
+        CanHaveHoles = false,
+        ReplaceInSecondHand = Bag_DuffelBag_LHandTINT holdingbagleft,
+        ReplaceInPrimaryHand = Bag_DuffelBag_RHandTINT holdingbagright,
+        WorldStaticModel = DuffelBag_Ground,
+        AcceptItemFunction = MDB.acceptLegacy,
+        Tooltip = Tooltip_MDB_LegacyBag,
+        Tags = base:neverempty;base:isfirefuel;base:isfiretinder,
+    }
+
+    item ToolBagPlus
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        ClothingItem = Bag_ToolBagPlus,
+        CanBeEquipped = base:back,
+        WeightReduction = 65,
+        Weight = 1.0,
+        Capacity = 18,
+        Icon = Duffelbag,
+        OpenSound = OpenBag,
+        CloseSound = CloseBag,
+        PutInSound = PutItemInBag,
+        RunSpeedModifier = 0.95,
+        CanHaveHoles = false,
+        ReplaceInSecondHand = Bag_DuffelBag_LHandTINT holdingbagleft,
+        ReplaceInPrimaryHand = Bag_DuffelBag_RHandTINT holdingbagright,
+        WorldStaticModel = DuffelBag_Ground,
+        AcceptItemFunction = MDB.acceptLegacy,
+        Tooltip = Tooltip_MDB_LegacyBag,
+        Tags = base:ignorezombiedensity;base:isfirefuel;base:isfiretinder;base:neverempty,
+    }
+
+    item FannyPackFrontPlus
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        Weight = 0.2,
+        IconsForTexture = FannyPack;Fannypack_Sport;Fannypack_Sport2,
+        CanBeEquipped = base:fannypackfront,
+        CanHaveHoles = false,
+        Capacity = 1,
+        CloseSound = CloseLeatherBag,
+        ClothingItem = Bag_FannyPackFrontPlus,
+        EquipSound = EquipFannyPack,
+        OpenSound = OpenLeatherBag,
+        PutInSound = StoreItemLeatherBag,
+        RunSpeedModifier = 0.98,
+        WeightReduction = 85,
+        WorldStaticModel = FannyPack_Ground,
+        AcceptItemFunction = MDB.acceptLegacy,
+        Tooltip = Tooltip_MDB_LegacyBag,
+        Tags = base:isfiretinder;base:isfirefuel,
+    }
+
+    item FannyPackBackPlus
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        Weight = 0.2,
+        IconsForTexture = FannyPack;Fannypack_Sport;Fannypack_Sport2,
+        CanBeEquipped = base:fannypackback,
+        CanHaveHoles = false,
+        Capacity = 1,
+        CloseSound = CloseLeatherBag,
+        ClothingItem = Bag_FannyPackBackPlus,
+        EquipSound = EquipFannyPack,
+        OpenSound = OpenLeatherBag,
+        PutInSound = StoreItemLeatherBag,
+        RunSpeedModifier = 0.98,
+        WeightReduction = 85,
+        WorldStaticModel = FannyPack_Ground,
+        AcceptItemFunction = MDB.acceptLegacy,
+        Tooltip = Tooltip_MDB_LegacyBag,
+        Tags = base:isfiretinder;base:isfirefuel,
+    }
+
+    item HydrationBackpackPlus
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        Weight = 1.0,
+        IconsForTexture = Hydropack_Black;Hydropack_Blue;Hydropack_Neon,
+        AttachmentReplacement = Bag,
+        BloodLocation = Bag,
+        CanBeEquipped = base:back,
+        CanHaveHoles = false,
+        Capacity = 12,
+        CloseSound = CloseHydrationPack,
+        ClothingItem = Bag_HydrationBackpackPlus,
+        EquipSound = EquipBackpackLarge,
+        OpenSound = OpenHydrationPack,
+        PutInSound = StoreItemHydrationPack,
+        ReplaceInPrimaryHand = Bag_HydrationBackpack_RHand holdingbagright,
+        ReplaceInSecondHand = Bag_HydrationBackpack_LHand holdingbagleft,
+        RunSpeedModifier = 0.97,
+        SoundParameter = EquippedBaggageContainer SchoolBag,
+        WeightReduction = 85,
+        WorldStaticModel = HydrationBackpack_Ground,
+        AcceptItemFunction = MDB.acceptLegacy,
+        Tooltip = Tooltip_MDB_LegacyBag,
+        Tags = base:ignorezombiedensity,
+        component FluidContainer
+        {
+            ContainerName = HydrationBackpack,
+            Capacity = 2.0,
+            InitialPercentMin = 0.0,
+            InitialPercentMax = 1.0,
+            Fluids
+            {
+                fluid = Water:1.0,
+            }
+        }
+    }
+
+    item HydrationBackpackPlus_Camo
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        Weight = 1.0,
+        Icon = Hydropack_Camo,
+        AttachmentReplacement = Bag,
+        BloodLocation = Bag,
+        CanBeEquipped = base:back,
+        CanHaveHoles = false,
+        Capacity = 12,
+        CloseSound = CloseHydrationPack,
+        ClothingItem = Bag_HydrationBackpackPlus_Camo,
+        EquipSound = EquipBackpackLarge,
+        OpenSound = OpenHydrationPack,
+        PutInSound = StoreItemHydrationPack,
+        ReplaceInPrimaryHand = Bag_HydrationBackpack_Camo_RHand holdingbagright,
+        ReplaceInSecondHand = Bag_HydrationBackpack_Camo_LHand holdingbagleft,
+        RunSpeedModifier = 0.97,
+        SoundParameter = EquippedBaggageContainer SchoolBag,
+        WeightReduction = 85,
+        WorldStaticModel = HydrationBackpack_Ground,
+        AcceptItemFunction = MDB.acceptLegacy,
+        Tooltip = Tooltip_MDB_LegacyBag,
+        Tags = base:ignorezombiedensity,
+        component FluidContainer
+        {
+            ContainerName = HydrationBackpack,
+            Capacity = 3.0,
+            InitialPercentMin = 0.0,
+            InitialPercentMax = 1.0,
+            Fluids
+            {
+                fluid = Water:1.0,
+            }
+        }
+    }
+
+    item HikingBagPlus
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        Weight = 1.2,
+        IconsForTexture = Hiking_Blue;Hiking_Green;Hiking_Red;Hiking_Green,
+        AttachmentReplacement = Bag,
+        BloodLocation = Bag,
+        CanBeEquipped = base:back,
+        CanHaveHoles = false,
+        Capacity = 20,
+        CloseSound = CloseBag,
+        ClothingItem = Bag_HikingBagPlus,
+        EquipSound = EquipBackpackLarge,
+        OpenSound = OpenBag,
+        PutInSound = PutItemInBag,
+        ReplaceInPrimaryHand = Bag_HikingBag_RHand holdingbagright,
+        ReplaceInSecondHand = Bag_HikingBag_LHand holdingbagleft,
+        RunSpeedModifier = 0.96,
+        SoundParameter = EquippedBaggageContainer HikingBag,
+        WeightReduction = 75,
+        WorldStaticModel = HikingBag_Ground,
+        AttachmentsProvided = BedrollBottom,
+        AcceptItemFunction = MDB.acceptLegacy,
+        Tooltip = Tooltip_MDB_LegacyBag,
+        Tags = base:isfirefuel;base:isfiretinder,
+    }
+
+    item BigHikingBagplus
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        Weight = 1.5,
+        IconsForTexture = BigHiking_Blue;BigHiking_Green;BigHiking_Red,
+        AttachmentReplacement = Bag,
+        BloodLocation = Bag,
+        CanBeEquipped = base:back,
+        CanHaveHoles = false,
+        Capacity = 22,
+        CloseSound = CloseBag,
+        ClothingItem = Bag_BigHikingBagPlus,
+        EquipSound = EquipBackpackLarge,
+        OpenSound = OpenBag,
+        PutInSound = PutItemInBag,
+        ReplaceInPrimaryHand = Bag_BigHikingBag_RHand holdingbagright,
+        ReplaceInSecondHand = Bag_BigHikingBag_LHand holdingbagleft,
+        RunSpeedModifier = 0.95,
+        SoundParameter = EquippedBaggageContainer HikingBag,
+        WeightReduction = 80,
+        WorldStaticModel = BigHikingBag_Ground,
+        AttachmentsProvided = BedrollBottomBig,
+        AcceptItemFunction = MDB.acceptLegacy,
+        Tooltip = Tooltip_MDB_LegacyBag,
+        Tags = base:isfirefuel;base:isfiretinder,
+    }
+
+    item BigHikingBagPlus_Travel
+    {
+        DisplayCategory = Memento,
+        ItemType = base:container,
+        Weight = 1.2,
+        IconsForTexture = Hiking_Blue;Hiking_Green;Hiking_Red,
+        AttachmentReplacement = Bag,
+        BloodLocation = Bag,
+        CanBeEquipped = base:back,
+        CanHaveHoles = false,
+        Capacity = 20,
+        CloseSound = CloseBag,
+        ClothingItem = Bag_HikingBagPlus_Travel,
+        EquipSound = EquipBackpackLarge,
+        OpenSound = OpenBag,
+        PutInSound = PutItemInBag,
+        ReplaceInPrimaryHand = Bag_HikingBag_Travel_RHand holdingbagright,
+        ReplaceInSecondHand = Bag_HikingBag_Travel_LHand holdingbagleft,
+        RunSpeedModifier = 0.96,
+        SoundParameter = EquippedBaggageContainer HikingBag,
+        WeightReduction = 75,
+        WorldStaticModel = HikingBag_Ground,
+        AttachmentsProvided = BedrollBottom,
+        AcceptItemFunction = MDB.acceptLegacy,
+        Tooltip = Tooltip_MDB_LegacyBag,
+        Tags = base:ignorezombiedensity;base:isfirefuel;base:isfiretinder;base:ismemento,
+    }
+
+    item SchoolbagPlus
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        Weight = 1.0,
+        IconsForTexture = Backpack_Black;Backpack_Blue;Backpack_Primary;Backpack_Teal,
+        AttachmentReplacement = Bag,
+        BloodLocation = Bag,
+        CanBeEquipped = base:back,
+        CanHaveHoles = false,
+        Capacity = 15,
+        CloseSound = CloseBag,
+        ClothingItem = Bag_SchoolbagPlus,
+        EquipSound = EquipBackpackSmall,
+        OpenSound = OpenBag,
+        PutInSound = PutItemInBag,
+        ReplaceInPrimaryHand = Bag_SchoolBag_RHand holdingbagright,
+        ReplaceInSecondHand = Bag_SchoolBag_LHand holdingbagleft,
+        RunSpeedModifier = 0.97,
+        SoundParameter = EquippedBaggageContainer SchoolBag,
+        WeightReduction = 70,
+        WorldStaticModel = SchoolBag_Ground,
+        AcceptItemFunction = MDB.acceptLegacy,
+        Tooltip = Tooltip_MDB_LegacyBag,
+        Tags = base:isfirefuel;base:isfiretinder,
+    }
+
+    item SatchelPlus
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        Weight = 1.0,
+        IconsForTexture = Satchel_Leather;Satchel_Green;Satchel_Khaki,
+        BloodLocation = Bag,
+        CanBeEquipped = base:satchel,
+        CanHaveHoles = false,
+        Capacity = 12,
+        CloseSound = CloseSatchel,
+        ClothingItem = Bag_SatchelPlus,
+        EquipSound = EquipSatchel,
+        OpenSound = OpenSatchel,
+        PutInSound = StoreItemSatchel,
+        ReplaceInPrimaryHand = Bag_Satchel_RHand holdingbagright,
+        ReplaceInSecondHand = Bag_Satchel_LHand holdingbagleft,
+        RunSpeedModifier = 0.99,
+        WeightReduction = 65,
+        WorldStaticModel = Satchel_Ground,
+        AcceptItemFunction = MDB.acceptLegacy,
+        Tooltip = Tooltip_MDB_LegacyBag,
+        Tags = base:isfiretinder;base:isfirefuel,
+    }
+
+    item Satchel_FishingPlus
+    {
+        DisplayCategory = Memento,
+        ItemType = base:container,
+        Weight = 1.0,
+        Icon = Satchel_Fishing,
+        BloodLocation = Bag,
+        CanBeEquipped = base:satchel,
+        CanHaveHoles = false,
+        Capacity = 12,
+        CloseSound = CloseSatchelFishing,
+        ClothingItem = Bag_Satchel_FishingPlus,
+        EquipSound = EquipSatchel,
+        OpenSound = OpenSatchelFishing,
+        PutInSound = StoreItemSatchelFishing,
+        ReplaceInPrimaryHand = Bag_Satchel_Fishing_RHand holdingbagright,
+        ReplaceInSecondHand = Bag_Satchel_Fishing_LHand holdingbagleft,
+        RunSpeedModifier = 0.99,
+        WeightReduction = 65,
+        WorldStaticModel = Satchel_Fishing_Ground,
+        AcceptItemFunction = MDB.acceptLegacy,
+        Tooltip = Tooltip_MDB_LegacyBag,
+        Tags = base:ignorezombiedensity;base:isfirefuel;base:isfiretinder;base:ismemento,
+    }
+
+    item Satchel_MedicalPlus
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        Weight = 1.0,
+        Icon = Satchel_Medical,
+        BloodLocation = Bag,
+        CanBeEquipped = base:satchel,
+        CanHaveHoles = false,
+        Capacity = 12,
+        CloseSound = CloseSatchelMedical,
+        ClothingItem = Bag_Satchel_MedicalPlus,
+        EquipSound = EquipSatchel,
+        OpenSound = OpenSatchelMedical,
+        PutInSound = StoreItemSatchelMedical,
+        ReplaceInPrimaryHand = Bag_Satchel_Medical_RHand holdingbagright,
+        ReplaceInSecondHand = Bag_Satchel_Medical_LHand holdingbagleft,
+        RunSpeedModifier = 0.99,
+        WeightReduction = 65,
+        WorldStaticModel = Satchel_Medical_Ground,
+        AcceptItemFunction = MDB.acceptLegacy,
+        Tooltip = Tooltip_MDB_LegacyBag,
+        Tags = base:ignorezombiedensity;base:isfirefuel;base:isfiretinder,
+    }
+
+    item Satchel_MilitaryPlus
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        Weight = 1.0,
+        Icon = Satchel_Military,
+        BloodLocation = Bag,
+        CanBeEquipped = base:satchel,
+        CanHaveHoles = false,
+        Capacity = 12,
+        CloseSound = CloseSatchelMilitary,
+        ClothingItem = Bag_Satchel_MilitaryPlus,
+        EquipSound = EquipSatchel,
+        OpenSound = OpenSatchelMilitary,
+        PutInSound = StoreItemSatchelMilitary,
+        ReplaceInPrimaryHand = Bag_Satchel_Military_RHand holdingbagright,
+        ReplaceInSecondHand = Bag_Satchel_Military_LHand holdingbagleft,
+        RunSpeedModifier = 0.99,
+        WeightReduction = 65,
+        WorldStaticModel = Satchel_Military_Ground,
+        AcceptItemFunction = MDB.acceptLegacy,
+        Tooltip = Tooltip_MDB_LegacyBag,
+        Tags = base:ignorezombiedensity;base:isfirefuel;base:isfiretinder,
+    }
+
+}
+
+module Base
+{
+    item SheetSlingBagPlus
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        Weight = 0.8,
+        Icon = SheetSlingBag,
+        CanBeEquipped = base:back,
+        CanHaveHoles = false,
+        Capacity = 10,
+        CloseSound = CloseSheetSlingBag,
+        ClothingItem = Bag_SheetSlingBagPlus,
+        EquipSound = EquipSheetSling,
+        OpenSound = OpenSheetSlingBag,
+        PutInSound = StoreItemSheetSlingBag,
+        ReplaceInPrimaryHand = Bag_SheetSlingBag_RHand holdingbagright,
+        ReplaceInSecondHand = Bag_SheetSlingBag_LHand holdingbagleft,
+        RunSpeedModifier = 0.95,
+        WeightReduction = 50,
+        WorldStaticModel = SheetSlingBag_Ground,
+        AcceptItemFunction = MDB.acceptLegacy,
+        Tooltip = Tooltip_MDB_LegacyBag,
+        Tags = base:isfirefuel;base:isfiretinder,
+    }
+
+    /* 舊水瓶：照原版 Base.WaterBottle，不鎖、不改裝 */
+    item WaterBottleFull
+    {
+        DisplayCategory = Water,
+        ItemType = base:normal,
+        Weight = 0.1,
+        Icon = WaterBottle,
+        IconColorMask = WaterBottle_Mask2,
+        IconFluidMask = WaterBottle_Mask,
+        CookingSound = BoilingFood,
+        CustomEatSound = DrinkingFromBottlePlastic,
+        FillFromDispenserSound = GetWaterFromDispenserPlasticMedium,
+        FillFromLakeSound = GetWaterFromLakeBottle,
+        FillFromTapSound = GetWaterFromTapPlasticMedium,
+        Tooltip = Tooltip_item_OnlyPurifyMicrowave,
+        AttachmentType = WaterBottle,
+        StaticModel = WaterBottle,
+        WorldStaticModel = WaterBottleFull,
+        Tags = base:cookablemicrowave,
+        component FluidContainer
+        {
+            ContainerName = BottlePlastic,
+            Capacity = 1.0,
+            PickRandomFluid = true,
+            Fluids
+            {
+                fluid = Water:1.0,
+                fluid = CarbonatedWater:1.0,
+            }
+        }
+    }
+
+    /* 舊水瓶：照原版 Base.WaterBottle，不鎖、不改裝 */
+    item WaterPopBottle
+    {
+        DisplayCategory = Water,
+        ItemType = base:normal,
+        Weight = 0.1,
+        Icon = Pop_water,
+        IconColorMask = WaterBottle_Mask2,
+        IconFluidMask = WaterBottle_Mask,
+        CookingSound = BoilingFood,
+        CustomEatSound = DrinkingFromBottlePlastic,
+        FillFromDispenserSound = GetWaterFromDispenserPlasticMedium,
+        FillFromLakeSound = GetWaterFromLakeBottle,
+        FillFromTapSound = GetWaterFromTapPlasticMedium,
+        Tooltip = Tooltip_item_OnlyPurifyMicrowave,
+        AttachmentType = WaterBottle,
+        StaticModel = PopBottle,
+        WorldStaticModel = PopBottle,
+        Tags = base:cookablemicrowave;base:lightwhenattached,
+        component FluidContainer
+        {
+            ContainerName = BottlePlastic,
+            Capacity = 1.0,
+            PickRandomFluid = true,
+            Fluids
+            {
+                fluid = Water:1.0,
+                fluid = CarbonatedWater:1.0,
+            }
+        }
+    }
+}
+
+/* 舊版（3403697073、3640342538、3780399230）把布吊帶包放在 ExtraCraft 模組 */
+module ExtraCraft
+{
+    imports
+    {
+        Base
+    }
+
+    item SheetSlingBagPlus
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        Weight = 0.8,
+        Icon = SheetSlingBag,
+        CanBeEquipped = base:back,
+        CanHaveHoles = false,
+        Capacity = 10,
+        CloseSound = CloseSheetSlingBag,
+        ClothingItem = Bag_SheetSlingBagPlus,
+        EquipSound = EquipSheetSling,
+        OpenSound = OpenSheetSlingBag,
+        PutInSound = StoreItemSheetSlingBag,
+        ReplaceInPrimaryHand = Bag_SheetSlingBag_RHand holdingbagright,
+        ReplaceInSecondHand = Bag_SheetSlingBag_LHand holdingbagleft,
+        RunSpeedModifier = 0.95,
+        WeightReduction = 50,
+        WorldStaticModel = SheetSlingBag_Ground,
+        AcceptItemFunction = MDB.acceptLegacy,
+        Tooltip = Tooltip_MDB_LegacyBag,
+        Tags = base:isfirefuel;base:isfiretinder,
+    }
+}
