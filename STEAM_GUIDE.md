@@ -267,3 +267,5 @@ Bag Upgrade Plus（以下簡稱 BUP）已經從 Workshop 下架。本 MOD 接手
 [/list]
 [*] [b]翻譯[/b]：介面翻譯有問題也請回報。
 [/list]
+
+本 MOD 是以 Capcom《惡靈古堡》為題材的非官方二次創作，與 Capcom 無關，也未經 Capcom 授權。

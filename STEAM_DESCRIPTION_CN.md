@@ -47,6 +47,8 @@ S.T.A.R.S. 与保护伞主题的战术背包，能用缝纫升级，还能接手
 MOD 永远免费。喜欢的话可以请我喝杯咖啡，赞助会用在服务器与 MOD 开发上；源代码公开在 GitHub。
 [url=https://ko-fi.com/minidoracat][img]https://raw.githubusercontent.com/Minidoracat/workshop-resources/refs/heads/main/badges/badge_kofi.png[/img][/url] [url=https://github.com/Minidoracat/MinidoracatBagsFor42][img]https://raw.githubusercontent.com/Minidoracat/workshop-resources/refs/heads/main/badges/badge_github.png[/img][/url]
 
+本 MOD 是以 Capcom《生化危机》为题材的非官方二次创作，与 Capcom 无关，也未经 Capcom 授权。
+
 [b]#Minidoracat[/b]
 
 Workshop ID: XXXX

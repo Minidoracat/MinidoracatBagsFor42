@@ -46,6 +46,8 @@ S.T.A.R.S. とアンブレラをテーマにしたタクティカルバッグで
 MODはずっと無料です。気に入ったらコーヒーをおごってください。支援はサーバーとMOD開発に使います。ソースコードは GitHub で公開しています。
 [url=https://ko-fi.com/minidoracat][img]https://raw.githubusercontent.com/Minidoracat/workshop-resources/refs/heads/main/badges/badge_kofi.png[/img][/url] [url=https://github.com/Minidoracat/MinidoracatBagsFor42][img]https://raw.githubusercontent.com/Minidoracat/workshop-resources/refs/heads/main/badges/badge_github.png[/img][/url]
 
+本MODはカプコンの『バイオハザード』を題材にした非公式の二次創作です。カプコンとは関係がなく、カプコンの許諾も受けていません。
+
 [b]#Minidoracat[/b]
 
 Workshop ID: XXXX

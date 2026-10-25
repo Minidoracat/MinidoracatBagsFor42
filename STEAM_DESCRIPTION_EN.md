@@ -46,6 +46,8 @@ If this mod helps you, please give it a 👍 here and a ⭐ on GitHub so more pl
 The mod is and always will be free. If you like it, you can buy me a coffee; donations go to the server and mod development. The source code is on GitHub.
 [url=https://ko-fi.com/minidoracat][img]https://raw.githubusercontent.com/Minidoracat/workshop-resources/refs/heads/main/badges/badge_kofi.png[/img][/url] [url=https://github.com/Minidoracat/MinidoracatBagsFor42][img]https://raw.githubusercontent.com/Minidoracat/workshop-resources/refs/heads/main/badges/badge_github.png[/img][/url]
 
+This mod is an unofficial fan work based on Capcom's Resident Evil. It is not affiliated with Capcom and is not authorized by Capcom.
+
 [b]#Minidoracat[/b]
 
 Workshop ID: XXXX

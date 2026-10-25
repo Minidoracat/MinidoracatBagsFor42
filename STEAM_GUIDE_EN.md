@@ -267,3 +267,5 @@ On the "Tactical Bags" page of the sandbox settings.
 [/list]
 [*] [b]Translations[/b]: please report any translation issues too.
 [/list]
+
+This mod is an unofficial fan work based on Capcom's Resident Evil. It is not affiliated with Capcom and is not authorized by Capcom.

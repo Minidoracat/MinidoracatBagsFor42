@@ -46,6 +46,8 @@ S.T.A.R.S. 與保護傘主題的戰術背包，能用縫紉升級，還能接手
 MOD 永遠免費。喜歡的話可以請我喝杯咖啡，贊助會用在伺服器與 MOD 開發上；原始碼公開在 GitHub。
 [url=https://ko-fi.com/minidoracat][img]https://raw.githubusercontent.com/Minidoracat/workshop-resources/refs/heads/main/badges/badge_kofi.png[/img][/url] [url=https://github.com/Minidoracat/MinidoracatBagsFor42][img]https://raw.githubusercontent.com/Minidoracat/workshop-resources/refs/heads/main/badges/badge_github.png[/img][/url]
 
+本 MOD 是以 Capcom《惡靈古堡》為題材的非官方二次創作，與 Capcom 無關，也未經 Capcom 授權。
+
 [b]#Minidoracat[/b]
 
 Workshop ID: XXXX
