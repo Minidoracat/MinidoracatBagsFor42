@@ -3,32 +3,34 @@
 
 [hr][/hr]
 
-S.T.A.R.S. 與保護傘主題的 7 款背包，可升三階，並接手 Bag Upgrade Plus 存檔裡的舊背包。
+S.T.A.R.S. 與保護傘主題的戰術背包，能用縫紉升級，還能接手 Bag Upgrade Plus 存檔裡的舊背包。
 
 [h2]📦 需要安裝[/h2]
 [list]
 [*] 單人與多人皆可用；多人遊戲需要伺服器啟用本 MOD
-[*] [b]中途加入／移除：[/b]都可以；移除後本 MOD 的背包和裡面的東西會消失
+[*] [b]中途加入／移除：[/b]都可以；移除後新背包、接手的舊背包和裡面的東西都會消失
 [*] [b]介面語言：[/b]繁體中文、简体中文、English、日本語、한국어、Русский、Español、Português、Türkçe、Français、Polski、Deutsch（翻譯有問題請回報）
 [/list]
 
 [h2]🚀 快速上手[/h2]
 [olist]
 [*] 到警察局找 S.T.A.R.S. 款，到軍事與醫療地點找保護傘款
-[*] 背包脫下來，在製作選單用材料升級，最多三階
+[*] 背包脫下來，在製作選單的縫紉分類升級，最多三階
 [*] Bag Upgrade Plus 的舊背包清空後，在製作選單改裝成新背包
+[*] 服主從 Bag Upgrade Plus 換過來，照完整說明的換裝步驟做
 [/olist]
 
 [h2]✨ 主要功能[/h2]
 [list]
-[*] [b]兩條產品線[/b]：S.T.A.R.S. 深藍尼龍與保護傘橄欖卡其
+[*] [b]自製外觀[/b]：七款都有 S.T.A.R.S. 深藍與保護傘卡其兩種配色
 [*] [b]從腰包到遠征背包[/b]：腰包、彈藥背帶、側背包、背包與胸掛
-[*] [b]專用收納[/b]：醫療腰包收醫療用品，彈藥背帶收彈藥並加快裝填
+[*] [b]專用收納[/b]：醫療腰包收醫療用品，彈藥背帶收子彈並加快裝填
 [*] [b]升級背包[/b]：原版背包和本 MOD 背包都能升級，容量更大、更輕
-[*] [b]接手 Bag Upgrade Plus[/b]：舊存檔的背包照樣讀得到，可改裝成新款
+[*] [b]搜刮與掉落[/b]：警局、軍事與醫療地點找得到，對應的殭屍也會掉
+[*] [b]接手 Bag Upgrade Plus[/b]：舊背包照樣在，換裝步驟見完整說明
 [*] [b]伺服器可調[/b]：升級幅度、上限與出現機率都能在沙盒設定調整
 [/list]
-📖 [b]完整說明與常見問題：[/b][url=https://steamcommunity.com/sharedfiles/filedetails/?id=XXXX]Minidoracat Bags 完整說明[/url]
+📖 [b]數值、取得地點、升級與換裝步驟：[/b][url=https://steamcommunity.com/sharedfiles/filedetails/?id=XXXX]Minidoracat Bags 完整說明[/url]
 
 [h2]🔗 Minidoracat 全系列[/h2]
 其他作品都在[url=https://steamcommunity.com/sharedfiles/filedetails/?id=3809297109]Minidoracat 全系列收藏[/url]，依需求自選訂閱。
