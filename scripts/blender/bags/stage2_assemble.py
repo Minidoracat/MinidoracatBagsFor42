@@ -357,9 +357,9 @@ def main(name):
                             name=f"MDB_{name}")
         print(f"MDB_{name}_{suffix[k]}.X: {len(m['V'])} verts, {len(FF)} tris, bones {list(Wd)}")
 
-    # 貼圖：1024 烘焙 → 調色 → 沿用的原版子網格塗黑 →（深藍）S.T.A.R.S. 隊徽 → 縮成 TEX_SIZE
+    # 貼圖：1024 烘焙 → 調色 → 沿用的原版子網格塗黑 →（深藍）S.T.A.R.S. 隊徽 → 縮成 TEX_SIZE。變體沿用原款貼圖，不產生
     van_tex = Image.open(PZ + "/" + cfg["keep_tex"])
-    for look, fix in (("Navy", recolor_navy), ("Olive", lambda i: i.convert("RGB"))):
+    for look, fix in () if cfg.get("variant_of") else (("Navy", recolor_navy), ("Olive", lambda i: i.convert("RGB"))):
         img = keep_paint(fix(Image.open(os.path.join(TEMP, f"bake_{look.lower()}.png"))), van_tex, [i[1:] for i in isl])
         size = (TEX_SIZE[look],) * 2
         if look == "Navy" and cfg.get("emblem"):

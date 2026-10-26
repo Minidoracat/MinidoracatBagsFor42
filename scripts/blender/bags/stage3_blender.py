@@ -16,7 +16,7 @@ from mathutils import Matrix, Vector
 
 sys.path.insert(0, os.path.dirname(__file__))
 import bags
-from common import PZ, fit_affine, keep_groups, obb_axes, out, sel, temp, xio
+from common import MEDIA, PZ, fit_affine, keep_groups, obb_axes, out, sel, temp, xio
 from io_scene_fbx import parse_fbx
 
 cfg = bags.get(sys.argv[sys.argv.index("--") + 1])
@@ -164,7 +164,9 @@ print("ground", ground)
 json.dump(ground, open(os.path.join(TEMP, "ground.json"), "w"), indent=1)
 
 # ---- 預覽與圖示 ----
-imgs = {look: bpy.data.images.load(f"{OUT}/textures/Clothes/Bag/MDB_{NAME}_{look}.png") for look in ("Navy", "Olive")}
+# 變體（variant_of）沿用原款已安裝的貼圖；地面 FBX 與圖示原圖照樣產生但不安裝（build.py）
+TEX = f"{MEDIA}/textures/Clothes/Bag/MDB_{cfg['variant_of']}" if cfg.get("variant_of") else f"{OUT}/textures/Clothes/Bag/MDB_{NAME}"
+imgs = {look: bpy.data.images.load(f"{TEX}_{look}.png") for look in ("Navy", "Olive")}
 texmat(g2, imgs["Navy"])
 bpy.ops.import_scene.fbx(filepath=GROUND_FBX)
 gv = next(o for o in sc.objects if o.type == "MESH" and o is not g2)

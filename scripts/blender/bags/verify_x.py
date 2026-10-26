@@ -7,7 +7,7 @@ import numpy as np
 from PIL import Image
 
 import bags
-from common import PZ, TEX_SIZE, fbx_node_transforms, out, temp, xio
+from common import MEDIA, PZ, TEX_SIZE, fbx_node_transforms, out, temp, xio
 
 BP = "models_X/Skinned/BackPacks/"
 HAND_BONES = {"RHand": {"Bip01_R_Hand", "Bip01_Prop1"}, "LHand": {"Bip01_L_Hand", "Bip01_Prop2"}}
@@ -122,7 +122,12 @@ def check(name, media):
                f"地面 FBX 節點 {nd} 不是單位矩陣（節點縮放 {tr['Lcl Scaling']}、旋轉 {tr['Lcl Rotation']}）")
         info["ground"] = dict(bbox=gj["ours_pz_bbox"], vanilla=gj["vanilla_pz_bbox"], scale=gj["scale"],
                               node={k: v for nd in nodes.values() for k, v in nd.items()})
-    for look in ("Navy", "Olive"):
+    base = cfg.get("variant_of")
+    if base:   # 變體沿用原款貼圖與圖示：每個 UV 都要在原款已安裝的男版 .X 裡（同一張貼圖上同一點）
+        B = xio.read_x(f"{MEDIA}/{BP}MDB_{base}_M.X")["UV"]
+        for k, d in X.items():
+            ok(np.abs(d["UV"][:, None] - B[None]).max(2).min(1).max() < 1e-6, f"MDB_{name}_{k}: UV 不在原款 {base} 的 UV 裡（貼圖對不上）")
+    for look in () if base else ("Navy", "Olive"):
         p = f"{media}/textures/Clothes/Bag/MDB_{name}_{look}.png"
         n = TEX_SIZE[look]
         ok(os.path.exists(p) and Image.open(p).size == (n, n), f"{look} 貼圖不是 {n}×{n}")
@@ -140,6 +145,8 @@ def _mutate(cfg, p, kind):
         Wd[idx, j] = w
     if kind == "UV":
         UV[0] = (1.5, 0.5)
+    elif kind == "原款UV":
+        UV[0, 0] += 0.01
     elif kind == "穿模":
         if cfg["clearance"] == "closed":
             V[:, 2] -= 0.04
@@ -174,6 +181,8 @@ def selftest(name):
     expect = {"權重": "白名單", "反綁定": "反綁定矩陣", "UV": "UV 超出", "頂點": "頂點 >", "穿模": "穿模", "節點縮放": "不是單位矩陣"}
     if cfg.get("bedroll") is not None:
         expect["底部"] = "本體底部"
+    if cfg.get("variant_of"):
+        expect["原款UV"] = "貼圖對不上"
     for kind, msg in expect.items():
         tmp = tempfile.mkdtemp()
         shutil.copytree(out(name), tmp, dirs_exist_ok=True)
