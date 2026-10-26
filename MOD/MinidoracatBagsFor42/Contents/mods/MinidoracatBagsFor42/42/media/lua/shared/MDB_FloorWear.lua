@@ -39,12 +39,39 @@ function MDB_WearFromFloor:isValid()
     return self.item ~= nil and self.item:getWorldItem() ~= nil and not self.character:getVehicle()
 end
 
+-- 聲音與物品上的進度照原版穿衣服（ISWearClothing.lua:17-23、:52-80、:82-86、:154-162）：
+-- 開始播翻找聲，快穿好時播背包的穿戴聲，停止或完成時收掉翻找聲
+function MDB_WearFromFloor:update()
+    self.item:setJobDelta(self:getJobDelta())
+    if not self.equipSound and self:getJobDelta() > 0.7 and self.item:getEquipSound() then
+        self.equipSound = self.character:playSound(self.item:getEquipSound())
+    end
+end
+
 function MDB_WearFromFloor:start()
+    self.item:setJobType(getText("ContextMenu_MDB_WearWithContents") .. " " .. self.item:getName())
+    self.item:setJobDelta(0.0)
     self:setActionAnim("WearClothing")
     self:setAnimVariable("WearClothingLocation", WearClothingAnimations[self.item:canBeEquipped()] or "")
+    self.character:reportEvent("EventWearClothing")
+    self.sound = self.character:playSound("RummageInInventory")
+end
+
+-- 原版的 soundNoTrigger 一律是 true，所以只走 stopSound 那一支
+function MDB_WearFromFloor:stopSound()
+    local emitter = self.character:getEmitter()
+    if self.sound and emitter:isPlaying(self.sound) then emitter:stopSound(self.sound) end
+end
+
+function MDB_WearFromFloor:stop()
+    self.item:setJobDelta(0.0)
+    self:stopSound()
+    ISBaseTimedAction.stop(self)
 end
 
 function MDB_WearFromFloor:perform()
+    self:stopSound()
+    self.item:setJobDelta(0.0)
     triggerEvent("OnClothingUpdated", self.character)
     getPlayerInventory(self.character:getPlayerNum()):refreshBackpacks()
     ISInventoryPage.renderDirty = true

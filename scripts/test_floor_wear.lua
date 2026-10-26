@@ -1,5 +1,5 @@
 -- 離線測試：直接穿上地上裝滿的背包（shared/MDB_FloorWear.lua、client/MDB_FloorWearMenu.lua、ContextMenu 翻譯）。
---   lua scripts/test_floor_wear.lua             選單條件、伺服器驗證各分支、動作時間、翻譯鍵
+--   lua scripts/test_floor_wear.lua             選單條件、伺服器驗證各分支、動作時間、聲音與進度、翻譯鍵
 --   lua scripts/test_floor_wear.lua --mutants   另對 MOD 檔案植入錯誤，確認測試抓得到
 -- 用假的 PZ 全域載入真正的 MOD Lua。引擎模擬：
 -- - NetTimedAction 照 new 的參數名讀動作欄位送給伺服器，伺服器以全域名 Type 重建（NetTimedAction.java:37-55、:145-165）。
@@ -77,6 +77,10 @@ local function resetEnv()
         return o
     end
     function ISBaseTimedAction.perform(self) log("basePerform", self) end
+    function ISBaseTimedAction.stop(self) log("baseStop", self) end
+    function ISBaseTimedAction:getJobDelta() return self.jobDelta or 0 end
+    function ISBaseTimedAction:setActionAnim(anim) self.anim = anim end
+    function ISBaseTimedAction:setAnimVariable(k, v) self.animVar = { k, v } end
     package.loaded["TimedActions/ISBaseTimedAction"] = true
 end
 
@@ -130,6 +134,10 @@ local function newItem(scriptWeight)
     function it:getActualWeight() return 0 end
     function it:getWorldItem() return self.worldItem end
     function it:canBeEquipped() return nil end
+    function it:getName() return "Bag" end
+    function it:setJobType(t) self.jobType = t end
+    function it:setJobDelta(d) self.jobDelta = d end
+    function it:getEquipSound() return self.equipSound end
     return it
 end
 local FLOOR = { getType = function() return "floor" end }
@@ -159,6 +167,20 @@ local function newPlayer(x, y, sq, roomFor)
     function p:isTimedActionInstant() return self.instant == true end
     function p:isWearingAwkwardGloves() return self.awkward == true end
     function p:setWornItem(loc, item) log("wear", loc, item) if loc then self.worn[loc] = item end end
+    function p:reportEvent(e) log("reportEvent", e) end
+    -- 播放中的聲音記在 playing；emitter 停掉後就不在了
+    p.playing = {}
+    function p:playSound(name)
+        log("playSound", name)
+        local id = #env.log
+        self.playing[id] = true
+        return id
+    end
+    p.emitter = {
+        isPlaying = function(_, id) return p.playing[id] == true end,
+        stopSound = function(_, id) log("stopSound", id) p.playing[id] = nil end,
+    }
+    function p:getEmitter() return self.emitter end
     return p
 end
 
@@ -354,6 +376,47 @@ local function suite()
         check("perform：刷新背包欄並交回佇列", #calls("refresh") == 1 and #calls("basePerform") == 1)
     end
 
+    -- 聲音與物品上的進度，照原版穿衣服（ISWearClothing.lua:17-23、:52-86、:154-162）
+    do
+        local chr, bag = scene()
+        bag.equipSound = "PutOnBag"
+        local a = MDB_WearFromFloor:new(chr, bag)
+        env.log = {}
+        a:start()
+        local sounds = calls("playSound")
+        check("start：播翻找聲", #sounds == 1 and sounds[1][2] == "RummageInInventory" and a.sound ~= nil)
+        check("start：物品顯示動作名稱、進度歸零", bag.jobType == KEY .. " Bag" and bag.jobDelta == 0)
+        check("start：穿衣動畫", a.anim == "WearClothing" and a.animVar[1] == "WearClothingLocation")
+        a.jobDelta = 0.5
+        a:update()
+        check("update：物品進度跟著動作", bag.jobDelta == 0.5 and #calls("playSound") == 1)
+        a.jobDelta = 0.8
+        a:update()
+        a.jobDelta = 0.9
+        a:update()
+        sounds = calls("playSound")
+        check("update：過 0.7 播一次背包的穿戴聲", #sounds == 2 and sounds[2][2] == "PutOnBag")
+        local rummage = a.sound
+        a:perform()
+        local stops = calls("stopSound")
+        check("perform：收掉翻找聲、進度歸零", #stops == 1 and stops[1][2] == rummage and bag.jobDelta == 0)
+
+        chr, bag = scene()
+        a = MDB_WearFromFloor:new(chr, bag)
+        env.log = {}
+        a:start()
+        a.jobDelta = 0.9
+        a:update()
+        check("update：沒有穿戴聲的背包不播", #calls("playSound") == 1)
+        a:stop()
+        stops = calls("stopSound")
+        check("stop：收掉翻找聲、進度歸零、交回原版 stop", #stops == 1 and stops[1][2] == a.sound
+            and bag.jobDelta == 0 and #calls("baseStop") == 1)
+        env.log = {}
+        a:stop()
+        check("stop：聲音已經停了就不再停", #calls("stopSound") == 0)
+    end
+
     -- 翻譯：16 語都有鍵，只放在 ContextMenu.json
     for _, lang in ipairs(LANGS) do
         local path = TRANSLATE .. lang .. "/ContextMenu.json"
@@ -392,6 +455,14 @@ if arg and arg[1] == "--mutants" then
           to = "new(character, bag)\n    local o = ISBaseTimedAction.new(self, character)\n    o.item = bag" },
         { name = "Type 不是全域名", file = "ACT", from = 'derive("MDB_WearFromFloor")', to = 'derive("MDB_FloorWear")' },
         { name = "isValid 不看地上", file = "ACT", from = "self.item:getWorldItem() ~= nil and ", to = "" },
+        { name = "沒播翻找聲", file = "ACT", from = '    self.sound = self.character:playSound("RummageInInventory")\n', to = "" },
+        { name = "停止不收聲", file = "ACT", from = "    self:stopSound()\n    ISBaseTimedAction.stop(self)", to = "    ISBaseTimedAction.stop(self)" },
+        { name = "完成不收聲", file = "ACT", from = "    self:stopSound()\n    self.item:setJobDelta(0.0)\n    triggerEvent", to = "    self.item:setJobDelta(0.0)\n    triggerEvent" },
+        { name = "停了還再停", file = "ACT", from = "if self.sound and emitter:isPlaying(self.sound) then", to = "if self.sound then" },
+        { name = "進度沒跟著動作", file = "ACT", from = "    self.item:setJobDelta(self:getJobDelta())\n", to = "" },
+        { name = "停止進度沒歸零", file = "ACT", from = "    self.item:setJobDelta(0.0)\n    self:stopSound()\n    ISBaseTimedAction.stop", to = "    self:stopSound()\n    ISBaseTimedAction.stop" },
+        { name = "穿戴聲重複播", file = "ACT", from = "if not self.equipSound and ", to = "if " },
+        { name = "穿戴聲太早", file = "ACT", from = "self:getJobDelta() > 0.7", to = "self:getJobDelta() > 0.4" },
         { name = "選單有空間也出現", file = "MENU", from = "\n        and not chr:getInventory():hasRoomFor(chr, item)", to = "" },
         { name = "選單不限地上", file = "MENU", from = "item:getWorldItem() ~= nil and ", to = "" },
         { name = "選單不限可穿", file = "MENU", from = " and item:canBeEquipped() ~= nil", to = "" },
