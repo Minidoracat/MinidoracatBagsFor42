@@ -216,7 +216,8 @@ local function resetEnv()
         if env.failCopy then error("copy failed") end
         for _, c in ipairs(item.contents or {}) do newItem.contents[#newItem.contents + 1] = c end
         item.contents = {}
-        newItem.name = item.name
+        local shown = item.getName and item:getName() or item.name   -- 原版寫入 getName()（帶染血等前綴），不搬改名旗標
+        if shown ~= item:getScriptItem():getDisplayName() then newItem.name = shown end
         if item.fc and newItem.fc then newItem.fc:copyFluidsFrom(item.fc) end
         if item:hasModData() then
             newItem.md = {}
@@ -1042,6 +1043,19 @@ local function suite()
     check("reinforced hide fanny pack front -> its reinforced back keeps tier 2 (1/65 -> 33/88 at weight 0.1)",
         hideBack and hideBack.fullType == "MinidoracatBags.Bag_FannyPackBack_Hide_Reinforced" and hideBack.md.MDB_tier == 2
         and hideBack.cap == 33 and hideBack.wr == 88)
+    -- 改過名的腰包換穿再升級（E2EWear H5）：換穿要帶著改名旗標與不帶前綴的名字，升級才會沿用
+    old = stocked("Base.Bag_FannyPackFront")   -- 改名 My Bag、第 0 階（沒有 MDB_tier）
+    function old:getName() return "Bloody, " .. self.name end
+    local renamedBack = ISClothingExtraAction:createItemNew(old, instanceItem("Base.Bag_FannyPackBack"))
+    check("renamed tier-0 fanny pack front -> back keeps the custom flag and the name without the bloody prefix",
+        renamedBack.name == "My Bag" and renamedBack.custom == true)
+    CONTAINER.items = {}
+    CONTAINER:AddItem(renamedBack)
+    MDB.onUpgrade(keepData(renamedBack), PLAYER)
+    new = CONTAINER.items[1]
+    check("renamed fanny pack swapped to the back, then upgraded: reinforced back tier 1 keeps the name",
+        new.fullType == "MinidoracatBags.Bag_FannyPackBack_Reinforced" and new.md.MDB_tier == 1
+        and new.name == "My Bag" and new.custom == true)
 
     -- 本 MOD 的背包也是來源：第一次升級換成自己的強化版（日行背包 20／75，自重 0.1 → 第 1 階 30／83）
     local D, RD = "MinidoracatBags.DayPack_Navy", "MinidoracatBags.DayPack_Navy_Reinforced"
@@ -1432,7 +1446,8 @@ if arg and arg[1] == "--mutants" then
         { name = "液體沒在容量設好後重搬", file = "UPG", from = "if ofc and nfc then nfc:copyFluidsFrom(ofc) end", to = "" },
         { name = "出錯沒復原旗標", file = "UPG", from = "    swapping = false\n    if not ok", to = "    if not ok" },
         { name = "新背包沒先放進容器", file = "UPG", from = "    cont:AddItem(new)\n", to = "" },
-        { name = "改名旗標沒搬", file = "UPG", from = "            new:setCustomName(true)\n", to = "" },
+        { name = "換穿沒搬改名旗標", file = "UPG", from = "        newItem:setCustomName(true)\n", to = "" },
+        { name = "換穿沿用帶前綴的名字", file = "UPG", from = "        newItem:setName(item:getDisplayName())\n", to = "" },
         { name = "沒改名也沿用舊名", file = "UPG", from = "            new:setName(new:getScriptItem():getDisplayName())\n", to = "" },
         { name = "還原掉級", file = "UPG", from = "MDB.ORIGINAL[ft] or MDB.REINFORCED[ft], tierOf(bag)", to = "MDB.ORIGINAL[ft] or MDB.REINFORCED[ft], 0" },
         { name = "第 0 階也能改強化版", file = "UPG", from = "tierOf(item) >= 1", to = "tierOf(item) >= 0" },

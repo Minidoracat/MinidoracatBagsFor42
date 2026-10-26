@@ -117,11 +117,9 @@ function MDB.swapBag(old, newType, tier, character)
     local ok, err = pcall(function()
         copyClothingItem(old, new)
         -- copyClothingItem 拿 getName() 比對腳本名稱，染血、磨損的前綴或水袋的液體名稱也會被當成改名寫進新背包
-        -- （InventoryItem.java:2435-2480），名稱不同就跟著存檔（:1711）。只有玩家改過名才沿用原名（ISInventoryPaneContextMenu.lua:2741-2750）
-        if old:isCustomName() then
-            new:setName(old:getDisplayName())
-            new:setCustomName(true)
-        else
+        -- （InventoryItem.java:2435-2480），名稱不同就跟著存檔（:1711）。玩家改過名的（ISInventoryPaneContextMenu.lua:2741-2750）
+        -- 由檔尾的換穿包裝帶著旗標沿用原名，其餘換回新背包的腳本名稱。
+        if not old:isCustomName() then
             new:setName(new:getScriptItem():getDisplayName())
         end
         MDB.applyTier(new, tier)
@@ -197,10 +195,16 @@ end
 -- 新物品這時還沒放進容器，applyTier 不重送；接著 sendAddItemToContainer 整件送出，負重減輕與容量都在裡面
 -- （AddInventoryItemToContainerPacket.java:54-58、InventoryContainer.java:57-58、ItemContainer.java:2439）。
 -- MDB.swapBag 呼叫 copyClothingItem 時新背包已在容器裡，由 swapping 擋下這次重送。
+-- 原版只搬改過的名字（:76-79），沒搬改名旗標；swapBag 看旗標決定沿不沿用舊名，換穿過的改名腰包一升級就變回預設名。
+-- 原版拿 getName() 比對、寫入，染血、磨損前綴也會寫進名字（InventoryItem.java:2435-2480），改過名的這裡換回原始名稱。
 require "TimedActions/ISClothingExtraAction"
 local createItemNew = ISClothingExtraAction.createItemNew
 function ISClothingExtraAction:createItemNew(item, newItem)
     local result = createItemNew(self, item, newItem)
+    if item:isCustomName() and instanceof(newItem, "InventoryContainer") then
+        newItem:setName(item:getDisplayName())
+        newItem:setCustomName(true)
+    end
     local tier = newItem:hasModData() and newItem:getModData().MDB_tier
     if tier and instanceof(newItem, "InventoryContainer") then
         MDB.applyTier(newItem, tier)
