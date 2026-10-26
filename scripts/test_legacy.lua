@@ -160,7 +160,7 @@ local bootHandlers
 local env
 local function bootLua()
     MDB, SandboxVars, printed, bootHandlers = nil, nil, {}, {}
-    env = { server = false, sent = {}, replaced = {} }
+    env = { server = false, sent = {}, replaced = {}, added = {} }
     Events = { OnGameBoot = { Add = function(fn) bootHandlers[#bootHandlers + 1] = fn end } }
     -- MDB_Upgrade 會 require 並包住原版的換穿法。照原版搬內容物、液體（依新容量截斷）、modData（ISClothingExtraAction.lua:66-112）
     ISClothingExtraAction = {}
@@ -190,6 +190,8 @@ end
 -- ===== 假背包（只模擬 swapBag／applyTier 用到的方法）=====
 function isServer() return env.server end
 function sendReplaceItemInContainer(c, a, b) env.sent[#env.sent + 1] = { c, a, b } end
+-- 只在伺服器有作用（LuaManager.java:12370-12374）
+function sendAddItemToContainer(c, i) if env.server then env.added[#env.added + 1] = { c, i } end end
 function replaceItemInContainer(c, a, b) env.replaced[#env.replaced + 1] = { c, a, b } end
 function copyClothingItem(item, newItem) ISClothingExtraAction:createItemNew(item, newItem) end
 function instanceof(o, cls) return type(o) == "table" and rawget(o, "__class") == cls end
@@ -383,8 +385,10 @@ local function suite()
     check("布吊帶包直接製作：床單 1＋鈔票 5、沒有工具、無技能門檻", sl ~= nil and #sl.inputs == 2
         and sl.inputs[1]:match("^item 1 %[Base%.Sheet%],?$") ~= nil and sl.inputs[2]:match("^item 5 %[Base%.Money%],?$") ~= nil
         and sl.fields.SkillRequired == nil and sl.fields.NeedToBeLearn == nil)
-    check("布吊帶包直接製作：產出強化版、OnCreate = MDB.onCraftFull", sl ~= nil and #sl.outputs == 1
-        and sl.outputs[1]:match("^item 1 (%S-),?$") == "MinidoracatBags.Bag_SheetSlingBag_Reinforced" and sl.fields.OnCreate == "MDB.onCraftFull")
+    check("布吊帶包直接製作：RemoveResultItems、outputs 只顯示強化版圖示、OnCreate = MDB.onMakeReinforcedSling", sl ~= nil
+        and #sl.outputs == 1 and sl.outputs[1]:match("^item 1 (%S-),?$") == "MinidoracatBags.Bag_SheetSlingBag_Reinforced"
+        and (";" .. (sl.fields.Tags or "") .. ";"):find(";RemoveResultItems;", 1, true) ~= nil
+        and sl.fields.OnCreate == "MDB.onMakeReinforcedSling")
     local convertCount = 0
     for _ in pairs(recipes) do convertCount = convertCount + 1 end
     check("MDB_Convert.txt 剛好 2 條配方", convertCount == 2)
@@ -450,21 +454,25 @@ local function suite()
         and math.abs(new.fc.capacity - 2.0) < 1e-6 and #env.replaced == 1)
     INV.items = {}
 
-    -- 8c. 強化版布吊帶包直接製作：產出直接給 MaxTier（真的 applyTier）
+    -- 8c. 強化版布吊帶包直接製作：自己建、給 MaxTier、放進主物品欄；伺服器只整件送一次（加入），不另送 replace
     local function craftSling(maxTier)
+        INV.items, env.sent, env.added = {}, {}, {}
         SandboxVars = { MinidoracatBags = { MaxTier = maxTier } }
-        local bag = instanceItem("MinidoracatBags.Bag_SheetSlingBag_Reinforced")
-        MDB.onCraftFull({ getAllCreatedItems = function() return javaList({ bag, { id = "other" } }) end }, PLAYER)
-        return bag
+        MDB.onMakeReinforcedSling({}, PLAYER)
+        return INV.items[1]
     end
+    env.server = true
     local sling = craftSling(3)
-    check("布吊帶包直接製作：第 3 階 49／100", sling.md.MDB_tier == 3 and sling.cap == 49 and sling.wr == 100)
+    check("布吊帶包直接製作（伺服器）：主物品欄裡一個第 3 階 49／100 的強化版",
+        #INV.items == 1 and sling.fullType == "MinidoracatBags.Bag_SheetSlingBag_Reinforced"
+        and sling.md.MDB_tier == 3 and sling.cap == 49 and sling.wr == 100)
+    check("布吊帶包直接製作（伺服器）：只送一次加入（主物品欄、這個背包），沒有 replace",
+        #env.added == 1 and env.added[1][1] == INV and env.added[1][2] == sling and #env.sent == 0)
+    env.server = false
     sling = craftSling(0)
-    check("布吊帶包直接製作（MaxTier 0）：第 0 階＝原版 10／50", sling.md.MDB_tier == 0 and sling.cap == 10 and sling.wr == 50)
-    local calls = {}
-    MDB.applyTier = function(bag, tier) calls[#calls + 1] = bag end
-    MDB.onCraftFull({ getAllCreatedItems = function() return javaList({}) end }, PLAYER)
-    check("布吊帶包直接製作：沒有產出物時不呼叫", #calls == 0)
+    check("布吊帶包直接製作（MaxTier 0，單機）：第 0 階＝原版 10／50，不送封包",
+        #INV.items == 1 and sling.md.MDB_tier == 0 and sling.cap == 10 and sling.wr == 50 and #env.added == 0)
+    INV.items = {}
 
     -- 9. guard：定義被蓋掉、合併、BUP 啟用時印警告；乾淨時不印
     check("guard 掛在 OnGameBoot", #bootHandlers == 1 and bootHandlers[1] == MDB.warnDuplicates)
@@ -552,15 +560,21 @@ if arg and arg[1] == "--mutants" then
         { name = "布吊帶包產出原版", file = C, from = "item 1 MinidoracatBags.Bag_SheetSlingBag_Reinforced,", to = "item 1 Base.Bag_SheetSlingBag," },
         { name = "布吊帶包多要工具", file = C, from = "item 5 [Base.Money],", to = "item 5 [Base.Money],\n            item 1 tags[base:scissors] mode:keep," },
         { name = "布吊帶包鈔票數錯", file = C, from = "item 5 [Base.Money]", to = "item 4 [Base.Money]" },
-        { name = "布吊帶包要技能", file = C, from = "OnCreate = MDB.onCraftFull,", to = "OnCreate = MDB.onCraftFull,\n        SkillRequired = Tailoring:1," },
+        { name = "布吊帶包要技能", file = C, from = "OnCreate = MDB.onMakeReinforcedSling,", to = "OnCreate = MDB.onMakeReinforcedSling,\n        SkillRequired = Tailoring:1," },
+        { name = "布吊帶包沒 RemoveResultItems", file = C, from = "CanBeDoneInDark;RemoveResultItems,", to = "CanBeDoneInDark," },
         { name = "鎖永遠放行", file = "MDB_Legacy.lua", from = 'return MDB.opt("LockLegacyBags") == false', to = "return true" },
         { name = "鎖永遠擋", file = "MDB_Legacy.lua", from = 'return MDB.opt("LockLegacyBags") == false', to = "return false" },
         { name = "改裝固定給 3 階", file = "MDB_Legacy.lua", from = 'MDB.LEGACY_TARGET[bag:getFullType()]], MDB.opt("MaxTier")', to = "MDB.LEGACY_TARGET[bag:getFullType()]], 3" },
         { name = "改裝不換型", file = "MDB_Legacy.lua", from = 'MDB.swapBag(bag, MDB.REINFORCED[MDB.LEGACY_TARGET[bag:getFullType()]], MDB.opt("MaxTier"), character)', to = 'MDB.applyTier(bag, MDB.opt("MaxTier"))' },
         { name = "對照表錯一款", file = "MDB_Legacy.lua", from = '["BagUpgradePlus.SWATPlus"] = "Base.Bag_SWAT"', to = '["BagUpgradePlus.SWATPlus"] = "Base.Bag_Police"' },
         { name = "對照表少一款", file = "MDB_Legacy.lua", from = '    ["BagUpgradePlus.MoneyBagPlus"] = "Base.Bag_MoneyBag",\n', to = "" },
-        { name = "直接製作固定 3 階", file = "MDB_Legacy.lua", from = 'MDB.applyTier(created:get(0), MDB.opt("MaxTier"))', to = "MDB.applyTier(created:get(0), 3)" },
-        { name = "直接製作取最後一個產出物", file = "MDB_Legacy.lua", from = "created:get(0)", to = "created:get(created:size() - 1)" },
+        { name = "直接製作固定 3 階", file = "MDB_Legacy.lua", from = 'MDB.applyTier(bag, MDB.opt("MaxTier"))', to = "MDB.applyTier(bag, 3)" },
+        { name = "直接製作沒放進主物品欄", file = "MDB_Legacy.lua", from = "    inv:AddItem(bag)\n", to = "" },
+        { name = "直接製作伺服器沒送", file = "MDB_Legacy.lua", from = "    sendAddItemToContainer(inv, bag)\n", to = "" },
+        { name = "直接製作先放進容器才套階級（多送 replace）", file = "MDB_Legacy.lua",
+            from = '    MDB.applyTier(bag, MDB.opt("MaxTier"))\n    local inv = character:getInventory()\n    inv:AddItem(bag)\n',
+            to = '    local inv = character:getInventory()\n    inv:AddItem(bag)\n    MDB.applyTier(bag, MDB.opt("MaxTier"))\n' },
+        { name = "直接製作產出別款", file = "MDB_Legacy.lua", from = 'instanceItem("MinidoracatBags.Bag_SheetSlingBag_Reinforced")', to = 'instanceItem("MinidoracatBags.Bag_ALICEpack_Reinforced")' },
         { name = "換型液體沒重搬", file = "MDB_Upgrade.lua", from = "if ofc and nfc then nfc:copyFluidsFrom(ofc) end", to = "" },
         { name = "換型不搬內容物", file = "MDB_Upgrade.lua", from = "        copyClothingItem(old, new)\n", to = "" },
         { name = "guard 不比 modID", file = "MDB_Guard.lua", from = "s:getModID() ~= MOD_ID", to = "false" },

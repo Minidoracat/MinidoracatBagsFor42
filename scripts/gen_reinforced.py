@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""產生強化版背包：物品腳本、ClothingItem XML、fileGuidTable、16 語名稱、配方清單。
+"""產生強化版背包：物品腳本、ClothingItem XML、fileGuidTable、16 語名稱（物品與液體容器）、配方清單。
 
 用法（repo 根目錄）：
     uv run scripts/gen_reinforced.py           寫入
@@ -8,7 +8,10 @@
 來源表是 MDB_Upgrade.lua 的 MDB.REINFORCED_SOURCES（Lua 也用同一張表），要加款式只加那張表再跑本腳本。
 每個來源 <模組>.<名稱> 產生 MinidoracatBags.<名稱>_Reinforced：
 - 欄位照來源的腳本逐行抄，只改 Weight 0.1、RunSpeedModifier 1.0、ClothingItem（改用自己的名稱）、
-  ClothingItemExtra（指向對方的強化版完整 ID）。
+  ClothingItemExtra（指向對方的強化版完整 ID），以及液體元件的 ContainerName（MDB_<名稱>_Reinforced）：
+  有液體容器的物品，物品欄、提示框與液體面板顯示的是 Fluid_Container_<ContainerName>，不是 ItemName
+  （InventoryItem.java:2436-2437、FluidContainer.java:398-404、ISFluidContainerPanel.lua:146-149），
+  所以 Fluids.json 另給它和 ItemName 相同的強化版名稱。
 - ClothingItem MDB_<名稱>_Reinforced：XML 照來源的 XML，只換 GUID（uuid5，重跑結果不變）；
   名稱是全域對照，不能沿用原版名稱（ScriptManager.java:1883-1891）。
 - 名稱＝各語言的來源名稱＋強化標記；繁中的原版名稱照 LangFor42。
@@ -66,6 +69,10 @@ def reinforced(full):
     return f"{MODULE}.{full.split('.', 1)[1]}{SUFFIX}"
 
 
+def fluid_name(full):
+    return f"MDB_{full.split('.', 1)[1]}{SUFFIX}"
+
+
 def item_blocks():
     """{完整 ID: 區塊行（含 item 行到結尾大括號）}；來源是原版 generated/items 與本 MOD 物品腳本"""
     files = []
@@ -94,7 +101,7 @@ def item_blocks():
 
 
 def item_text(full, block, mapping):
-    """抄來源欄位，只改四個；第一層欄位各要剛好一個"""
+    """抄來源欄位，只改四個第一層欄位與液體元件的 ContainerName；第一層欄位各要剛好一個"""
     name = full.split(".", 1)[1]
     seen = {"Weight": 0, "RunSpeedModifier": 0, "ClothingItem": 0}
     out, depth = [], 0
@@ -118,6 +125,9 @@ def item_text(full, block, mapping):
             if key in seen:
                 seen[key] += 1
             line = f"{ind}{key}{eq}{val},"
+        elif depth == 2 and m and m.group(2) == "ContainerName":
+            # 液體容器的物品顯示名稱取 Fluid_Container_<ContainerName>（FluidContainer.java:398-404），不用 ItemName
+            line = f"{m.group(1)}ContainerName{m.group(3)}{fluid_name(full)},"
         elif depth == 0 and re.match(r"^\s*item\s+\w+\s*$", line):
             line = re.sub(r"item\s+\w+", f"item {name}{SUFFIX}", line)
         depth += line.count("{") - line.count("}")
@@ -169,11 +179,13 @@ def build():
     blocks = item_blocks()
     out = {}
 
-    items, guids = [], []
+    items, guids, fluid_sources = [], [], []
     for s in src:
         if s not in blocks:
             sys.exit(f"找不到來源物品 {s}")
         items.append(item_text(s, blocks[s], mapping))
+        if f"ContainerName = {fluid_name(s)}," in items[-1]:
+            fluid_sources.append(s)
         name, guid, xml = clothing_xml(s, blocks[s])
         out[os.path.join(CLOTHING_DIRS[0], name + ".xml")] = xml
         guids.append((name, guid))
@@ -221,6 +233,13 @@ def build():
             if lang == "CN" and any(c in d[mapping[s]] for c in CN_MISSING):
                 sys.exit(f"CN {s} 名稱有原版字型缺的字：{d[mapping[s]]}")
         out[p] = json.dumps(d, ensure_ascii=False, indent=4) + "\n"
+        # 液體容器名稱（Translator.java:159 依檔名 Fluids 分表，getFluidText 查 Fluid_ 開頭的鍵，:871-874）
+        fp = os.path.join(TRANSLATE, lang, "Fluids.json")
+        fd = json.loads(read(fp)) if os.path.isfile(fp) else {}
+        fd = {k: v for k, v in fd.items() if not (k.startswith("Fluid_Container_MDB_") and k.endswith(SUFFIX))}
+        for s in fluid_sources:
+            fd[f"Fluid_Container_{fluid_name(s)}"] = d[mapping[s]]
+        out[fp] = json.dumps(fd, ensure_ascii=False, indent=4) + "\n"
     return out
 
 

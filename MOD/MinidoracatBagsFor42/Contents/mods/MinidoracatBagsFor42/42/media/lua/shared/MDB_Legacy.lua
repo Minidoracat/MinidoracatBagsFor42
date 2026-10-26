@@ -58,9 +58,13 @@ function MDB.onConvertLegacy(data, character)
     MDB.swapBag(bag, MDB.REINFORCED[MDB.LEGACY_TARGET[bag:getFullType()]], MDB.opt("MaxTier"), character)
 end
 
--- 強化版布吊帶包直接製作（BUP 的 MakeSheetSlingBagPlus 同材料）：產出直接給最高階
-function MDB.onCraftFull(data, character)
-    local created = data:getAllCreatedItems()
-    if created:size() == 0 then return end
-    MDB.applyTier(created:get(0), MDB.opt("MaxTier"))
+-- 強化版布吊帶包直接製作（BUP 的 MakeSheetSlingBagPlus 同材料）：配方 RemoveResultItems 不產出，這裡自己建。
+-- 還沒放進容器時套最高階（applyTier 不重送），再放進主物品欄（自重 0.1，超重也不丟地上），伺服器整件送一次
+-- （AddInventoryItemToContainerPacket.java:54-58；sendAddItemToContainer 只在伺服器有作用，LuaManager.java:12370-12374）
+function MDB.onMakeReinforcedSling(data, character)
+    local bag = instanceItem("MinidoracatBags.Bag_SheetSlingBag_Reinforced")
+    MDB.applyTier(bag, MDB.opt("MaxTier"))
+    local inv = character:getInventory()
+    inv:AddItem(bag)
+    sendAddItemToContainer(inv, bag)
 end

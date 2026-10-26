@@ -644,7 +644,7 @@ module MinidoracatBags
         Tags = base:ignorezombiedensity,
         component FluidContainer
         {
-            ContainerName = HydrationBackpack,
+            ContainerName = MDB_Bag_HydrationBackpack_Reinforced,
             Capacity = 2.0,
             InitialPercentMin = 0.0,
             InitialPercentMax = 1.0,
@@ -680,7 +680,7 @@ module MinidoracatBags
         Tags = base:ignorezombiedensity,
         component FluidContainer
         {
-            ContainerName = HydrationBackpack,
+            ContainerName = MDB_Bag_HydrationBackpack_Camo_Reinforced,
             Capacity = 3.0,
             InitialPercentMin = 0.0,
             InitialPercentMax = 1.0,

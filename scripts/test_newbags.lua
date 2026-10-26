@@ -29,6 +29,7 @@ local F = {
     CHESTRIG_XML = MEDIA .. "clothing/clothingItems/MDB_ScoutChestRig_Navy.xml",
     I18N_RECIPES = TRANSLATE .. "EN/Recipes.json",
     I18N_ITEMS = TRANSLATE .. "EN/ItemName.json",
+    I18N_FLUIDS = TRANSLATE .. "EN/Fluids.json",
     REIN = MEDIA .. "scripts/MDB_Reinforced.txt",
     REIN_XML = MEDIA .. "clothing/clothingItems/MDB_Bag_Satchel_Reinforced.xml",
 }
@@ -387,7 +388,11 @@ local function suite()
             end
             for k in pairs(r.fields) do if want[k] == nil then ok = false; diag("    reinforced " .. s .. " extra field " .. k) end end
             ok = ok and #r.lines == #v.lines
-            for i, l in ipairs(v.lines) do ok = ok and r.lines[i] ~= nil and r.lines[i].text == l.text end
+            -- 液體元件照原版，只有 ContainerName 改成自己的（顯示名稱取 Fluid_Container_<ContainerName>，FluidContainer.java:398-404）
+            for i, l in ipairs(v.lines) do
+                local want = l.text:gsub("^ContainerName = .*$", "ContainerName = MDB_" .. s .. "_Reinforced")
+                ok = ok and r.lines[i] ~= nil and r.lines[i].text == want
+            end
         end
         if not ok then reinFieldsOk = false end
         local ci = "MDB_" .. s .. "_Reinforced"
@@ -604,6 +609,28 @@ local function suite()
         end
     end
     check("i18n: items, recipes, tooltips, sandbox keys in all 16 Translate folders", i18nOk)
+    -- 強化版水袋：Fluids.json（引擎依檔名分表，Translator.java:159）有 Fluid_Container_<ContainerName>，16 語都和 ItemName 的強化版名稱相同
+    local fluidNames, fluidOk = {}, true
+    for full, b in pairs(rein) do
+        for _, l in ipairs(b.lines) do
+            local cn = l.text:match("^ContainerName = (%S+)$")
+            if cn then fluidNames[full] = cn end
+        end
+    end
+    local function jsonValue(text, key)
+        return text and text:match('\n%s*"' .. key:gsub("%p", "%%%0") .. '"%s*:%s*"(.-)"%s*,?\n')
+    end
+    local fluidCount = 0
+    for full, cn in pairs(fluidNames) do
+        fluidCount = fluidCount + 1
+        for _, lang in ipairs(LANGS) do
+            local item = jsonValue(readFile(TRANSLATE .. lang .. "/ItemName.json", true), full)
+            local fluid = jsonValue(readFile(TRANSLATE .. lang .. "/Fluids.json", true), "Fluid_Container_" .. cn)
+            if not item or fluid ~= item then fluidOk = false; diag("    fluid container name: " .. lang .. " " .. cn) end
+        end
+    end
+    check("reinforced water bags: Fluid_Container_<ContainerName> in 16 Fluids.json = reinforced ItemName",
+        fluidOk and fluidCount == 2)
 
     -- 6. Lua 載入與函式名解析
     loadAll()
@@ -1088,6 +1115,9 @@ if arg and arg[1] == "--mutants" then
         { name = "強化腰包換穿指回原版", file = "REIN", from = "ClothingItemExtra = MinidoracatBags.Bag_FannyPackBack_Reinforced,", to = "ClothingItemExtra = Base.Bag_FannyPackBack," },
         { name = "強化版多一個欄位", file = "REIN", from = "ClothingItem = MDB_Bag_Satchel_Reinforced,", to = "ClothingItem = MDB_Bag_Satchel_Reinforced,\n        AcceptItemFunction = MDB.acceptAmmo," },
         { name = "強化版水袋容量改了", file = "REIN", from = "Capacity = 2.0,", to = "Capacity = 5.0," },
+        { name = "強化版水袋沿用原版容器名", file = "REIN", from = "ContainerName = MDB_Bag_HydrationBackpack_Reinforced,", to = "ContainerName = HydrationBackpack," },
+        { name = "液體容器名稱缺鍵", file = "I18N_FLUIDS", from = '"Fluid_Container_MDB_Bag_HydrationBackpack_Camo_Reinforced"', to = '"Fluid_Container_MDB_X"' },
+        { name = "液體容器名稱和物品名不同", file = "I18N_FLUIDS", from = "(Reinforced)", to = "(Plus)" },
         { name = "還原配方漏一款", file = "REIN", from = "MinidoracatBags.Bag_SWAT_Reinforced;", to = "" },
         { name = "還原配方可用穿著中的背包", file = "REIN", from = "_Reinforced] mode:keep flags[IsNotWorn],", to = "_Reinforced] mode:keep," },
         { name = "改強化版配方沒 OnTest", file = "REIN", from = "OnTest = MDB.onTestUpgraded,", to = "" },
