@@ -163,7 +163,7 @@ Every upgraded bag is a "Reinforced" bag: this mod's own item with the same look
 [h3]What carries over when a bag becomes reinforced[/h3]
 [list]
 [*] [b]Contents[/b]: everything inside stays, including bags inside bags and liquids.
-[*] [b]Your name[/b]: a bag you renamed keeps your name. Other bags take the reinforced name (dirty or worn prefixes do not carry over).
+[*] [b]Your name[/b]: a bag you renamed keeps your name. Other bags take the reinforced name (dirty or worn prefixes do not carry over). Fanny packs swapped front or back earlier can be an exception; see "Known Limitations".
 [*] [b]The rest[/b]: color, condition and favorite mark carry over.
 [/list]
 
@@ -199,7 +199,7 @@ Every upgraded bag is a "Reinforced" bag: this mod's own item with the same look
 {{img:fanny-swap-menu-en.jpg}}
 {{img:fanny-back-en.jpg}}
 [list]
-[*] [b]This mod's pouches[/b]: the Tool Belt Pouch can be moved to the back of the waist and the Medic Hip Pouch to the front, with the same "on Back" / "on Front" wear options as vanilla fanny packs.
+[*] [b]This mod's pouches[/b]: the Tool Belt Pouch can be moved to the back of the waist and the Medic Hip Pouch to the front, with the same "Wear > on Back" / "Wear > on Front" options as vanilla fanny packs.
 [*] [b]Reinforced versions swap too[/b]: the reinforced versions of the three vanilla fanny packs (regular, hide, tarp) and of this mod's two pouches stay reinforced after swapping.
 [*] [b]Upgrades are kept[/b]: tier, capacity, Encumbrance Reduction, contents and your custom name all stay.
 [*] [b]Medic Hip Pouch on the front[/b]: still only takes First Aid items.
@@ -319,7 +319,8 @@ On the "Tactical Bags" page of the sandbox settings.
 [*] [b]Living zombies never show the new bags[/b]: zombie bags come from their outfits, and a mod can only replace a whole outfit. So the bag is put into the corpse when the zombie dies instead.
 [*] [b]No tier display[/b]: to see a bag's tier, check which "Reinforce Bag" recipe accepts it. Only the next tier's recipe does.
 [*] [b]Old bags show capacity 49 or 48[/b]: the engine caps a bag's capacity at 50 minus its own weight. BUP bags weighed 0.1, so the save stored 49. After the switch they use the vanilla weight, so an ALICE pack (2.0) shows 48. Items packed up to 49 are all still there and can be taken out, and converting the bag brings it back to 49.
-[*] [b]Lower sandbox values cut old Hydration Pack water[/b]: with a highest tier of 0, or a full capacity below 100, the 5 L of water in an old BUP Hydration Pack is cut down to the water capacity at that time when converted (2 L with a highest tier of 0). The defaults and highest tiers 1 and 2 keep all 5 L.
+[*] [b]Changed upgrade sandbox options can cost Hydration Pack water[/b]: converting an old BUP Hydration Pack, or upgrading or reverting a reinforced one, recalculates its water capacity from the current sandbox values, and water that no longer fits is lost. For example, with a highest tier of 0 the 5 L in an old BUP Hydration Pack drops to 2 L, and a full capacity below 100 also cuts water. Unchanged sandbox values never lose water; with only the highest tier changed to 1 or 2, converting an old BUP Hydration Pack still keeps 5 L.
+[*] [b]Renamed fanny packs swapped earlier[/b]: if a renamed fanny pack was swapped front or back on version 0.1.0 or without this mod, its first upgrade or conversion resets the name to the default. The vanilla swap copies the name but does not mark it as custom, so this mod cannot tell it is yours. Rename it again before upgrading to keep the name.
 [*] [b]One reinforced satchel at a time[/b]: two reinforced satchels both need the second satchel slot.
 [*] [b]Satchel straps cross over[/b]: on female characters, a reinforced cloth satchel worn with a vanilla satchel has straps that clip into each other a little where they cross on the chest and back when seen up close.
 [*] [b]Attachment slots on four families only[/b]: only the reinforced Military Backpacks, Duffel Bags, Hiking and Big Hiking Backpacks have them; the originals and other bags do not.

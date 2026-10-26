@@ -38,7 +38,8 @@
 > - 強化版的物品 ID 是 `MinidoracatBags.<原物品名>_Reinforced`。移除本 MOD 時強化版（等於所有升級過的背包）會連同內容物消失；要保留的原版背包先用「強化版改回原版背包」換回去，升級後的容量與負重減輕存在背包本身，移除後照樣在（上限照原版自重算）。
 > - 沙盒新選項 `MinidoracatBags.FullCapacityPercent`、`MinidoracatBags.FullWeightReduction` 取代 `CapacityStepPercent`、`WeightReductionStep`、`MaxWeightReduction`。單人舊存檔讀檔時 console 會印一行 `ERROR unknown SandboxOption`，照常讀檔，存一次就不再出現。
 > - 第二個側背包位置是本 MOD 註冊的穿戴位置 `minidoracatbags:satchel2`。
-> - 調低沙盒（最高升級階級 0，或升滿時的容量低於 100）時，改裝舊 Bag Upgrade Plus 水袋會把 5 公升的水截到當時的液體容量；預設值與最高階 1、2 都保留 5 公升。
+> - 改過升級沙盒後，改裝舊 Bag Upgrade Plus 水袋、升級或改回原版時，液體容量照當時的沙盒重算，裝不下的水會不見（例：最高升級階級設 0 時，舊水袋的 5 公升剩 2 公升）；沙盒沒改過就不會發生，只把最高階改成 1 或 2 時改裝舊水袋照樣是 5 公升。
+> - 0.1.0 或沒裝本 MOD 時換穿過前後的改名腰包，第一次升級或改裝時名字會變回預設名稱：原版換穿只搬名字、沒有標成改過名。升級前再改一次名就會保留。
 > - 「穿戴（連同內容物）」由伺服器驗證距離、同一層、走得到與安全屋權限；同一位置原本的背包放得進物品欄就收進去，否則掉在腳下。
 
 ## [42.21.0-0.1.0] - 2026-10-26
