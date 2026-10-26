@@ -35,8 +35,12 @@ end
 
 MDB_WearFromFloor = ISBaseTimedAction:derive("MDB_WearFromFloor")
 
+-- MP 客戶端只看物品還在，照原版穿衣服（ISWearClothing.lua:10-11）：伺服器 complete() 成功時，地面移除的封包
+-- 可能比完成通知先到（RemoveItemFromSquarePacket.java:83-93），引擎每格先問 isValid 才讀完成（IsoGameCharacter.java:9013-9035），
+-- 這時看地上會判成失效、走 stop() 把後面排的動作全清掉（ISBaseTimedAction.lua:63-64）。搶輸時伺服器拒絕，照樣停下。
 function MDB_WearFromFloor:isValid()
-    return self.item ~= nil and self.item:getWorldItem() ~= nil and not self.character:getVehicle()
+    if not self.item or self.character:getVehicle() then return false end
+    return isClient() or self.item:getWorldItem() ~= nil
 end
 
 -- 聲音與物品上的進度照原版穿衣服（ISWearClothing.lua:17-23、:52-80、:82-86、:154-162）：
@@ -89,8 +93,14 @@ function MDB_WearFromFloor:complete()
     -- 從地上移除並廣播（ISTransferAction.lua:131-160），內容物跟著背包，不另外搬
     ISTransferAction:transferItem(chr, bag, src, inv)
     sendAddItemToContainer(inv, bag)
-    -- 位置上原有的背包放不進物品欄時會掉到腳下，穿戴會自動廣播（IsoGameCharacter.java:3444-3478）
-    chr:setWornItem(bag:canBeEquipped(), bag)
+    -- 位置上原有的背包：引擎先穿上新的、再用 hasRoomFor 判舊背包，舊背包的未穿重量被算兩次（IsoGameCharacter.java:3435-3444、
+    -- ItemContainer.java:268），接近負重上限時放得下也會掉到腳下；原版從物品欄穿上也一樣（ISWearClothing.lua:118）。
+    -- 這裡照引擎的算法（IsoGameCharacter.getInventoryWeight）先算穿上後的總重，超過才讓引擎丟到腳下（穿戴與掉落都會廣播，:3444-3478）
+    local loc = bag:canBeEquipped()
+    local old = chr:getWornItem(loc)
+    local after = inv:getCapacityWeight() - bag:getUnequippedWeight() + bag:getEquippedWeight()
+    if old then after = after - old:getEquippedWeight() + old:getUnequippedWeight() end
+    chr:setWornItem(loc, bag, after > inv:getEffectiveCapacity(chr))
     return true
 end
 

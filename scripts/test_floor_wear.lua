@@ -138,6 +138,8 @@ local function newItem(scriptWeight)
     function it:setJobType(t) self.jobType = t end
     function it:setJobDelta(d) self.jobDelta = d end
     function it:getEquipSound() return self.equipSound end
+    function it:getUnequippedWeight() return self.uneqW or 0 end
+    function it:getEquippedWeight() return self.eqW or 0 end
     return it
 end
 local FLOOR = { getType = function() return "floor" end }
@@ -156,7 +158,8 @@ local function newBag(scriptWeight, contentWeights, sq)
 end
 local function newPlayer(x, y, sq, roomFor)
     local p = { x = x, y = y, sq = sq, traits = {}, worn = {} }
-    p.inv = { items = {}, hasRoomFor = function(_, chr, item) log("hasRoomFor", chr, item) return roomFor end }
+    p.inv = { items = {}, hasRoomFor = function(_, chr, item) log("hasRoomFor", chr, item) return roomFor end,
+        getCapacityWeight = function() return p.weight or 0 end, getEffectiveCapacity = function() return p.cap or 15 end }
     function p:getX() return self.x end
     function p:getY() return self.y end
     function p:getCurrentSquare() return self.sq end
@@ -166,7 +169,8 @@ local function newPlayer(x, y, sq, roomFor)
     function p:hasTrait(t) return self.traits[t] == true end
     function p:isTimedActionInstant() return self.instant == true end
     function p:isWearingAwkwardGloves() return self.awkward == true end
-    function p:setWornItem(loc, item) log("wear", loc, item) if loc then self.worn[loc] = item end end
+    function p:getWornItem(loc) return self.worn[loc] end
+    function p:setWornItem(loc, item, force) log("wear", loc, item, force) if loc then self.worn[loc] = item end end
     function p:reportEvent(e) log("reportEvent", e) end
     -- 播放中的聲音記在 playing；emitter 停掉後就不在了
     p.playing = {}
@@ -270,6 +274,11 @@ local function suite()
     env.log = {}
     opts[1].fn(opts[1].target, opts[1].param)
     check("走不到就不排動作", #calls("queue") == 0)
+    opts = menuFor(function(sq) return { newBag(1.0, { 1 }, sq) } end, false)
+    opts[1].param.worldItem = nil   -- 選單開著時被別人撿走
+    env.log = {}
+    local okClick = pcall(opts[1].fn, opts[1].target, opts[1].param)
+    check("選單開著時背包被撿走：點了不出錯、不走、不排動作", okClick and #calls("walkAdj") == 0 and #calls("queue") == 0)
 
     -- 伺服器 complete()：成功
     do
@@ -292,6 +301,27 @@ local function suite()
         check("成功：內容物全程留在包裡", same)
         check("成功：安全區檢查用背包那一格與玩家", #calls("safehouse") == 1 and calls("safehouse")[1][2] == sq
             and calls("safehouse")[1][3] == chr)
+    end
+
+    -- 位置上原有的背包：照穿上後的總重決定要不要讓引擎丟到腳下（引擎自己判會把舊背包算兩次）
+    do
+        local function forceDrop(weight, cap, withOld)
+            local chr, bag = scene()
+            bag.uneqW, bag.eqW = 20, 0.1
+            if withOld then
+                local old = newBag(1.0, {})
+                old.uneqW, old.eqW = 10, 3
+                chr.worn["base:back"] = old
+            end
+            chr.weight, chr.cap = weight, cap
+            completeWith(chr, bag)
+            local w = calls("wear")
+            return #w == 1 and w[1][3] == bag and w[1][4]
+        end
+        -- 物品欄現有 31（其他 8＋新背包未穿 20＋舊背包穿著 3），穿上後 31 − 20 ＋ 0.1 − 3 ＋ 10 ＝ 18.1
+        check("原有的背包：穿上後總重 18.1 不超過上限 20 就留在物品欄", forceDrop(31, 20, true) == false)
+        check("原有的背包：穿上後總重 18.1 超過上限 18 才讓引擎丟到腳下", forceDrop(31, 18, true) == true)
+        check("沒有原有的背包：總重只扣新背包的差（31 − 20 ＋ 0.1 ＝ 11.1 ≤ 12）", forceDrop(31, 12, false) == false)
     end
 
     -- 地面容器：伺服器重建的地面容器沒設物品的 container
@@ -336,13 +366,20 @@ local function suite()
         check("解析不到物品時時間為 0、complete 回 false", a.maxTime == 0 and a:complete() == false)
     end
 
-    -- 客戶端 isValid
+    -- isValid：單機與伺服器看背包還在地上，MP 客戶端只看物品還在
     do
         local chr, bag = scene()
         local a = MDB_WearFromFloor:new(chr, bag)
         check("isValid：背包還在地上", a:isValid() == true)
         bag.worldItem = nil
         check("isValid：背包離開地上就停", a:isValid() == false)
+        local realIsClient = isClient
+        isClient = function() return true end   -- MP 客戶端：伺服器完成時地面移除可能比完成通知先到
+        check("isValid：MP 客戶端背包已不在地上也不判失效", a:isValid() == true)
+        a.item = nil
+        check("isValid：MP 客戶端沒有物品就停", a:isValid() == false)
+        a.item = bag
+        isClient = realIsClient
         bag.worldItem = { sq = newSquare(10, 10, 0), getSquare = function(wi) return wi.sq end }
         chr.vehicle = {}
         check("isValid：上車就停", a:isValid() == false)
@@ -443,7 +480,10 @@ if arg and arg[1] == "--mutants" then
         { name = "complete 不驗", file = "ACT", from = "if not MDB.canWearFromFloor(chr, bag) then return false end", to = "" },
         { name = "沒用地面容器", file = "ACT", from = 'if not src or src:getType() ~= "floor" then', to = "if not src then" },
         { name = "不送物品欄", file = "ACT", from = "    sendAddItemToContainer(inv, bag)\n", to = "" },
-        { name = "不穿上", file = "ACT", from = "chr:setWornItem(bag:canBeEquipped(), bag)", to = "" },
+        { name = "不穿上", file = "ACT", from = "    chr:setWornItem(loc, bag, after > inv:getEffectiveCapacity(chr))\n", to = "" },
+        { name = "原有背包交給引擎判", file = "ACT", from = "chr:setWornItem(loc, bag, after > inv:getEffectiveCapacity(chr))", to = "chr:setWornItem(loc, bag)" },
+        { name = "總重沒扣舊背包穿著重", file = "ACT", from = "after - old:getEquippedWeight() + old:getUnequippedWeight()", to = "after + old:getUnequippedWeight()" },
+        { name = "總重沒算新背包穿著重", file = "ACT", from = " - bag:getUnequippedWeight() + bag:getEquippedWeight()", to = "" },
         { name = "時間不加內容物", file = "ACT", from = "t = t + pickupTime(items:get(i))", to = "" },
         { name = "時間用實例自重", file = "ACT", from = "item:getScriptItem():getActualWeight()", to = "item:getActualWeight()" },
         { name = "時間不封頂", file = "ACT", from = "math.min(item:getScriptItem():getActualWeight(), 3)", to = "item:getScriptItem():getActualWeight()" },
@@ -454,7 +494,8 @@ if arg and arg[1] == "--mutants" then
         { name = "參數名和欄位不一致", file = "ACT", from = "new(character, item)\n    local o = ISBaseTimedAction.new(self, character)\n    o.item = item",
           to = "new(character, bag)\n    local o = ISBaseTimedAction.new(self, character)\n    o.item = bag" },
         { name = "Type 不是全域名", file = "ACT", from = 'derive("MDB_WearFromFloor")', to = 'derive("MDB_FloorWear")' },
-        { name = "isValid 不看地上", file = "ACT", from = "self.item:getWorldItem() ~= nil and ", to = "" },
+        { name = "isValid 不看地上", file = "ACT", from = "return isClient() or self.item:getWorldItem() ~= nil", to = "return true" },
+        { name = "MP 客戶端也看地上", file = "ACT", from = "return isClient() or ", to = "return " },
         { name = "沒播翻找聲", file = "ACT", from = '    self.sound = self.character:playSound("RummageInInventory")\n', to = "" },
         { name = "停止不收聲", file = "ACT", from = "    self:stopSound()\n    ISBaseTimedAction.stop(self)", to = "    ISBaseTimedAction.stop(self)" },
         { name = "完成不收聲", file = "ACT", from = "    self:stopSound()\n    self.item:setJobDelta(0.0)\n    triggerEvent", to = "    self.item:setJobDelta(0.0)\n    triggerEvent" },
@@ -466,7 +507,8 @@ if arg and arg[1] == "--mutants" then
         { name = "選單有空間也出現", file = "MENU", from = "\n        and not chr:getInventory():hasRoomFor(chr, item)", to = "" },
         { name = "選單不限地上", file = "MENU", from = "item:getWorldItem() ~= nil and ", to = "" },
         { name = "選單不限可穿", file = "MENU", from = " and item:canBeEquipped() ~= nil", to = "" },
-        { name = "選單不走過去", file = "MENU", from = "if luautils.walkAdj(chr, bag:getWorldItem():getSquare()) then", to = "if true then" },
+        { name = "選單不走過去", file = "MENU", from = "if wi and luautils.walkAdj(chr, wi:getSquare()) then", to = "if true then" },
+        { name = "選單沒重驗背包在地上", file = "MENU", from = "if wi and luautils.walkAdj", to = "if luautils.walkAdj" },
         { name = "選單多個選項", file = "MENU", from = "            return\n", to = "" },
         { name = "選單鍵拼錯", file = "MENU", from = 'getText("ContextMenu_MDB_WearWithContents")', to = 'getText("ContextMenu_MDB_WearWithContent")' },
         { name = "沒掛事件", file = "MENU", from = "Events.OnFillInventoryObjectContextMenu.Add(MDB.onFillFloorWearMenu)", to = "" },

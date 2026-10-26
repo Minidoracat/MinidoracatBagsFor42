@@ -9,9 +9,11 @@ function MDB.needsFloorWear(chr, item)
         and not chr:getInventory():hasRoomFor(chr, item)
 end
 
--- 先走到背包旁邊，照原版穿地上物品的做法（ISInventoryPaneContextMenu.lua:1915-1919）
+-- 先走到背包旁邊，照原版穿地上物品的做法（ISInventoryPaneContextMenu.lua:1915-1919）。
+-- 選單開著時背包可能已被別人撿走，移除封包會把 worldItem 清成 nil（RemoveItemFromSquarePacket.java:83-93）
 local function onWear(chr, bag)
-    if luautils.walkAdj(chr, bag:getWorldItem():getSquare()) then
+    local wi = bag:getWorldItem()
+    if wi and luautils.walkAdj(chr, wi:getSquare()) then
         ISTimedActionQueue.add(MDB_WearFromFloor:new(chr, bag))
     end
 end

@@ -44,8 +44,8 @@ S = np.array([-1.0, 1.0, 1.0])
 STRAP_Y = 0.7   # 背帶連通塊伸到肩上；包身、扣環、提把都在 y<0.6
 ORBIT_Y = (0.59, 0.76)   # 背帶跟著包身轉的範圍：包頂以下全轉、肩下以上不轉
 ORBIT_MAX, ORBIT_MARGIN, ORBIT_STEP = 75, 2, 5   # 度
-SCALE = 0.8   # 包身（連背帶下段）縮放（--scale）：0.8＝變體「縮小斜掛」、1＝「斜掛」；待使用者選（2026-10-26）
-# 手腳穿進包裡的量（limb_check）：原版 Bob_<動作>.x 動畫的這幾格（一圈 3200 tick），男女都用（女性用 Kate_* 與否沒查證）
+SCALE = 0.8   # 包身（連背帶下段）縮放（--scale）：0.8＝縮小斜掛（使用者 2026-10-27 選定，見知識庫 art.md）、1＝斜掛
+# 手腳穿進包裡的量（limb_check）：原版 Bob_<動作>.x 動畫的這幾格（一圈 3200 tick）。女性也用 Bob_*：AnimSets 的站、走、跑節點都引用 Bob_*，Kate_* 只在假人節點
 ANIM_TICKS = {"Idle": (0, 1600), "Walk": tuple(range(0, 3200, 320)), "Run": tuple(range(0, 3200, 400))}
 LIMBS = {"arm": ("UpperArm", "Forearm", "Hand", "Finger0", "Finger1"), "leg": ("Thigh", "Calf")}
 LIMB_TOL = 2.0   # 百分點：鏡像版那側手腳表面在包裡的比例，不能比原側背包對原側手腳多這麼多（深度另比 SKIN_TOL）
