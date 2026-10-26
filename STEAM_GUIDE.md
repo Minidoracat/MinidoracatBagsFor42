@@ -113,6 +113,7 @@ https://steamcommunity.com/sharedfiles/filedetails/?id=3827497087
 [/table]
 縫線照用量扣，不會把整捲用掉。做出來的是第 0 階的原款，升級後才變成強化版。
 === 🧰 升級背包
+{{img:craft-tier1-zh.jpg}}
 [list]
 [*] [b]配方[/b]：製作選單「縫紉」分類的「強化背包至第 1 階」「第 2 階」「第 3 階」。
 [*] [b]一階一階升[/b]：每條配方只收上一階的背包，不能跳階。
@@ -147,6 +148,7 @@ https://steamcommunity.com/sharedfiles/filedetails/?id=3827497087
 [/list]
 === 🧰 強化版背包
 升級過的背包都是「強化版」：本 MOD 自己的物品，外觀、圖示和原款一樣，名稱後面加「（強化）」，例如「登山包（強化）」「S.T.A.R.S. 日行背包（強化）」。
+{{img:reinforced-tooltip-zh.jpg}}
 
 [h3]和原款的差別[/h3]
 [list]
@@ -172,6 +174,7 @@ https://steamcommunity.com/sharedfiles/filedetails/?id=3827497087
 [/list]
 
 [h3]相關配方（製作選單「縫紉」分類）[/h3]
+{{img:craft-restore-zh.jpg}}
 [table]
 [tr][th]配方[/th][th]做什麼[/th][th]需要[/th][/tr]
 [tr][td]強化版改回原版背包[/td][td]強化版換回原款，階級、內容物、液體照舊[/td][td]剪刀（保留），不能穿著[/td][/tr]
@@ -183,6 +186,8 @@ https://steamcommunity.com/sharedfiles/filedetails/?id=3827497087
 [*] [b]第 0 階的背包[/b]：不能走「已升級背包改成強化版」，要用一般的升級配方。
 [/list]
 === 🧰 第二個側背包位置
+{{img:satchel2-front-zh.jpg}}
+{{img:satchel2-back-zh.jpg}}
 [list]
 [*] [b]兩個側背包一起背[/b]：強化版側背包背在另一側的第二個位置，可以和一個一般的側背包同時背，背包面板會出現兩個容器。
 [*] [b]哪些是側背包[/b]：原版 13 款側背包（側背包、郵差包、獸皮側背包、手工布側背包等）和本 MOD 的信差側背包，升級成強化版後都背在這裡。
@@ -191,6 +196,8 @@ https://steamcommunity.com/sharedfiles/filedetails/?id=3827497087
 [*] [b]Bag Upgrade Plus 的側背包[/b]：改裝後是強化版側背包，一樣背在第二個位置。
 [/list]
 === 🧰 腰包換穿前後
+{{img:fanny-swap-menu-zh.jpg}}
+{{img:fanny-back-zh.jpg}}
 [list]
 [*] [b]本 MOD 的腰包[/b]：腰掛工具包可以改穿到後腰，醫療腰包可以改穿到前面，右鍵「穿在背面」或「穿在前面」，和原版腰包一樣。
 [*] [b]強化版也能換[/b]：原版三種腰包（一般、獸皮、防水布）與本 MOD 兩款的強化版，換過去仍是強化版。
@@ -201,6 +208,8 @@ https://steamcommunity.com/sharedfiles/filedetails/?id=3827497087
 [/list]
 === 🧰 強化版的背包掛點
 強化版的大型背包、行李袋、登山包與大登山包多了快捷列掛點，穿上後快捷列會多出這些欄位，可以把東西掛在背包外面。
+{{img:attach-hotbar-zh.jpg}}
+{{img:attach-back-zh.jpg}}
 
 [table]
 [tr][th]家族[/th][th]背包[/th][th]掛點[/th][/tr]
@@ -222,6 +231,7 @@ https://steamcommunity.com/sharedfiles/filedetails/?id=3827497087
 [/list]
 === 🧰 穿戴地上裝滿的背包
 地上的背包裝得太滿時，原版「穿戴」會先把它搬進物品欄，放不下就穿不起來。這時右鍵選單會多一個「穿戴（連同內容物）」。
+{{img:floorwear-menu-zh.jpg}}
 [list]
 [*] [b]做法[/b]：角色走到背包旁邊，直接把背包穿上，裡面的東西全程留在包裡，不會散到地上。
 [*] [b]什麼時候出現[/b]：只在原版「穿戴」會失敗時出現；空的或半滿的背包照原版穿。
@@ -232,6 +242,7 @@ https://steamcommunity.com/sharedfiles/filedetails/?id=3827497087
 [*] [b]安全屋[/b]：別人的安全屋裡的背包拿不到。
 [*] [b]多人[/b]：兩個人搶同一個背包時只有一個人穿得上，不會複製。
 [/list]
+{{img:floorwear-progress-zh.jpg}}
 === 🧰 接手 Bag Upgrade Plus
 Bag Upgrade Plus（以下簡稱 BUP）已經從 Workshop 下架。本 MOD 接手它存檔裡的背包：換成本 MOD 之後，舊背包照樣讀得到，裡面的東西也都在。
 
@@ -256,6 +267,7 @@ Bag Upgrade Plus（以下簡稱 BUP）已經從 Workshop 下架。本 MOD 接手
 [/list]
 
 [h3]改裝成強化版[/h3]
+{{img:craft-convert-zh.jpg}}
 [list]
 [*] [b]配方[/b]：製作選單「縫紉」分類的「改裝舊 Plus 背包為強化版」。
 [*] [b]條件[/b]：舊背包不能穿著；裡面的東西不用拿出來。

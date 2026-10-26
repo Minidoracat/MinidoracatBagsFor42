@@ -113,6 +113,7 @@ In each picture S.T.A.R.S. (navy) is on the left and Umbrella (olive khaki) on t
 [/table]
 Thread is used by amount; a whole spool is not consumed. Sewn bags start at tier 0 and become reinforced when upgraded.
 === 🧰 Upgrading Bags
+{{img:craft-tier1-en.jpg}}
 [list]
 [*] [b]Recipes[/b]: "Reinforce Bag to Tier 1", "Tier 2" and "Tier 3" in the Tailoring category of the crafting menu.
 [*] [b]One tier at a time[/b]: each recipe only accepts a bag from the tier below. You cannot skip tiers.
@@ -147,6 +148,7 @@ Thread is used by amount; a whole spool is not consumed. Sewn bags start at tier
 [/list]
 === 🧰 Reinforced Bags
 Every upgraded bag is a "Reinforced" bag: this mod's own item with the same look and icon as the original and "(Reinforced)" after its name, such as "Hiking Backpack (Reinforced)" or "S.T.A.R.S. Day Pack (Reinforced)".
+{{img:reinforced-tooltip-en.jpg}}
 
 [h3]What is different from the original[/h3]
 [list]
@@ -172,6 +174,7 @@ Every upgraded bag is a "Reinforced" bag: this mod's own item with the same look
 [/list]
 
 [h3]Related recipes (Tailoring category of the crafting menu)[/h3]
+{{img:craft-restore-en.jpg}}
 [table]
 [tr][th]Recipe[/th][th]What it does[/th][th]Needs[/th][/tr]
 [tr][td]Revert Reinforced Bag to Original[/td][td]Turns a reinforced bag back into the original; tier, contents and liquid stay[/td][td]Scissors (kept); not worn[/td][/tr]
@@ -183,6 +186,8 @@ Every upgraded bag is a "Reinforced" bag: this mod's own item with the same look
 [*] [b]Tier 0 bags[/b]: cannot use "Convert Upgraded Bag to Reinforced"; use the normal upgrade recipe.
 [/list]
 === 🧰 Second Satchel Slot
+{{img:satchel2-front-en.jpg}}
+{{img:satchel2-back-en.jpg}}
 [list]
 [*] [b]Two satchels at once[/b]: a reinforced satchel is worn in a second slot on the other side, so you can wear it together with one normal satchel. The inventory panel shows both containers.
 [*] [b]Which bags count as satchels[/b]: the 13 vanilla satchels (Satchel, Mail Satchel, Crafted Hide Satchel, crafted cloth satchels and others) and this mod's Courier Satchel. Their reinforced versions all go in this slot.
@@ -191,6 +196,8 @@ Every upgraded bag is a "Reinforced" bag: this mod's own item with the same look
 [*] [b]Bag Upgrade Plus satchels[/b]: become reinforced satchels when converted and use the second slot too.
 [/list]
 === 🧰 Swapping Fanny Packs Front and Back
+{{img:fanny-swap-menu-en.jpg}}
+{{img:fanny-back-en.jpg}}
 [list]
 [*] [b]This mod's pouches[/b]: the Tool Belt Pouch can be moved to the back of the waist and the Medic Hip Pouch to the front, with the same "on Back" / "on Front" wear options as vanilla fanny packs.
 [*] [b]Reinforced versions swap too[/b]: the reinforced versions of the three vanilla fanny packs (regular, hide, tarp) and of this mod's two pouches stay reinforced after swapping.
@@ -201,6 +208,8 @@ Every upgraded bag is a "Reinforced" bag: this mod's own item with the same look
 [/list]
 === 🧰 Reinforced Bag Attachment Slots
 The reinforced Military Backpacks, Duffel Bags, Hiking Backpacks and Big Hiking Backpacks get extra hotbar attachment slots. Wear one and the hotbar shows the new slots, so you can hang things on the outside of the bag.
+{{img:attach-hotbar-en.jpg}}
+{{img:attach-back-en.jpg}}
 
 [table]
 [tr][th]Family[/th][th]Bags[/th][th]Slots[/th][/tr]
@@ -222,6 +231,7 @@ The reinforced Military Backpacks, Duffel Bags, Hiking Backpacks and Big Hiking 
 [/list]
 === 🧰 Wearing Full Bags Off the Floor
 When a bag on the floor is very full, the vanilla "Wear" option first moves it into your inventory and fails if it does not fit. In that case the right-click menu adds "Wear (with contents)".
+{{img:floorwear-menu-en.jpg}}
 [list]
 [*] [b]How it works[/b]: your character walks to the bag and puts it on directly. Everything stays inside the bag the whole time; nothing spills onto the floor.
 [*] [b]When it shows up[/b]: only when the vanilla "Wear" would fail. Empty or half-full bags use the vanilla option.
@@ -232,6 +242,7 @@ When a bag on the floor is very full, the vanilla "Wear" option first moves it i
 [*] [b]Safehouses[/b]: you cannot take bags from someone else's safehouse.
 [*] [b]Multiplayer[/b]: if two players grab the same bag, only one gets it; nothing is duplicated.
 [/list]
+{{img:floorwear-progress-en.jpg}}
 === 🧰 Bag Upgrade Plus Takeover
 Bag Upgrade Plus (BUP below) has been removed from the Workshop. This mod takes over the bags in its saves: after switching, the old bags still load and everything inside them is still there.
 
@@ -256,6 +267,7 @@ Bag Upgrade Plus (BUP below) has been removed from the Workshop. This mod takes 
 [/list]
 
 [h3]Converting to a reinforced bag[/h3]
+{{img:craft-convert-en.jpg}}
 [list]
 [*] [b]Recipe[/b]: "Convert Old Plus Bag to Reinforced" in the Tailoring category of the crafting menu.
 [*] [b]Requirements[/b]: the old bag must not be worn; items can stay inside.
