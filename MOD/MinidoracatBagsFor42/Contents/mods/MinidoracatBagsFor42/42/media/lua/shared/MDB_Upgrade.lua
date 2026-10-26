@@ -5,9 +5,9 @@ MDB = MDB or {}
 local DEFAULTS = {
     LockLegacyBags = true,
     MaxTier = 3,
-    CapacityStepPercent = 15,
-    WeightReductionStep = 5,
-    MaxWeightReduction = 95,
+    CapacityStepPercent = 34,
+    WeightReductionStep = 10,
+    MaxWeightReduction = 100,
     LootMultiplier = 1,
 }
 
@@ -26,10 +26,12 @@ function MDB.applyTier(bag, tier)
         md.MDB_cap = bag:getCapacity()
         md.MDB_wr = bag:getWeightReduction()
     end
-    -- cap(t)=floor(base×(1+step%×t)+0.5)，用整數算避免 1.45 這類小數誤差
-    local cap = math.floor((md.MDB_cap * (100 + MDB.opt("CapacityStepPercent") * tier) + 50) / 100)
-    -- 物品內容器的實際上限是 50 減背包重量（InventoryContainer.java:79-86），超過只會印警告
-    cap = math.min(cap, math.floor(50 - bag:getActualWeight()))
+    -- 上限＝50 減背包自重：腳本載入與 tooltip 都壓在這裡（Item.java:2493-2499、InventoryContainer.java:125-131），
+    -- 原本的 Plus 背包就是 49。自重取腳本值（Item.java:533）：伺服器上 getActualWeight() 會回 0（顯示名稱等於全名時，InventoryItem.java:2740-2742）
+    local top = math.floor(50 - bag:getScriptItem():getActualWeight())
+    -- 每階補上「原本容量到上限」差距的 CapacityStepPercent%，預設 34 時第 3 階補滿（使用者 2026-10-26：升滿要和 Bag Upgrade Plus 一樣）
+    local fill = math.min(100, MDB.opt("CapacityStepPercent") * tier)
+    local cap = md.MDB_cap + math.floor((math.max(top - md.MDB_cap, 0) * fill + 50) / 100)
     local wr = math.min(md.MDB_wr + MDB.opt("WeightReductionStep") * tier, MDB.opt("MaxWeightReduction"))
     bag:setCapacity(cap)
     bag:setWeightReduction(wr)

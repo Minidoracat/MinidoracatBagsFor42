@@ -236,12 +236,12 @@ module MinidoracatBags
         AttachmentsProvided = BedrollBottom,
     }
 
-    /* 自製模型（scripts/blender/bags/build.py）；欄位照原版 Base.Bag_BigHikingBag */
+    /* 自製模型（scripts/blender/bags/build.py）；欄位照原版 Base.Bag_BigHikingBag，自重改 1.0：升滿的容量上限是 50 減自重，1.2 只到 48（使用者 2026-10-26 要升滿和 Bag Upgrade Plus 一樣 49） */
     item ExpeditionPack_Navy
     {
         DisplayCategory = Bag,
         ItemType = base:container,
-        Weight = 1.2,
+        Weight = 1.0,
         Icon = MDB_ExpeditionPack_Navy,
         CanBeEquipped = base:back,
         CanHaveHoles = false,
@@ -262,12 +262,12 @@ module MinidoracatBags
         AttachmentsProvided = BedrollBottomBig,
     }
 
-    /* 自製模型（scripts/blender/bags/build.py）；欄位照原版 Base.Bag_BigHikingBag */
+    /* 自製模型（scripts/blender/bags/build.py）；欄位照原版 Base.Bag_BigHikingBag，自重改 1.0（同上） */
     item ExpeditionPack_Olive
     {
         DisplayCategory = Bag,
         ItemType = base:container,
-        Weight = 1.2,
+        Weight = 1.0,
         Icon = MDB_ExpeditionPack_Olive,
         CanBeEquipped = base:back,
         CanHaveHoles = false,

@@ -125,14 +125,14 @@ end
 
 -- ===== 規格（AGENTS.md「設計定案」的表） =====
 local MODELS = {
-    ToolBeltPouch = { eq = "base:fannypackfront", cap = { 3, 4 }, wr = { 80, 95 }, w = 0.3, run = 0.98 },
-    MedicHipPouch = { eq = "base:fannypackback", cap = { 4, 6 }, wr = { 85, 95 }, w = 0.3, run = 0.99, accept = "MDB.acceptFirstAid" },
-    AmmoBandolier = { eq = "base:ammostrap", cap = { 4, 6 }, wr = { 85, 95 }, w = 0.3, run = 0.98, accept = "MDB.acceptAmmo",
+    ToolBeltPouch = { eq = "base:fannypackfront", cap = { 3, 49 }, wr = { 80, 100 }, w = 0.3, run = 0.98 },
+    MedicHipPouch = { eq = "base:fannypackback", cap = { 4, 49 }, wr = { 85, 100 }, w = 0.3, run = 0.99, accept = "MDB.acceptFirstAid" },
+    AmmoBandolier = { eq = "base:ammostrap", cap = { 4, 49 }, wr = { 85, 100 }, w = 0.3, run = 0.98, accept = "MDB.acceptAmmo",
         tags = "base:reloadfastbullets;base:reloadfastmagazines;base:reloadfastshells" },
-    CourierSatchel = { eq = "base:satchel", cap = { 14, 20 }, wr = { 70, 85 }, w = 0.6, run = 0.99 },
-    DayPack = { eq = "base:back", cap = { 20, 29 }, wr = { 75, 90 }, w = 0.8, run = 0.97, attach = "BedrollBottom" },
-    ExpeditionPack = { eq = "base:back", cap = { 30, 44 }, wr = { 80, 95 }, w = 1.2, run = 0.95, attach = "BedrollBottomBig" },
-    ScoutChestRig = { eq = "base:webbing", cap = { 6, 9 }, wr = { 85, 95 }, w = 0.5, run = 0.98, maxSize = "1.3" },
+    CourierSatchel = { eq = "base:satchel", cap = { 14, 49 }, wr = { 70, 100 }, w = 0.6, run = 0.99 },
+    DayPack = { eq = "base:back", cap = { 20, 49 }, wr = { 75, 100 }, w = 0.8, run = 0.97, attach = "BedrollBottom" },
+    ExpeditionPack = { eq = "base:back", cap = { 30, 49 }, wr = { 80, 100 }, w = 1.0, run = 0.95, attach = "BedrollBottomBig" },
+    ScoutChestRig = { eq = "base:webbing", cap = { 6, 49 }, wr = { 85, 100 }, w = 0.5, run = 0.98, maxSize = "1.3" },
 }
 local SKINS = { "Navy", "Olive" }
 local LOOT_SPEC = {
@@ -156,8 +156,8 @@ local OUTFIT_SPEC = {
 }
 local SANDBOX_SPEC = {
     LockLegacyBags = { "boolean", "true" }, MaxTier = { "integer", "3", "0", "3" },
-    CapacityStepPercent = { "integer", "15", "0", "50" }, WeightReductionStep = { "integer", "5", "0", "20" },
-    MaxWeightReduction = { "integer", "95", "50", "100" }, LootMultiplier = { "double", "1.0", "0.0", "10.0" },
+    CapacityStepPercent = { "integer", "34", "0", "100" }, WeightReductionStep = { "integer", "10", "0", "20" },
+    MaxWeightReduction = { "integer", "100", "50", "100" }, LootMultiplier = { "double", "1.0", "0.0", "10.0" },
 }
 
 -- ===== 假引擎 =====
@@ -171,8 +171,8 @@ local function resetEnv()
         return e
     end })
     MDB = nil
-    SandboxVars = { MinidoracatBags = { LockLegacyBags = true, MaxTier = 3, CapacityStepPercent = 15,
-        WeightReductionStep = 5, MaxWeightReduction = 95, LootMultiplier = 1 } }
+    SandboxVars = { MinidoracatBags = { LockLegacyBags = true, MaxTier = 3, CapacityStepPercent = 34,
+        WeightReductionStep = 10, MaxWeightReduction = 100, LootMultiplier = 1 } }
 end
 function isServer() return env.server end
 function isClient() return env.client end
@@ -207,14 +207,18 @@ local function resolve(path)
 end
 
 local CONTAINER = { name = "playerInv" }
+-- weight＝腳本自重；instanceWeight 模擬 getActualWeight()（伺服器上顯示名稱等於全名時回 0，InventoryItem.java:2740-2742）
 local function newBag(cap, wr, weight)
     local b = { __class = "InventoryContainer", cap = cap, wr = wr, weight = weight, md = {}, container = CONTAINER }
+    local script = {}
+    function script:getActualWeight() return weight end
     function b:getModData() return self.md end
     function b:getCapacity() return math.min(self.cap, 50, math.floor(50 - self.weight)) end
     function b:setCapacity(c) self.cap = c end
     function b:getWeightReduction() return self.wr end
     function b:setWeightReduction(w) self.wr = math.max(0, math.min(100, w)) end
-    function b:getActualWeight() return self.weight end
+    function b:getActualWeight() return self.instanceWeight or self.weight end
+    function b:getScriptItem() return script end
     function b:getContainer() return self.container end
     return b
 end
@@ -461,8 +465,9 @@ local function suite()
             local fresh = newBag(base, baseWr, w)
             MDB.applyTier(fresh, t)
             MDB.applyTier(seq, t)
-            local cap = math.floor((base * (100 + 15 * t) + 50) / 100)
-            local wr = math.min(baseWr + 5 * t, 95)
+            local gap = math.max(math.floor(50 - w) - base, 0)
+            local cap = base + math.floor((gap * math.min(100, 34 * t) + 50) / 100)
+            local wr = math.min(baseWr + 10 * t, 100)
             if fresh.cap ~= cap or fresh.wr ~= wr or seq.cap ~= cap or seq.wr ~= wr or fresh.md.MDB_tier ~= t then ok = false end
         end
         local fresh3 = newBag(base, baseWr, w); MDB.applyTier(fresh3, 3)
@@ -470,18 +475,28 @@ local function suite()
             ok and seq.cap == s.cap[2] and seq.wr == s.wr[2] and seq.md.MDB_cap == s.cap[1] and seq.md.MDB_wr == s.wr[1]
             and fresh3.cap == s.cap[2])
     end
+    local tb = newBag(3, 80, 0.3)
+    local steps = {}
+    for t = 1, 3 do MDB.applyTier(tb, t); steps[t] = tb.cap end
+    check("applyTier: tool belt 3 -> 19 -> 34 -> 49 (gap filled 34% per tier)", steps[1] == 19 and steps[2] == 34 and steps[3] == 49)
     local big = newBag(45, 85, 1.2)
     MDB.applyTier(big, 3)
     check("applyTier: capacity capped at 50 - bag weight", big.cap == 48)
-    SandboxVars.MinidoracatBags.CapacityStepPercent = 50
-    local exp = newBag(30, 80, 1.2); MDB.applyTier(exp, 3)
-    check("applyTier: big step also capped", exp.cap == 48)
-    SandboxVars.MinidoracatBags.CapacityStepPercent = 15
+    local sv0 = newBag(20, 75, 0.8); sv0.instanceWeight = 0
+    MDB.applyTier(sv0, 3)
+    check("applyTier: cap uses the script weight when getActualWeight() is 0 (server)", sv0.cap == 49)
+    SandboxVars.MinidoracatBags.CapacityStepPercent = 100
+    local one = newBag(20, 75, 0.8); MDB.applyTier(one, 1)
+    check("applyTier: step 100 fills to the cap at tier 1", one.cap == 49)
+    SandboxVars.MinidoracatBags.CapacityStepPercent = 0
+    local none = newBag(20, 75, 0.8); MDB.applyTier(none, 3)
+    check("applyTier: step 0 keeps the original capacity", none.cap == 20 and none.wr == 100)
+    SandboxVars.MinidoracatBags.CapacityStepPercent = 34
     SandboxVars.MinidoracatBags.MaxWeightReduction = 90
     local fanny = newBag(4, 85, 0.3); MDB.applyTier(fanny, 1)
     local exp2 = newBag(30, 80, 1.2); MDB.applyTier(exp2, 3)
     check("applyTier: MaxWeightReduction caps", fanny.wr == 90 and exp2.wr == 90)
-    SandboxVars.MinidoracatBags.MaxWeightReduction = 95
+    SandboxVars.MinidoracatBags.MaxWeightReduction = 100
     env.sent = {}
     local sp = newBag(20, 75, 0.8); MDB.applyTier(sp, 1)
     check("applyTier: single player sends nothing", #env.sent == 0)
@@ -508,9 +523,9 @@ local function suite()
     local ub = newBag(30, 80, 1.2)
     local data = { getAllKeepInputItems = function() return javaList({ tool, ub }) end }
     MDB.onUpgrade(data, nil)
-    check("onUpgrade: first keep bag goes 0 -> 1", ub.md.MDB_tier == 1 and ub.cap == 35 and ub.wr == 85)
+    check("onUpgrade: first keep bag goes 0 -> 1", ub.md.MDB_tier == 1 and ub.cap == 36 and ub.wr == 90)
     MDB.onUpgrade(data, nil); MDB.onUpgrade(data, nil)
-    check("onUpgrade: reaches tier 3 = 44/95", ub.md.MDB_tier == 3 and ub.cap == 44 and ub.wr == 95)
+    check("onUpgrade: reaches tier 3 = 48/100 (weight 1.2)", ub.md.MDB_tier == 3 and ub.cap == 48 and ub.wr == 100)
     MDB.onUpgrade(data, nil)
     check("onUpgrade: never above MaxTier", ub.md.MDB_tier == 3)
 
@@ -675,7 +690,9 @@ suite()
 if arg and arg[1] == "--mutants" then
     local mutants = {
         { name = "容量不四捨五入", file = "UPG", from = " + 50) / 100)", to = ") / 100)" },
-        { name = "不截 50 減重量", file = "UPG", from = "cap = math.min(cap, math.floor(50 - bag:getActualWeight()))", to = "" },
+        { name = "上限不扣自重", file = "UPG", from = "math.floor(50 - bag:getScriptItem():getActualWeight())", to = "50" },
+        { name = "上限用實例自重", file = "UPG", from = "bag:getScriptItem():getActualWeight()", to = "bag:getActualWeight()" },
+        { name = "補滿不封頂", file = "UPG", from = 'math.min(100, MDB.opt("CapacityStepPercent") * tier)', to = 'MDB.opt("CapacityStepPercent") * tier' },
         { name = "負重減輕不封頂", file = "UPG", from = ', MDB.opt("MaxWeightReduction"))', to = ", 999)" },
         { name = "每次重讀 base", file = "UPG", from = "if md.MDB_cap == nil then", to = "if true then" },
         { name = "不記階級", file = "UPG", from = "md.MDB_tier = tier", to = "" },
