@@ -24,14 +24,16 @@
 local MEDIA = "MOD/MinidoracatBagsFor42/Contents/mods/MinidoracatBagsFor42/42/media/lua"
 
 -- ===== 假的 PZ 全域：只記錄掛了哪些事件 =====
--- MOD 的 Lua 在載入時只呼叫 Events.X.Add；其餘引擎全域都在函式被呼叫時才用，
--- 那些行為由 scripts/test_legacy.lua、scripts/test_newbags.lua 用各自的假全域測。
+-- MOD 的 Lua 在載入時只呼叫 Events.X.Add，另外 MDB_Upgrade 會 require 並包住原版的 ISClothingExtraAction.createItemNew；
+-- 其餘引擎全域都在函式被呼叫時才用，那些行為由 scripts/test_legacy.lua、scripts/test_newbags.lua 用各自的假全域測。
 local registered = {}
 Events = setmetatable({}, {
     __index = function(_, name)
         return { Add = function(fn) registered[#registered + 1] = { name = name, fn = fn } end }
     end,
 })
+ISClothingExtraAction = { createItemNew = function(_, _, newItem) return newItem end }
+package.loaded["TimedActions/ISClothingExtraAction"] = true
 
 -- ===== 測試工具 =====
 local failures = 0

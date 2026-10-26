@@ -163,6 +163,9 @@ local bootHandlers
 local function bootLua()
     MDB, SandboxVars, printed, bootHandlers = nil, nil, {}, {}
     Events = { OnGameBoot = { Add = function(fn) bootHandlers[#bootHandlers + 1] = fn end } }
+    -- MDB_Upgrade 會 require 並包住原版的換穿法；行為由 test_newbags.lua 測，這裡只讓它載得起來
+    ISClothingExtraAction = { createItemNew = function(_, _, newItem) return newItem end }
+    package.loaded["TimedActions/ISClothingExtraAction"] = true
     print = function(...)
         local parts = {}
         for i = 1, select("#", ...) do parts[#parts + 1] = tostring((select(i, ...))) end

@@ -6,6 +6,7 @@
 -- - InventoryContainer.getCapacity＝min(容量, 50, (int)(50－背包重量))（InventoryContainer.java:79-86、ItemContainer.java:158-170）；
 --   setWeightReduction 夾在 0～100（InventoryContainer.java:138-141）。
 -- - sendReplaceItemInContainer 只在伺服器有作用（LuaManager.java:12404-12412）。
+-- - 換穿法的 ISClothingExtraAction.createItemNew 只搬 modData，新物品維持腳本預設容量（ISClothingExtraAction.lua:107-109）。
 -- - OnTest 對每個符合輸入的候選物品各呼叫一次（CraftRecipeManager.java:781-783）。
 -- - 原版 ProceduralDistributions.lua 原樣載入，Events.OnPreDistributionMerge（與單機讀檔的 OnInitGlobalModData）觸發後檢查清單。
 -- 執行目錄：repo 根。
@@ -173,6 +174,15 @@ local function resetEnv()
     MDB = nil
     SandboxVars = { MinidoracatBags = { LockLegacyBags = true, MaxTier = 3, FullCapacityPercent = 100,
         FullWeightReduction = 100, LootMultiplier = 1 } }
+    -- MDB_Upgrade 會 require 並包住原版的 createItemNew；每次載入給新表，突變才不會吃到上一輪的包裝
+    ISClothingExtraAction = {}
+    function ISClothingExtraAction:createItemNew(item, newItem)
+        if item:hasModData() then
+            for k, v in pairs(item:getModData()) do newItem:getModData()[k] = v end
+        end
+        return newItem
+    end
+    package.loaded["TimedActions/ISClothingExtraAction"] = true
 end
 function isServer() return env.server end
 function isClient() return env.client end
@@ -212,6 +222,7 @@ local function newBag(cap, wr, weight)
     local b = { __class = "InventoryContainer", cap = cap, wr = wr, weight = weight, md = {}, container = CONTAINER }
     local script = {}
     function script:getActualWeight() return weight end
+    function b:hasModData() return next(self.md) ~= nil end
     function b:getModData() return self.md end
     function b:getCapacity() return math.min(self.cap, 50, math.floor(50 - self.weight)) end
     function b:setCapacity(c) self.cap = c end
@@ -581,6 +592,29 @@ local function suite()
     MDB.onUpgrade(data, nil)
     check("onUpgrade: never above MaxTier", ub.md.MDB_tier == 3)
 
+    -- 8b. 換穿法（腰包前背↔後背）：Bag_FannyPackFront／Back 都是容量 1、負重減輕 85、自重 0.2（container.txt:805-853）
+    local function swapped(old, fluid)
+        local n = newBag(1, 85, 0.2); n.container = nil   -- 新物品還沒放進容器
+        if fluid then n.fc = newFluid(fluid) end
+        return ISClothingExtraAction:createItemNew(old, n)
+    end
+    local front = newBag(1, 85, 0.2); front.fc = newFluid(2.0)
+    for t = 1, 3 do MDB.applyTier(front, t) end
+    env.server, env.sent = true, {}
+    local back = swapped(front, 2.0)
+    env.server = false
+    check("swap: tier-3 fanny pack keeps 49/100 and 5.0 L after front<->back, nothing resent",
+        front.cap == 49 and back.cap == 49 and back.wr == 100 and near(back.fc.capacity, 5.0) and back.md.MDB_tier == 3
+        and #env.sent == 0)
+    local plain = swapped(newBag(1, 85, 0.2), 2.0)
+    check("swap: never-upgraded bag keeps script defaults", plain.cap == 1 and plain.wr == 85 and plain.fc.capacity == 2.0
+        and next(plain.md) == nil)
+    local dropped = newBag(1, 85, 0.2)
+    dropped.md = { MDB_tier = 2, MDB_cap = 1, MDB_wr = 85, MDB_fluid = 2.0 }; dropped.fc = newFluid(2.0)
+    local fixed = swapped(dropped, 2.0)
+    check("swap: bag that already lost its tier (defaults + modData) is restored to tier 2 = 33/95, 4.0 L",
+        fixed.cap == 33 and fixed.wr == 95 and near(fixed.fc.capacity, 4.0))
+
     -- 9. 放入限制（原版物品的真實 tag 與分類）
     check("acceptFirstAid: bandage, disinfectant, pills accepted", MDB.acceptFirstAid(nil, vanillaItem("Base.Bandage"))
         and MDB.acceptFirstAid(nil, vanillaItem("Base.Disinfectant")) and MDB.acceptFirstAid(nil, vanillaItem("Base.Pills")))
@@ -760,6 +794,7 @@ if arg and arg[1] == "--mutants" then
         { name = "OnTest 不看 MaxTier", file = "UPG", from = 'return tier <= MDB.opt("MaxTier") and', to = "return" },
         { name = "OnTest 階級差一", file = "UPG", from = "tierOf(item) == tier - 1", to = "tierOf(item) <= tier - 1" },
         { name = "onUpgrade 不看 MaxTier", file = "UPG", from = 'if tier <= MDB.opt("MaxTier") then', to = "if true then" },
+        { name = "換穿法沒包裝", file = "UPG", from = "function ISClothingExtraAction:createItemNew(item, newItem)", to = "function MDB:unusedCreateItemNew(item, newItem)" },
         { name = "彈藥背帶收彈藥盒", file = "FIL", from = "return item:hasTag(ItemTag.AMMO)", to = 'return item:getDisplayCategory() == "Ammo"' },
         { name = "彈藥背帶不收霰彈", file = "FIL", from = "return item:hasTag(ItemTag.AMMO)", to = "return item:hasTag(ItemTag.AMMO) and not item:hasTag(ItemTag.SHOTGUN_SHELL)" },
         { name = "醫療腰包分類錯", file = "FIL", from = '== "FirstAid"', to = '== "Medical"' },

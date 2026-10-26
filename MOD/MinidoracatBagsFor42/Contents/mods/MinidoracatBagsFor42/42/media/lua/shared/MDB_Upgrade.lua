@@ -85,3 +85,20 @@ function MDB.onUpgrade(data, character)
         end
     end
 end
+
+-- 換穿法（腰包前背↔後背）換成另一個物品：原版 createItemNew 搬了 modData，沒搬容量與負重減輕
+-- （ISClothingExtraAction.lua:66-112），換完回到腳本預設、MDB_tier 卻還在，就升不回來了。這裡依 MDB_tier 重算。
+-- 同一個函式也是 copyClothingItem（:62-64，InventoryItem.java:5029-5036）與背負噴霧器換物（ISEquipWeaponAction.lua:152）的路徑。
+-- MP 的 complete() 在伺服器跑（NetTimedAction.java:132-139；客戶端不跑，LuaTimedActionNew.java:164-170）。
+-- 新物品這時還沒放進容器，applyTier 不重送；接著 sendAddItemToContainer 整件送出，負重減輕與容量都在裡面
+-- （AddInventoryItemToContainerPacket.java:54-58、InventoryContainer.java:57-58、ItemContainer.java:2439）。
+require "TimedActions/ISClothingExtraAction"
+local createItemNew = ISClothingExtraAction.createItemNew
+function ISClothingExtraAction:createItemNew(item, newItem)
+    local result = createItemNew(self, item, newItem)
+    local tier = newItem:hasModData() and newItem:getModData().MDB_tier
+    if tier and instanceof(newItem, "InventoryContainer") then
+        MDB.applyTier(newItem, tier)
+    end
+    return result
+end
