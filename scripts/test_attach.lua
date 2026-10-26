@@ -207,7 +207,7 @@ local function suite()
     check("掛點名稱帶本 MOD 前綴，不用 Bag Upgrade Plus 的名稱",
         MDB.attachSlotType("Alice", "Slot1") == "MDB_AliceSlot1" and MDB.attachLocation("Alice", "Slot1", "Hammer"):match("^MDB ") ~= nil)
 
-    -- 掛點組合照 Bag Upgrade Plus：28 款各歸一個家族，家族的掛點等於 BUP 的組合
+    -- 掛點組合照 Bag Upgrade Plus：它的 28 款各歸一個家族，家族的掛點等於 BUP 的組合（同網格的其他背包由下面的原版核對要求加入）
     local bagFam, dup = {}, false
     for _, f in ipairs(MDB.ATTACH_FAMILIES) do
         for _, b in ipairs(f.bags) do
@@ -220,9 +220,7 @@ local function suite()
         local f = bagFam[b]
         if not f or table.concat(f.slots, ",") ~= table.concat(BUP_SETS[set], ",") then setOk = false end
     end
-    local nBags = 0
-    for _ in pairs(bagFam) do nBags = nBags + 1 end
-    check("28 款各歸一個家族，掛點組合照 Bag Upgrade Plus（ALICE、行李袋、登山包三種）", setOk and nBags == 28)
+    check("Bag Upgrade Plus 的 28 款各歸一個家族，掛點組合照 BUP（ALICE、行李袋、登山包三種）", setOk)
     check("書包不加掛點", bagFam.Bag_Schoolbag == nil)
 
     -- AttachmentsProvided：保留強化版原本的床捲掛點，接上本 MOD 的掛點
@@ -297,6 +295,18 @@ local function suite()
             if not mesh or mesh:lower() ~= MESH[f.name] then bad[#bad + 1] = b .. "(" .. tostring(mesh) .. ")" end
         end
         check("原版核對：每款背包的穿戴網格和家族相同（座標照網格算）" .. table.concat(bad, ","), #bad == 0)
+        bad = {}
+        local famOfMesh = {}
+        for name, f in pairs(fams) do famOfMesh[MESH[name]] = f end
+        for name in pairs(reinforced) do
+            local src = name:gsub("_Reinforced$", "")
+            local ci = v.items[src] and field(v.items[src], "ClothingItem")
+            local xml = ci and readRaw(PZ .. "/media/clothing/clothingItems/" .. ci .. ".xml") or ""
+            local mesh = xml:match("<m_MaleModel>[^<]-([%w_]+)</m_MaleModel>")
+            local f = mesh and famOfMesh[mesh:lower()]
+            if f and bagFam[src] ~= f then bad[#bad + 1] = src .. "(" .. f.name .. ")" end
+        end
+        check("原版核對：強化版只要穿戴網格是某個家族的，就在那個家族（座標照網格共用）" .. table.concat(bad, ","), #bad == 0)
     else
         io.write("  SKIP  原版核對（找不到 " .. PZ .. "）\n")
     end
@@ -483,6 +493,7 @@ if arg and arg[1] == "--mutants" then
         { name = "右側面朝向錯", file = "CLIENT", from = "BottleR = { 0.030, -0.113, -0.057, -90 }", to = "BottleR = { 0.030, -0.113, -0.057, 90 }" },
         { name = "提示框沒去重", file = "CLIENT", from = 'if line == "" or not seen[key] then', to = "if true then" },
         { name = "提示框去重沒看縮排", file = "CLIENT", from = 'local key = line:gsub("^<INDENT:%d+> ", "")', to = "local key = line" },
+        { name = "家族漏同網格的背包", file = "SHARED", from = '"Bag_ToolBag", "Bag_DuffelBagTINT" }', to = '"Bag_ToolBag" }' },
         { name = "掛得上也改提示", file = "CLIENT", from = "local tip = opt and opt.notAvailable and opt.toolTip", to = "local tip = opt and opt.toolTip" },
         { name = "自身校正沒套位移", file = "CLIENT", from = "local off = { fix[5] or 0, fix[6] or 0, fix[7] or 0 }", to = "local off = { 0, 0, 0 }" },
         { name = "自身校正加到每種擺法", file = "CLIENT", from = "if pose == fix[1] then upsert", to = "if true then upsert" },

@@ -29,7 +29,8 @@ MDB.ATTACH_ACCEPTS = {
 }
 
 -- 家族照穿戴網格分（座標是照網格算的）：旅行登山包用一般登山包的網格（原版 Bag_HikingBag_Travel.xml），歸 Hiking；
--- Bag Upgrade Plus 把它歸大登山包，兩邊的掛點組合相同。base＝原版就有的床捲掛點，DoParam 是整串取代（Item.java:2410-2411），要接回去。
+-- Bag Upgrade Plus 把它歸大登山包，兩邊的掛點組合相同。名單是 Bag Upgrade Plus 有掛點的 28 款，加上同網格、BUP 沒給掛點的
+-- Bag_DuffelBagTINT 與 Bag_BigHikingBag_Travel。base＝原版就有的床捲掛點，DoParam 是整串取代（Item.java:2410-2411），要接回去。
 MDB.ATTACH_FAMILIES = {
     { name = "Alice", base = "BedrollBottomALICE",
       bags = { "Bag_ALICEpack", "Bag_ALICEpack_Army", "Bag_ALICEpack_DesertCamo", "Bag_SurvivorBag" },
@@ -38,13 +39,13 @@ MDB.ATTACH_FAMILIES = {
       bags = { "Bag_DuffelBag", "Bag_MedicalBag", "Bag_Military", "Bag_Police", "Bag_Sheriff", "Bag_SWAT", "Bag_BreakdownBag",
                "Bag_BurglarBag", "Bag_BaseballBag", "Bag_TennisBag", "Bag_WeaponBag", "Bag_InmateEscapedBag", "Bag_MoneyBag",
                "Bag_WorkerBag", "Bag_ShotgunBag", "Bag_ShotgunSawnoffBag", "Bag_ShotgunDblBag", "Bag_ShotgunDblSawnoffBag",
-               "Bag_FoodCanned", "Bag_FoodSnacks", "Bag_ToolBag" },
+               "Bag_FoodCanned", "Bag_FoodSnacks", "Bag_ToolBag", "Bag_DuffelBagTINT" },
       slots = { "Slot1", "Slot2", "Slot3", "BottleR", "Plushie", "UmbrellaR", "Flashlight" } },
     { name = "Hiking", base = "BedrollBottom",
       bags = { "Bag_NormalHikingBag", "Bag_HikingBag_Travel" },
       slots = { "Slot1", "Slot2", "Slot3", "BottleR", "BottleL", "Plushie", "UmbrellaL", "Flashlight" } },
     { name = "BigHiking", base = "BedrollBottomBig",
-      bags = { "Bag_BigHikingBag" },
+      bags = { "Bag_BigHikingBag", "Bag_BigHikingBag_Travel" },
       slots = { "Slot1", "Slot2", "Slot3", "BottleR", "BottleL", "Plushie", "UmbrellaL", "Flashlight" } },
 }
 
