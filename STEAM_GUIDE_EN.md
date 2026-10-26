@@ -141,7 +141,7 @@ Thread is used by amount; a whole spool is not consumed. Sewn bags start at tier
 [*] [b]Full upgrade matches Bag Upgrade Plus[/b]: at the highest tier, capacity is 49 (50 minus the reinforced weight of 0.1) and Encumbrance Reduction is 100.
 [*] [b]Even steps in between[/b]: each tier adds the same share of the way from the original values to full, rounded to whole numbers.
 [*] [b]Examples[/b]: a vanilla Small Backpack goes 15/70 → 26/80 → 38/90 → 49/100; a vanilla Fanny Pack goes 1/85 → 17/90 → 33/95 → 49/100 (capacity / Encumbrance Reduction).
-[*] [b]Hydration Packs[/b]: water capacity rises the same way up to 5 L, for example 2 → 3 → 4 → 5 L for the vanilla Hydration Pack.
+[*] [b]Hydration Packs[/b]: water capacity rises the same way up to 5 L, for example 2 → 3 → 4 → 5 L for the vanilla Hydration Pack and 3 → 3.7 → 4.3 → 5 L for the camo one.
 [*] [b]Already higher[/b]: a bag whose Encumbrance Reduction is already above the full value keeps its own.
 [*] [b]Server settings[/b]: the highest tier (0–3) and the full capacity and Encumbrance Reduction are sandbox options; see "Sandbox Options and Defaults".
 [/list]
@@ -152,7 +152,7 @@ Every upgraded bag is a "Reinforced" bag: this mod's own item with the same look
 [list]
 [*] [b]Weighs 0.1[/b]: the bag itself is almost weightless, so every bag reaches 49 when fully upgraded.
 [*] [b]No slowdown[/b]: wearing it does not reduce run or combat speed; only the weight of what is inside counts as usual.
-[*] [b]Hydration Packs[/b]: water capacity reaches 5 L when fully upgraded.
+[*] [b]Hydration Packs[/b]: water capacity reaches 5 L when fully upgraded; with water inside, the name shows as "Water (Reinforced Hydration Pack)".
 [*] [b]Satchels[/b]: worn in a second satchel slot on the other side; see "Second Satchel Slot".
 [*] [b]Military Backpacks, Duffel Bags, Hiking and Big Hiking Backpacks[/b]: get extra hotbar attachment slots; see "Reinforced Bag Attachment Slots".
 [*] [b]Everything else stays[/b]: capacity and Encumbrance Reduction follow the tier; item restrictions, bedroll attachments and fanny pack swapping work like the original.
@@ -176,7 +176,7 @@ Every upgraded bag is a "Reinforced" bag: this mod's own item with the same look
 [tr][th]Recipe[/th][th]What it does[/th][th]Needs[/th][/tr]
 [tr][td]Revert Reinforced Bag to Original[/td][td]Turns a reinforced bag back into the original; tier, contents and liquid stay[/td][td]Scissors (kept); not worn[/td][/tr]
 [tr][td]Convert Upgraded Bag to Reinforced[/td][td]Turns a bag upgraded in version 0.1.0 into its reinforced version; the tier stays and the values are recalculated with the new rules[/td][td]Needle (kept); not worn; tier 1 or higher only[/td][/tr]
-[tr][td]Make Sheet Sling Bag (Reinforced)[/td][td]Makes a reinforced Sheet Sling Bag at the highest tier, straight into your main inventory[/td][td]Sheet 1, Money 5; no tools or skill; gives 15 Tailoring XP[/td][/tr]
+[tr][td]Make Sheet Sling Bag (Reinforced)[/td][td]Makes a reinforced Sheet Sling Bag at the highest tier, straight into your main inventory[/td][td]Sheet 1, Money 5; no tools or skill; gives 15 Tailoring XP (scaled by your XP multiplier like any vanilla recipe; a character with no Tailoring boost gets 3.75)[/td][/tr]
 [/table]
 [list]
 [*] [b]Capacity after reverting[/b]: the cap goes back to 50 minus the original bag's weight; a tier 3 Military Backpack becomes 48 when reverted.
