@@ -1,0 +1,49 @@
+/* 額外快捷列掛點借給原版物品的 StaticModel（shared/MDB_Attach.lua 的 MDB.ATTACH_STATIC）裡，拿在手上要校正的兩款。
+   網格、貼圖、縮放照抄原版地面模型（models_items.txt 的 SheetRope、Plushabug），只多手骨掛點：
+   手上的模型掛在 Bip01_Prop1（右手）／Bip01_Prop2（左手），自身掛點取同名的 attachment（AnimatedModel.java:1455-1484），
+   原版地面模型沒有，網格原點直接接在手骨上：布繩的長條穿過前臂伸到臉旁、扭扭蟲把整隻手包在身體裡（E2E mdb-held-1027e）。
+   拿在手上的慣例同原版水瓶（WaterBottle 的 attachment Bip01_Prop1）：握點在原點、物品從拳頭往 +y 伸出去。
+   掛在背包上的自身校正（MDB.ATTACH_FIX）在 client/MDB_AttachClient.lua 用 Lua 加到這兩份上，和原本加在原版模型上的值相同。
+   只在快捷列掛上、拿下的動作裡畫（ModelManager.java:650-681），一次約 0.2～0.5 秒。 */
+module MinidoracatBags
+{
+    /* 布繩平放時 S 形在 xz 平面、長邊沿 z（約 -0.169～0.164）：長邊轉到 +y、S 面朝外，握住一端附近，往 +y 推 0.12 */
+    model MDB_SheetRope
+    {
+        mesh = WorldItems/SheetRope,
+        texture = WorldItems/SheetRope,
+        scale = 0.15,
+        attachment Bip01_Prop1
+        {
+            offset = 0.0 0.12 0.0,
+            rotate = -90.0 0.0 0.0,
+        }
+        attachment Bip01_Prop2
+        {
+            offset = 0.0 0.12 0.0,
+            rotate = -90.0 0.0 0.0,
+        }
+    }
+
+    /* 扭扭蟲平趴（身體在 xz 平面、約 ±0.128，背殼朝 +y、頭朝 +x）：身體平面轉到 xy、背殼朝 -z，往 +y 推 0.10 握住邊緣，手露在蟲身外 */
+    model MDB_Plushabug
+    {
+        mesh = WorldItems/Plumpabug_Plushie,
+        scale = 0.1,
+        attachment world
+        {
+            offset = 0.0 0.0 0.0,
+            rotate = -90.0 90.0 90.0,
+        }
+        attachment Bip01_Prop1
+        {
+            offset = 0.0 0.10 0.0,
+            rotate = -90.0 0.0 0.0,
+        }
+        attachment Bip01_Prop2
+        {
+            offset = 0.0 0.10 0.0,
+            rotate = -90.0 0.0 0.0,
+        }
+    }
+}

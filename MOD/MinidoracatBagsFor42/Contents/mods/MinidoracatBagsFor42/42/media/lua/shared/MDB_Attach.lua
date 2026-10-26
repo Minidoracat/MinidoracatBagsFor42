@@ -91,15 +91,16 @@ MDB.ATTACH_ITEMS = {
     ["Base.Rope"] = "Rope", ["Base.SheetRope"] = "SheetRope",
 }
 -- 沒有 StaticModel 的物品借它自己的地面模型（腳本已解析完，要寫全名：Item.java:3177-3180、ScriptManager.java:1926-1941）。
--- 寫了不存在的模型也算沒有：解析結果是「???.名稱」（ScriptManager.java:1946），一樣畫不出來；Bag Upgrade Plus 覆寫的獾、兔、狐就是這樣
+-- 寫了不存在的模型也算沒有：解析結果是「???.名稱」（ScriptManager.java:1946），一樣畫不出來；Bag Upgrade Plus 覆寫的獾、兔、狐就是這樣。
+-- 快捷列掛上、拿下的動作會把 StaticModel 畫在手上：布繩、扭扭蟲改指向本 MOD 照抄的模型，多了手骨掛點（scripts/MDB_AttachModels.txt）
 MDB.ATTACH_STATIC = {
     ["Base.Spiffo"] = "Base.SpiffoPlushie", ["Base.BorisBadger"] = "Base.PlushieBadger_Ground",
     ["Base.EyeOfCthulhu"] = "Base.PlushieEyeOfChulhu_Ground", ["Base.FluffyfootBunny"] = "Base.PlushieRabbit_Ground",
     ["Base.FreddyFox"] = "Base.PlushieFox_Ground", ["Base.FurbertSquirrel"] = "Base.PlushieSquirrel_Ground",
     ["Base.JacquesBeaver"] = "Base.PlushieBeaver_Ground", ["Base.MoleyMole"] = "Base.PlushieMole_Ground",
     ["Base.PancakeHedgehog"] = "Base.PlushieHedgehog_Ground", ["Base.PanchoDog"] = "Base.Pancho",
-    ["Base.Plushabug"] = "Base.Plushabug", ["Base.Doll"] = "Base.Doll",
-    ["Base.Rope"] = "Base.Rope_Looped", ["Base.SheetRope"] = "Base.SheetRope",
+    ["Base.Plushabug"] = "MinidoracatBags.MDB_Plushabug", ["Base.Doll"] = "Base.Doll",
+    ["Base.Rope"] = "Base.Rope_Looped", ["Base.SheetRope"] = "MinidoracatBags.MDB_SheetRope",
 }
 
 function MDB.attachSlotType(fam, slot) return "MDB_" .. fam .. slot end

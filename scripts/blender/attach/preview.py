@@ -23,6 +23,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."
 import xio  # noqa: E402
 
 PZ = os.environ.get("PZ_PATH", "D:/SteamLibrary/steamapps/common/ProjectZomboid").replace("\\", "/") + "/media/"
+MOD_SCRIPTS = "MOD/MinidoracatBagsFor42/Contents/mods/MinidoracatBagsFor42/42/media/scripts"   # 借給原版物品的本 MOD 模型（MDB_AttachModels.txt）
 BODY = {"M": "MaleBody", "F": "FemaleBody"}
 BAG = {  # 家族 → (男, 女) 穿戴網格，和 anchors.py 相同
     "Alice": ("M_ALICE_Pack.x", "F_ALICE_Pack.x"), "Duffel": ("M_Duffelbag.x", "F_DuffelBag.x"),
@@ -62,21 +63,24 @@ def field(body, key):
 
 
 def vanilla():
+    """原版 module Base 的物品與模型，加上本 MOD module MinidoracatBags 的模型（ATTACH_STATIC 會借）。"""
     items, models = {}, {}
-    for root, _, files in os.walk(PZ + "scripts"):
-        for f in files:
-            if not f.endswith(".txt"):
-                continue
-            t = open(os.path.join(root, f), encoding="utf-8", errors="replace").read()
-            if not re.search(r"\bmodule\s+Base\b", t):
-                continue
-            for n, b in blocks(t, "item").items():
-                # 武器沒有 StaticModel，畫的是 WeaponSprite（多款的取第一個）
-                static = field(b, "StaticModel") or field(b, "WeaponSprite") or (field(b, "WeaponSpritesByIndex") or "").split(";")[0]
-                items["Base." + n] = {"type": field(b, "AttachmentType"), "static": static or None}
-            for n, b in blocks(t, "model").items():
-                b = re.sub(r"attachment\s+\w+\s*\{[^}]*\}", "", b)
-                models["Base." + n] = {"mesh": field(b, "mesh"), "texture": field(b, "texture"), "scale": float(field(b, "scale") or 1)}
+    for top, module in ((PZ + "scripts", "Base"), (MOD_SCRIPTS, "MinidoracatBags")):
+        for root, _, files in os.walk(top):
+            for f in files:
+                if not f.endswith(".txt"):
+                    continue
+                t = open(os.path.join(root, f), encoding="utf-8", errors="replace").read()
+                if not re.search(r"\bmodule\s+" + module + r"\b", t):
+                    continue
+                if module == "Base":
+                    for n, b in blocks(t, "item").items():
+                        # 武器沒有 StaticModel，畫的是 WeaponSprite（多款的取第一個）
+                        static = field(b, "StaticModel") or field(b, "WeaponSprite") or (field(b, "WeaponSpritesByIndex") or "").split(";")[0]
+                        items["Base." + n] = {"type": field(b, "AttachmentType"), "static": static or None}
+                for n, b in blocks(t, "model").items():
+                    b = re.sub(r"attachment\s+\w+\s*\{[^}]*\}", "", b)
+                    models[module + "." + n] = {"mesh": field(b, "mesh"), "texture": field(b, "texture"), "scale": float(field(b, "scale") or 1)}
     return items, models
 
 

@@ -76,13 +76,14 @@ local FIX = {
     ["Base.PlushieBeaver_Ground"] = { "Plushie", 0, 180, 0 }, ["Base.PlushieMole_Ground"] = { "Plushie", 0, 180, 0 },
     ["Base.PlushieHedgehog_Ground"] = { "Plushie", 0, 180, 0 },
     ["Base.Pancho"] = { "Plushie", 0, -90, 0 },                       -- 正面朝 +x
-    -- 原點在背面：往後推半個厚度，置中坐在包頂
-    ["Base.Plushabug"] = { "Plushie", 90, 90, 0, 0, 0, -0.045 },      -- 平趴、頭朝 +x：改成背殼朝外、頭朝上，像攀在包上
+    -- 原點在背面：往後推半個厚度，置中坐在包頂。扭扭蟲、布繩改借本 MOD 照抄的模型（scripts/MDB_AttachModels.txt，多了手骨掛點），
+    -- 校正值和原本加在原版模型上時相同，掛在背包上的樣子不變
+    ["MinidoracatBags.MDB_Plushabug"] = { "Plushie", 90, 90, 0, 0, 0, -0.045 },   -- 平趴、頭朝 +x：改成背殼朝外、頭朝上，像攀在包上
     ["Base.Doll"] = { "Plushie", 90, 0, 0, 0, 0, -0.035 },            -- 仰躺、頭朝 -z
     ["Base.PlushieEyeOfChulhu_Ground"] = { "Plushie", 90, 0, 0, 0, 0, -0.070 },   -- 瞳孔朝 +y
     -- 平放在地上的鋸（長邊沿 z、原點在中間）：長邊轉到 +y、大面朝 +x，再往 +y 推半個長度對齊握點慣例
     ["Base.SawForgedWood"] = { "Saw", -90, 0, -90, 0, 0.137, 0 }, ["Base.SmallMetalworkingSaw"] = { "Saw", -90, 0, -90, 0, 0.104, 0 },
-    ["Base.SheetRope"] = { "Rope", 0, 90, 0 },                        -- 布繩長邊沿 z，先轉到 x 再照繩圈立起來
+    ["MinidoracatBags.MDB_SheetRope"] = { "Rope", 0, 90, 0 },          -- 布繩長邊沿 z，先轉到 x 再照繩圈立起來
 }
 MDB.ATTACH_ANCHOR, MDB.ATTACH_POSE, MDB.ATTACH_FIX = ANCHOR, POSE, FIX
 

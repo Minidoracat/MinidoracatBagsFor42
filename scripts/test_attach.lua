@@ -11,6 +11,7 @@ local F = {
     SHARED = MEDIA .. "lua/shared/MDB_Attach.lua",
     CLIENT = MEDIA .. "lua/client/MDB_AttachClient.lua",
     REINF = MEDIA .. "scripts/MDB_Reinforced.txt",
+    MODELS = MEDIA .. "scripts/MDB_AttachModels.txt",
     EN = TRANSLATE .. "EN/IG_UI.json",
     CH = TRANSLATE .. "CH/IG_UI.json",
 }
@@ -84,7 +85,7 @@ local function loadVanilla()
         for k, v in pairs(blocks(readRaw(root .. "items/" .. n), "item")) do vanilla.items[k] = v end
     end
     for _, n in ipairs(listDir(root, "^models_.*%.txt$")) do
-        for k in pairs(blocks(readRaw(root .. n), "model")) do vanilla.models[k] = true end
+        for k, b in pairs(blocks(readRaw(root .. n), "model")) do vanilla.models[k] = b end
     end
     return vanilla
 end
@@ -133,9 +134,9 @@ local function resetEnv()
     function getScriptManager()
         return {
             getItem = function(_, ft) return env.items[ft] end,
-            -- 原版 model（FIX 校正的對象）用到才建；身體兩個先建好
+            -- 原版與本 MOD 的 model（FIX 校正的對象）用到才建；身體兩個先建好
             getModelScript = function(_, n)
-                if not env.models[n] and n:match("^Base%.") then env.models[n] = newModelScript(n) end
+                if not env.models[n] and (n:match("^Base%.") or n:match("^MinidoracatBags%.")) then env.models[n] = newModelScript(n) end
                 return env.models[n]
             end,
         }
@@ -174,6 +175,8 @@ for _, b in ipairs({ "Bag_DuffelBag", "Bag_MedicalBag", "Bag_Military", "Bag_Pol
     "Bag_ToolBag" }) do BUP_BAGS[b] = "D" end
 -- 家族 → 原版穿戴網格（clothingItems/<ClothingItem>.xml 的 m_MaleModel）
 local MESH = { Alice = "m_alice_pack", Duffel = "m_duffelbag", Hiking = "m_hikingbag", BigHiking = "m_bighikingbag" }
+-- 拿在手上要校正的物品 → 照抄的原版模型（MDB_AttachModels.txt 的 MDB_SheetRope、MDB_Plushabug）
+local HELD_FIX = { ["Base.SheetRope"] = "SheetRope", ["Base.Plushabug"] = "Plushabug" }
 
 local function suite()
     resetEnv()
@@ -257,11 +260,24 @@ local function suite()
             staticOk = false
         end
     end
+    -- 本 MOD 照抄的模型（scripts/MDB_AttachModels.txt）也算：只能指向那個檔裡有的
+    local modModels = blocks(readFile(F.MODELS), "model")
+    local function known(m)
+        return m:match("^Base%.") ~= nil or (m:match("^MinidoracatBags%.") ~= nil and modModels[m:match("%.(.+)$")] ~= nil)
+    end
     for ft, m in pairs(MDB.ATTACH_STATIC) do
-        if not MDB.ATTACH_ITEMS[ft] or not m:match("^Base%.") then staticOk = false end
+        if not MDB.ATTACH_ITEMS[ft] or not known(m) then staticOk = false end
     end
     check("每個加 AttachmentType 的原版物品都有掛點收", atOk)
     check("沒有 StaticModel 或模型不存在（???.）的才借模型（全名），已有的不蓋", staticOk)
+    -- 拿在手上的校正：布繩、扭扭蟲借本 MOD 照抄的模型，左右手骨（Bip01_Prop1／Prop2）都有自身掛點、兩手一樣
+    local heldOk = true
+    for ft in pairs(HELD_FIX) do
+        local name = (MDB.ATTACH_STATIC[ft] or ""):match("^MinidoracatBags%.(.+)$")
+        local a = name and modModels[name] and blocks(modModels[name], "attachment")
+        if not a or not a.Bip01_Prop1 or not a.Bip01_Prop2 or a.Bip01_Prop1 ~= a.Bip01_Prop2 then heldOk = false end
+    end
+    check("布繩、扭扭蟲借本 MOD 照抄的模型，有左右手骨掛點、兩手相同", heldOk)
     local onlyTwo = true
     for _, it in pairs(env.items) do
         for k in pairs(it.params) do
@@ -285,10 +301,23 @@ local function suite()
         check("原版核對：加 AttachmentType 的物品都存在、原本沒有 AttachmentType " .. table.concat(bad, ","), #bad == 0)
         bad = {}
         for ft, m in pairs(MDB.ATTACH_STATIC) do
-            local body = v.items[ft:match("%.(.+)$")]
-            if field(body, "StaticModel") or not v.models[m:match("%.(.+)$")] then bad[#bad + 1] = ft end
+            local body, name = v.items[ft:match("%.(.+)$")], m:match("%.(.+)$")
+            local exists = (m:match("^Base%.") and v.models[name]) or (m:match("^MinidoracatBags%.") and modModels[name])
+            if field(body, "StaticModel") or not exists then bad[#bad + 1] = ft end
         end
         check("原版核對：借模型的物品原本沒有 StaticModel、借的模型存在 " .. table.concat(bad, ","), #bad == 0)
+        bad = {}
+        for ft, src in pairs(HELD_FIX) do
+            local name = (MDB.ATTACH_STATIC[ft] or ""):match("^MinidoracatBags%.(.+)$")
+            local mine, van = name and modModels[name], v.models[src]
+            if not mine or not van then bad[#bad + 1] = ft
+            else
+                for _, k in ipairs({ "mesh", "texture", "scale" }) do
+                    if field(mine, k) ~= field(van, k) then bad[#bad + 1] = ft .. "." .. k end
+                end
+            end
+        end
+        check("原版核對：照抄的模型網格、貼圖、縮放和原版 SheetRope、Plushabug 相同（掛在背包上的樣子不變） " .. table.concat(bad, ","), #bad == 0)
         bad = {}
         for b, f in pairs(bagFam) do
             local ci = field(v.items[b], "ClothingItem")
@@ -384,7 +413,9 @@ local function suite()
         end
         local bad = {}
         for model, fix in pairs(MDB.ATTACH_FIX) do
-            if not v.models[model:match("%.(.+)$")] or not used[model .. "|" .. fix[1]] then bad[#bad + 1] = model end
+            local name = model:match("%.(.+)$")
+            local exists = (model:match("^Base%.") and v.models[name]) or (model:match("^MinidoracatBags%.") and modModels[name])
+            if not exists or not used[model .. "|" .. fix[1]] then bad[#bad + 1] = model end
         end
         check("原版核對：校正的模型都存在、有物品會用這個擺法掛它 " .. table.concat(bad, ","), #bad == 0)
     end
@@ -502,6 +533,14 @@ if arg and arg[1] == "--mutants" then
         { name = "自身校正加到每種擺法", file = "CLIENT", from = "if pose == fix[1] then upsert", to = "if true then upsert" },
         { name = "自身校正擺法打錯", file = "CLIENT", from = '["Base.Doll"] = { "Plushie", 90', to = '["Base.Doll"] = { "Plushy", 90' },
         { name = "自身校正寫成物品名", file = "CLIENT", from = '["Base.Pancho"] = {', to = '["Base.PanchoDog"] = {' },
+        { name = "布繩沒指向自己的腳本", file = "SHARED", from = '["Base.SheetRope"] = "MinidoracatBags.MDB_SheetRope"', to = '["Base.SheetRope"] = "Base.SheetRope"' },
+        { name = "扭扭蟲沒指向自己的腳本", file = "SHARED", from = '["Base.Plushabug"] = "MinidoracatBags.MDB_Plushabug"', to = '["Base.Plushabug"] = "Base.Plushabug"' },
+        { name = "指向不存在的本 MOD 模型", file = "SHARED", from = '"MinidoracatBags.MDB_SheetRope"', to = '"MinidoracatBags.MDB_SheetRop"' },
+        { name = "手持模型少左手掛點", file = "MODELS", from = "attachment Bip01_Prop2", to = "attachment Bip01_Prop3" },
+        { name = "手持模型兩手不一樣", file = "MODELS", from = "offset = 0.0 0.12 0.0", to = "offset = 0.0 0.2 0.0" },
+        { name = "手持模型縮放和原版不同", file = "MODELS", from = "scale = 0.15,", to = "scale = 0.2," },
+        { name = "手持模型漏抄貼圖", file = "MODELS", from = "texture = WorldItems/SheetRope,", to = "" },
+        { name = "背包校正還掛在原版布繩上", file = "CLIENT", from = '["MinidoracatBags.MDB_SheetRope"] = {', to = '["Base.SheetRope"] = {' },
         { name = "翻譯缺鍵", file = "EN", from = '"IGUI_HotbarAttachment_MDB_DuffelBottleR"', to = '"IGUI_HotbarAttachment_MDB_DuffelBottleX"' },
         { name = "繁中缺鍵", file = "CH", from = '"IGUI_HotbarAttachment_MDB_AliceSlot1"', to = '"IGUI_HotbarAttachment_MDB_AliceSlotA"' },
     }
