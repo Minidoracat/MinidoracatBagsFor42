@@ -324,6 +324,7 @@ On the "Tactical Bags" page of the sandbox settings.
 [*] [b]One reinforced satchel at a time[/b]: two reinforced satchels both need the second satchel slot.
 [*] [b]Satchel straps cross over[/b]: on female characters, a reinforced cloth satchel worn with a vanilla satchel has straps that clip into each other a little where they cross on the chest and back when seen up close.
 [*] [b]Attachment slots on four families only[/b]: only the reinforced Military Backpacks, Duffel Bags, Hiking and Big Hiking Backpacks have them; the originals and other bags do not.
+[*] [b]Blowtorch with B42PackMule[/b]: when B42PackMule's sandbox option "Attach: Welding Torch" is on (the default), the blowtorch uses its back slot instead and does not fit this mod's side strap.
 [*] [b]Adding mid-save[/b]: containers that already generated loot do not get new bags.
 [*] [b]Server ran without the original mod[/b]: old bags loaded during that time are already deleted and this mod cannot restore them. See step 4 of "Server Switch".
 [*] [b]EFT compatibility version not supported[/b]: saves from Bag Upgrade Plus EFT compatibility (3781184534) are not taken over.
