@@ -1246,22 +1246,24 @@ do
     local real = readMirrorMap(MIRROR_MAP)
     local okAbsent = gen('--check --mirror-map "' .. tmpDir .. '/mdb_no_such_mirror_map.json"')
     check("mirror map absent: generator keeps the source model paths", okAbsent == (next(real) == nil))
-    -- 測試鍵：某個強化版側背包目前用的男模型（真對照檔沒改到的）；值：原版大背包的男模型
+    -- 測試鍵：某個強化版側背包來源的男模型（真對照檔有這個鍵時，覆蓋它的值）；值：原版大背包的男模型
     local reinText = readFile(F.REIN)
-    local satchelXml, testKey = {}, nil
+    local back = {}
+    for k, v in pairs(real) do back[v] = k end
+    local satchelXml, testKey, current = {}, nil, nil
     for name, body in reinText:gmatch("item%s+([%w_]+)%s*(%b{})") do
         if body:find("CanBeEquipped = " .. SATCHEL2 .. ",", 1, true) then
             local ci = body:match("ClothingItem = ([%w_]+),")
             local xml = readFile(MEDIA .. "clothing/clothingItems/" .. ci .. ".xml", true) or ""
             satchelXml[ci .. ".xml"] = xml
             local male = xml:match("<m_MaleModel>([^<]*)</m_MaleModel>")
-            if male and male ~= "" and not real[male] and not testKey then testKey = male end
+            if male and male ~= "" and not testKey then testKey, current = back[male] or male, male end
         end
     end
     local testValue = "media\\models_X\\Skinned\\BackPacks\\M_ALICE_Pack.X"
     local expected = {}
     for file, xml in pairs(satchelXml) do
-        if xml:find(">" .. testKey .. "<", 1, true) then expected[file] = true end
+        if xml:find(">" .. current .. "<", 1, true) then expected[file] = true end
     end
     local map = {}
     for k, v in pairs(real) do map[k] = v end

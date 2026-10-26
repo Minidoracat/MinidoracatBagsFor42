@@ -109,11 +109,12 @@ def _mesh_frame(name, V, N, UV, F, W, material, ibm, frame_matrix):
     return L
 
 
-def write_skinned_x(template, out, V, N, UV, F, W, name=None):
-    """W={骨名:(頂點索引 int 陣列, 權重)}；骨名必須在模板裡（反綁定矩陣照抄模板）。XSkinMeshHeader 從 W 算。"""
+def write_skinned_x(template, out, V, N, UV, F, W, name=None, extra_ibm=None):
+    """W={骨名:(頂點索引 int 陣列, 權重)}；骨名必須在模板裡（反綁定矩陣照抄模板），或由 extra_ibm={骨名: 4x4} 另給
+    （側背包鏡像換到另一側的骨頭時，從同性別身體 .X 取）。XSkinMeshHeader 從 W 算。"""
     T = read_x(template)
     t = T["text"]
-    ibm = {b: v[2] for b, v in T["sw"].items()}
+    ibm = {b: v[2] for b, v in T["sw"].items()} | (extra_ibm or {})
     missing = set(W) - set(ibm)
     assert not missing, f"模板沒有這些骨頭的反綁定矩陣：{missing}"
     # 網格 Frame 多半在檔案頂層；遠征包 LHand 的掛在 Bip01_Prop1 底下（有縮排）：一樣原地換掉，內層縮排不跟著加（.X 不看空白）
