@@ -102,6 +102,9 @@ MDB.ATTACH_STATIC = {
     ["Base.Plushabug"] = "MinidoracatBags.MDB_Plushabug", ["Base.Doll"] = "Base.Doll",
     ["Base.Rope"] = "Base.Rope_Looped", ["Base.SheetRope"] = "MinidoracatBags.MDB_SheetRope",
 }
+-- 本 MOD 照抄的模型的原版來源：物品的 StaticModel 正好是來源時也換成照抄的（只多手骨掛點，掛在包上一樣）。
+-- 收錄 Bag Upgrade Plus 的 ServerPatch 把扭扭蟲的 StaticModel 寫成原版 Plushabug，不換的話拿在手上照舊包住手、背包上的校正也對不上
+MDB.ATTACH_STATIC_SOURCE = { ["Base.SheetRope"] = "Base.SheetRope", ["Base.Plushabug"] = "Base.Plushabug" }
 
 function MDB.attachSlotType(fam, slot) return "MDB_" .. fam .. slot end
 function MDB.attachLocation(fam, slot, pose) return "MDB " .. fam .. " " .. slot .. " " .. pose end
@@ -143,7 +146,9 @@ function MDB.installAttach()
             s:DoParam("AttachmentType = " .. kind)
             local model = MDB.ATTACH_STATIC[fullType]
             local cur = s:getStaticModel()
-            if model and (not cur or cur:sub(1, 4) == "???.") then s:DoParam("StaticModel = " .. model) end
+            if model and (not cur or cur:sub(1, 4) == "???." or cur == MDB.ATTACH_STATIC_SOURCE[fullType]) then
+                s:DoParam("StaticModel = " .. model)
+            end
         end
     end
 end

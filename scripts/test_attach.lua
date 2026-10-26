@@ -150,8 +150,9 @@ end
 function getText(key) return key end
 
 -- 強化版物品：MDB_Reinforced.txt 裡的每一件；外加原版物品。Base.Doll 假裝已有 StaticModel（驗「有就不蓋」）；
--- Base.BorisBadger 假裝寫了不存在的模型、解析成「???.」（Bag Upgrade Plus 並存時的樣子），驗「畫不出來就改借」
-local SEED_STATIC = { ["Base.Doll"] = "SomeoneElsesDoll", ["Base.BorisBadger"] = "???.PlushieBadger_Static" }
+-- Base.BorisBadger 假裝寫了不存在的模型、解析成「???.」（Bag Upgrade Plus 並存時的樣子），驗「畫不出來就改借」；
+-- Base.Plushabug 假裝寫了原版 Plushabug（同樣是 BUP 並存時的樣子），驗「是照抄來源就換成照抄的」
+local SEED_STATIC = { ["Base.Doll"] = "SomeoneElsesDoll", ["Base.BorisBadger"] = "???.PlushieBadger_Static", ["Base.Plushabug"] = "Base.Plushabug" }
 local function seedItems(reinforced, attachItems)
     for name in pairs(reinforced) do env.items["MinidoracatBags." .. name] = newScriptItem("MinidoracatBags." .. name) end
     for ft in pairs(attachItems) do env.items[ft] = newScriptItem(ft, SEED_STATIC[ft]) end
@@ -269,15 +270,20 @@ local function suite()
         if not MDB.ATTACH_ITEMS[ft] or not known(m) then staticOk = false end
     end
     check("每個加 AttachmentType 的原版物品都有掛點收", atOk)
-    check("沒有 StaticModel 或模型不存在（???.）的才借模型（全名），已有的不蓋", staticOk)
-    -- 拿在手上的校正：布繩、扭扭蟲借本 MOD 照抄的模型，左右手骨（Bip01_Prop1／Prop2）都有自身掛點、兩手一樣
+    check("沒有 StaticModel、模型不存在（???.）或正是照抄來源的才借模型（全名），別人的不蓋", staticOk)
+    -- 拿在手上的校正：布繩、扭扭蟲借本 MOD 照抄的模型，左右手骨（Bip01_Prop1／Prop2）都有自身掛點、兩手一樣；
+    -- 照抄來源（ATTACH_STATIC_SOURCE）就是那份原版模型，而且只有這兩件
     local heldOk = true
-    for ft in pairs(HELD_FIX) do
+    for ft, src in pairs(HELD_FIX) do
         local name = (MDB.ATTACH_STATIC[ft] or ""):match("^MinidoracatBags%.(.+)$")
         local a = name and modModels[name] and blocks(modModels[name], "attachment")
         if not a or not a.Bip01_Prop1 or not a.Bip01_Prop2 or a.Bip01_Prop1 ~= a.Bip01_Prop2 then heldOk = false end
+        if MDB.ATTACH_STATIC_SOURCE[ft] ~= "Base." .. src then heldOk = false end
     end
-    check("布繩、扭扭蟲借本 MOD 照抄的模型，有左右手骨掛點、兩手相同", heldOk)
+    for ft in pairs(MDB.ATTACH_STATIC_SOURCE) do
+        if not HELD_FIX[ft] then heldOk = false end
+    end
+    check("布繩、扭扭蟲借本 MOD 照抄的模型，有左右手骨掛點、兩手相同，照抄來源對得上", heldOk)
     local onlyTwo = true
     for _, it in pairs(env.items) do
         for k in pairs(it.params) do
@@ -509,8 +515,10 @@ if arg and arg[1] == "--mutants" then
         { name = "漏一款行李袋", file = "SHARED", from = '"Bag_FoodSnacks", "Bag_ToolBag", "Bag_DuffelBagTINT" }', to = '"Bag_FoodSnacks", "Bag_DuffelBagTINT" }' },
         { name = "強化版前綴錯", file = "SHARED", from = '"MinidoracatBags." .. bag .. "_Reinforced"', to = '"Base." .. bag' },
         { name = "沒加 AttachmentType", file = "SHARED", from = 's:DoParam("AttachmentType = " .. kind)', to = "" },
-        { name = "已有 StaticModel 也蓋", file = "SHARED", from = 'if model and (not cur or cur:sub(1, 4) == "???.") then', to = "if model then" },
-        { name = "不存在的模型當成已有", file = "SHARED", from = '(not cur or cur:sub(1, 4) == "???.")', to = "not cur" },
+        { name = "已有 StaticModel 也蓋", file = "SHARED", from = 'if model and (not cur or cur:sub(1, 4) == "???." or cur == MDB.ATTACH_STATIC_SOURCE[fullType]) then', to = "if model then" },
+        { name = "不存在的模型當成已有", file = "SHARED", from = 'cur:sub(1, 4) == "???." or ', to = "" },
+        { name = "是照抄來源也不換", file = "SHARED", from = " or cur == MDB.ATTACH_STATIC_SOURCE[fullType]", to = "" },
+        { name = "照抄來源寫錯", file = "SHARED", from = '["Base.Plushabug"] = "Base.Plushabug" }', to = '["Base.Plushabug"] = "Base.SpiffoPlushie" }' },
         { name = "借模型沒寫全名", file = "SHARED", from = '["Base.Spiffo"] = "Base.SpiffoPlushie"', to = '["Base.Spiffo"] = "SpiffoPlushie"' },
         { name = "飲料類型沒有掛點收", file = "SHARED", from = 'local BOTTLES = { WaterBottle = "Bottle",', to = 'local BOTTLES = { WaterBottleX = "Bottle",' },
         { name = "加了已有 AttachmentType 的原版物品", file = "SHARED", from = '["Base.Flask"] = "WaterBottle",', to = '["Base.Flask"] = "WaterBottle", ["Base.Hammer"] = "Hammer",' },
