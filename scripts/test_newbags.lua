@@ -31,10 +31,12 @@ local F = {
     I18N_ITEMS = TRANSLATE .. "EN/ItemName.json",
     I18N_FLUIDS = TRANSLATE .. "EN/Fluids.json",
     REIN = MEDIA .. "scripts/MDB_Reinforced.txt",
+    CONVERT = MEDIA .. "scripts/MDB_Convert.txt",
     REIN_XML = MEDIA .. "clothing/clothingItems/MDB_Bag_Satchel_Reinforced.xml",
     REG = MEDIA .. "registries.lua",
     BODYLOC = MEDIA .. "lua/shared/MDB_BodyLocations.lua",
     GEN = "scripts/gen_reinforced.py",
+    VARIANT_XML = MEDIA .. "clothing/clothingItems/MDB_MedicHipPouchFront_Olive.xml",
 }
 -- conventions.md「介面語系」：12 種語言＋ES 的 AR／ES_CL／ES_MX、PTBR 的 PT
 local LANGS = { "AR", "CH", "CN", "DE", "EN", "ES", "ES_CL", "ES_MX", "FR", "JP", "KO", "PL", "PT", "PTBR", "RU", "TR" }
@@ -142,6 +144,13 @@ local MODELS = {
     ExpeditionPack = { eq = "base:back", cap = { 30, 49 }, wr = { 80, 100 }, w = 1.0, run = 0.95, attach = "BedrollBottomBig" },
     ScoutChestRig = { eq = "base:webbing", cap = { 6, 49 }, wr = { 85, 100 }, w = 0.5, run = 0.98, maxSize = "1.3" },
 }
+-- 腰包換穿變體：欄位抄原款，只換穿戴位置（CanBeEquipped＝BodyLocation）與 ClothingItem；和原款 ClothingItemExtra 互指
+local VARIANTS = {
+    ToolBeltPouchBack = { of = "ToolBeltPouch", loc = "base:fannypackback" },
+    MedicHipPouchFront = { of = "MedicHipPouch", loc = "base:fannypackfront" },
+}
+local SWAP_FIELDS = { CanBeEquipped = true, BodyLocation = true, ClothingItem = true, ClothingItemExtra = true,
+    ClothingItemExtraOption = true, ClothingExtraSubmenu = true }
 local SKINS = { "Navy", "Olive" }
 -- 強化版的來源＝升級配方清單裡的全部背包（原版可穿戴、沒有 AcceptItemFunction 的容器＋本 MOD 14 件）；suite 開頭算出
 local REIN_SPEC = {}
@@ -346,6 +355,7 @@ local function suite()
     REIN_SPEC = {}
     for full, b in pairs(VAN.items) do if isVanillaBag(b) then REIN_SPEC[#REIN_SPEC + 1] = full end end
     for k in pairs(MODELS) do for _, s in ipairs(SKINS) do REIN_SPEC[#REIN_SPEC + 1] = "MinidoracatBags." .. k .. "_" .. s end end
+    for v in pairs(VARIANTS) do for _, s in ipairs(SKINS) do REIN_SPEC[#REIN_SPEC + 1] = "MinidoracatBags." .. v .. "_" .. s end end
     table.sort(REIN_SPEC)
     local isSource = {}
     for _, s in ipairs(REIN_SPEC) do isSource[s] = true end
@@ -353,7 +363,7 @@ local function suite()
     -- 1. 物品欄位
     local count = 0
     for _ in pairs(items) do count = count + 1 end
-    check("items: exactly 14", count == 14)
+    check("items: exactly 18 (14 + 4 fanny swap variants)", count == 18)
     for k, s in pairs(MODELS) do
         for _, skin in ipairs(SKINS) do
             local full = "MinidoracatBags." .. k .. "_" .. skin
@@ -366,6 +376,45 @@ local function suite()
             if s.tags then check(full .. ": tags exact, no base:ammocase", f.Tags == s.tags) end
         end
     end
+
+    -- 1a. 腰包換穿變體：欄位逐一抄原款，只差 SWAP_FIELDS；兩邊 ClothingItemExtra 互指，
+    --     換穿選項與子選單照原版同一位置的腰包（container.txt:805-853）
+    local vanFanny = {}
+    for _, n in ipairs({ "Bag_FannyPackFront", "Bag_FannyPackBack" }) do
+        local f = VAN.items["Base." .. n].fields
+        vanFanny[f.BodyLocation] = f
+    end
+    local function paired(f, other)
+        local van = vanFanny[f.BodyLocation or ""]
+        return van ~= nil and f.CanBeEquipped == f.BodyLocation and f.ClothingItemExtra == other
+            and f.ClothingItemExtraOption == van.ClothingItemExtraOption and f.ClothingExtraSubmenu == van.ClothingExtraSubmenu
+    end
+    for v, spec in pairs(VARIANTS) do
+        for _, skin in ipairs(SKINS) do
+            local vf, bf = "MinidoracatBags." .. v .. "_" .. skin, "MinidoracatBags." .. spec.of .. "_" .. skin
+            local a, b = (items[vf] or { fields = {} }).fields, (items[bf] or { fields = {} }).fields
+            local same = items[vf] ~= nil and items[bf] ~= nil
+            for k, val in pairs(b) do
+                if not SWAP_FIELDS[k] and a[k] ~= val then same = false; diag("    variant " .. vf .. " " .. k .. "=" .. tostring(a[k])) end
+            end
+            for k in pairs(a) do if not SWAP_FIELDS[k] and b[k] == nil then same = false; diag("    variant " .. vf .. " extra " .. k) end end
+            check(vf .. ": fields copy " .. bf .. " except wear location and ClothingItem", same
+                and a.CanBeEquipped == spec.loc and a.ClothingItem == "MDB_" .. v .. "_" .. skin)
+            check(bf .. " <-> " .. vf .. ": ClothingItemExtra point at each other, option/submenu as vanilla fanny packs",
+                paired(a, bf) and paired(b, vf) and a.BodyLocation ~= b.BodyLocation)
+        end
+    end
+    -- 變體和它們的強化版：不進戰利品、殭屍掉落、任何配方產出（只靠換穿、升級與改裝取得；升級清單與 OnCreate 換型的背包行可以有）
+    local onlyBase = true
+    for v in pairs(VARIANTS) do
+        for _, key in ipairs({ "LOOT", "ZD", "RECIPES", "CONVERT", "REIN" }) do
+            local text = readFile(F[key])
+            if key == "REIN" then text = text:gsub("%f[%w]item%s+[%w_]+%s*%b{}", "") end   -- 物品定義本身不算
+            text = text:gsub("item 1 %[[^%]]*%] mode:keep flags%[IsNotWorn%]", "")   -- keep 背包行（升級、還原、改裝）
+            if text:find(v, 1, true) then onlyBase = false; diag("    variant in " .. key .. ": " .. v) end
+        end
+    end
+    check("variants and their reinforced versions never in loot, zombie drops, or any recipe output", onlyBase)
 
     -- 2. ClothingItem：不與原版同名、有 XML、GUID 對得上且不重複
     local guidOf = {}
@@ -391,8 +440,8 @@ local function suite()
     --     XML 照來源換 GUID（全新、登記、不重複），側背包另照鏡像對照檔換男女模型
     local reinCount, reinFieldsOk, reinXmlOk = 0, true, true
     for _ in pairs(rein) do reinCount = reinCount + 1 end
-    check("reinforced: one per source (" .. #REIN_SPEC .. " = 80 vanilla + 14 own), nothing else",
-        reinCount == #REIN_SPEC and #REIN_SPEC == 94)
+    check("reinforced: one per source (" .. #REIN_SPEC .. " = 80 vanilla + 14 own + 4 swap variants), nothing else",
+        reinCount == #REIN_SPEC and #REIN_SPEC == 98)
     local mirror = readMirrorMap(MIRROR_MAP)
     local function plainXml(x) return (x:gsub("^\239\187\191", ""):gsub("\r\n", "\n"):gsub("<m_GUID>[^<]*</m_GUID>", "")) end
     local function mirrored(x)
@@ -463,7 +512,11 @@ local function suite()
     check("reinforced: no CombatSpeedModifier below 1 (" .. table.concat(slowCombat, ",") .. ")", #slowCombat == 0)
     check("reinforced: every satchel source (" .. satchelSources .. ") wears in " .. SATCHEL2 .. ", no reinforced bag uses base:satchel",
         satchelSources >= 15 and satchel2Count == satchelSources and not readFile(F.REIN):find("base:satchel", 1, true))
-    check("reinforced: 3 vanilla fanny pack pairs swap between their reinforced versions (6 items)", pairCount == 6)
+    -- 成對數照來源算：有 ClothingItemExtra 的來源（原版一般、獸皮、防水布腰包 3 對＋本 MOD 兩款腰包 × 2 外觀 4 對）
+    local srcPairs = 0
+    for _, s in ipairs(REIN_SPEC) do if (srcBlock(s) or { fields = {} }).fields.ClothingItemExtra then srcPairs = srcPairs + 1 end end
+    check("reinforced: every swap pair (" .. pairCount .. " items = 3 vanilla + 4 own fanny pack pairs) points at each other's reinforced version",
+        pairCount == srcPairs and pairCount == 14)
     check("reinforced: ClothingItem XML = source XML (satchels via mirror map if present) with a new registered unique GUID",
         reinXmlOk)
     check("reinforced: never in loot or zombie drops", not readFile(F.LOOT):find("Reinforced", 1, true)
@@ -561,6 +614,14 @@ local function suite()
                     and xmlOk(P .. skin .. "_LHand", P .. "LHand", P .. "LHand", tex)))
         end
     end
+    -- 變體：圖示、地面模型（欄位已和原款相同）與貼圖沿用原款，穿戴 .X 是自己的（build.py <變體>）
+    for v, spec in pairs(VARIANTS) do
+        for _, skin in ipairs(SKINS) do
+            local P = "MDB_" .. v .. "_"
+            check(v .. "_" .. skin .. ": worn ClothingItem uses own .X and the " .. spec.of .. " texture",
+                xmlOk(P .. skin, P .. "M", P .. "F", "MDB_" .. spec.of .. "_" .. skin))
+        end
+    end
 
     -- 3. 配方
     local expectNames = { MDB_UpgradeBagTier1 = true, MDB_UpgradeBagTier2 = true, MDB_UpgradeBagTier3 = true }
@@ -606,7 +667,7 @@ local function suite()
         end
         check("MDB_Make" .. k .. ": Navy and Olive use different fabric", fabric.Navy and fabric.Olive and fabric.Navy ~= fabric.Olive)
     end
-    -- 升級配方：背包清單＝原版可穿戴、無 AcceptItemFunction 的容器＋14 件新背包（也就是全部強化版來源）＋它們的強化版
+    -- 升級配方：背包清單＝原版可穿戴、無 AcceptItemFunction 的容器＋14 件新背包＋4 件換穿變體（也就是全部強化版來源）＋它們的強化版
     local expectBags = {}
     for _, s in ipairs(REIN_SPEC) do expectBags[s] = true; expectBags[reinOf(s)] = true end
     for t = 1, 3 do
@@ -620,7 +681,7 @@ local function suite()
         for full in (bagLine and bagLine:match("%[(.-)%]") or ""):gmatch("[^;]+") do got[full] = true end
         for full in pairs(expectBags) do if not got[full] then setOk = false; diag("    upgrade missing: " .. full) end end
         for full in pairs(got) do if not expectBags[full] then setOk = false; diag("    upgrade extra: " .. full) end end
-        check("MDB_UpgradeBagTier" .. t .. ": bag list = wearable vanilla containers + 14 new + all their reinforced versions", setOk)
+        check("MDB_UpgradeBagTier" .. t .. ": bag list = wearable vanilla containers + 14 new + 4 variants + all their reinforced versions", setOk)
         check("MDB_UpgradeBagTier" .. t .. ": bag is keep + IsNotWorn, outputs empty", bagLine ~= nil
             and bagLine:find("mode:keep", 1, true) and bagLine:find("flags[IsNotWorn]", 1, true) and outputs == 0)
         check("MDB_UpgradeBagTier" .. t .. ": Tailoring " .. (t + 1) .. ", hooks wired", r ~= nil
@@ -684,6 +745,20 @@ local function suite()
     end
     check("reinforced water bags: Fluid_Container_<ContainerName> in 16 Fluids.json = reinforced ItemName",
         fluidOk and fluidCount == 2)
+    -- 換穿變體在 16 語和原款同名
+    local variantNameOk = true
+    for v, spec in pairs(VARIANTS) do
+        for _, skin in ipairs(SKINS) do
+            for _, lang in ipairs(LANGS) do
+                local text = readFile(TRANSLATE .. lang .. "/ItemName.json", true)
+                local a = jsonValue(text, "MinidoracatBags." .. v .. "_" .. skin)
+                if not a or a ~= jsonValue(text, "MinidoracatBags." .. spec.of .. "_" .. skin) then
+                    variantNameOk = false; diag("    variant name: " .. lang .. " " .. v .. "_" .. skin)
+                end
+            end
+        end
+    end
+    check("variants: ItemName in 16 languages = their original pouch", variantNameOk)
 
     -- 6. Lua 載入與函式名解析
     loadAll()
@@ -836,6 +911,27 @@ local function suite()
     local fixed = swapped(dropped, 2.0)
     check("swap: bag that already lost its tier (defaults + modData) is restored to tier 2 = 33/95, 4.0 L",
         fixed.cap == 33 and fixed.wr == 95 and near(fixed.fc.capacity, 4.0))
+    -- 本 MOD 腰包與換穿變體互換（第 2 階往返）：階級、容量、負重減輕照舊，換完還能升第 3 階
+    local variantSwapOk = true
+    for v, spec in pairs(VARIANTS) do
+        for _, skin in ipairs(SKINS) do
+            local base, var = "MinidoracatBags." .. spec.of .. "_" .. skin, "MinidoracatBags." .. v .. "_" .. skin
+            local a = instanceItem(base)
+            MDB.applyTier(a, 1); MDB.applyTier(a, 2)
+            local b = ISClothingExtraAction:createItemNew(a, instanceItem(var))
+            local c = ISClothingExtraAction:createItemNew(b, instanceItem(base))
+            local want = TIERS[spec.of][3]
+            for _, x in ipairs({ b, c }) do
+                if not (x.md.MDB_tier == 2 and x.cap == want[1] and x.wr == want[2]) then
+                    variantSwapOk = false; diag(string.format("    variant swap %s: tier %s %d/%d", var, tostring(x.md.MDB_tier), x.cap, x.wr))
+                end
+            end
+            local ok3 = MDB.onTestTier3(b) and not MDB.onTestTier2(b)
+            MDB.applyTier(b, 3)
+            if not (ok3 and b.cap == 49 and b.wr == 100) then variantSwapOk = false; diag("    variant tier 3 after swap: " .. var) end
+        end
+    end
+    check("own fanny pouches <-> swap variants keep tier 2 both ways and still upgrade to 49/100", variantSwapOk)
 
     -- 8c. 強化版：對照表、各階數值、升級換型、還原、腰包換穿、0.1.0 升過級的原版背包
     local specOk = #(MDB.REINFORCED_SOURCES or {}) == #REIN_SPEC
@@ -1341,6 +1437,12 @@ if arg and arg[1] == "--mutants" then
         { name = "獸皮腰包換穿指回原版", file = "REIN", from = "ClothingItemExtra = MinidoracatBags.Bag_FannyPackBack_Hide_Reinforced,", to = "ClothingItemExtra = Base.Bag_FannyPackBack_Hide," },
         { name = "腰包換穿沒成對", file = "REIN", from = "ClothingItemExtra = MinidoracatBags.Bag_FannyPackBack_Tarp_Reinforced,", to = "ClothingItemExtra = MinidoracatBags.Bag_FannyPackBack_Reinforced," },
         { name = "本 MOD 強化版丟了放入限制", file = "REIN", from = "AcceptItemFunction = MDB.acceptFirstAid,", to = "" },
+        { name = "強化版前腰醫療包丟了放入限制", file = "REIN", from = "        AcceptItemFunction = MDB.acceptFirstAid,\n    }\n\n    item AmmoBandolier_Navy_Reinforced", to = "    }\n\n    item AmmoBandolier_Navy_Reinforced" },
+        { name = "強化版變體換穿指回非強化", file = "REIN", from = "ClothingItemExtra = MinidoracatBags.ToolBeltPouch_Navy_Reinforced,", to = "ClothingItemExtra = MinidoracatBags.ToolBeltPouch_Navy," },
+        { name = "強化版原款換穿沒成對", file = "REIN", from = "ClothingItemExtra = MinidoracatBags.MedicHipPouchFront_Olive_Reinforced,", to = "ClothingItemExtra = MinidoracatBags.MedicHipPouchFront_Navy_Reinforced," },
+        { name = "對照表少變體", file = "UPG", from = '"MinidoracatBags.ToolBeltPouchBack_Olive",', to = "" },
+        { name = "強化版變體成了配方產出", file = "CONVERT", from = "item 1 MinidoracatBags.Bag_SheetSlingBag_Reinforced,", to = "item 1 MinidoracatBags.MedicHipPouchFront_Navy_Reinforced," },
+        { name = "強化版變體被放進戰利品", file = "LOOT", from = '{ "NurseOutfit"', to = '{ "MedicHipPouchFront_Olive_Reinforced", "x" }, { "NurseOutfit"' },
         { name = "註冊用 base 命名空間", file = "REG", from = 'ItemBodyLocation.register("minidoracatbags:satchel2")', to = 'ItemBodyLocation.register("satchel2")' },
         { name = "註冊沒先查", file = "REG", from = 'if not ItemBodyLocation.get(ResourceLocation.of("minidoracatbags:satchel2")) then', to = "if true then" },
         { name = "位置沒移到側背包後面", file = "BODYLOC", from = "        group:moveLocationToIndex(loc, satchel + 1)", to = "" },
@@ -1403,6 +1505,18 @@ if arg and arg[1] == "--mutants" then
         { name = "胸掛 Alt 模型借回原版", file = "CHESTRIG_XML", from = "MDB_ScoutChestRig_ALT_M.X", to = "Bob_ChestRig_ALT.x" },
         { name = "沙盒預設值錯", file = "SANDBOX", from = "max = 3, default = 3,", to = "max = 3, default = 2," },
         { name = "翻譯缺鍵", file = "I18N_RECIPES", from = '"MDB_UpgradeBagTier3"', to = '"MDB_UpgradeBagTierX"' },
+        { name = "工具包換穿指回原版腰包", file = "ITEMS", from = "ClothingItemExtra = MinidoracatBags.ToolBeltPouchBack_Navy,", to = "ClothingItemExtra = Base.Bag_FannyPackBack," },
+        { name = "變體沒指回原款", file = "ITEMS", from = "ClothingItemExtra = MinidoracatBags.MedicHipPouch_Olive,", to = "ClothingItemExtra = MinidoracatBags.MedicHipPouch_Navy," },
+        { name = "換穿選項前後顛倒", file = "ITEMS", from = "ClothingItemExtraOption = FannyPack_WearBack,\n        ClothingExtraSubmenu = FannyPack_WearFront,", to = "ClothingItemExtraOption = FannyPack_WearFront,\n        ClothingExtraSubmenu = FannyPack_WearBack," },
+        { name = "變體穿戴位置沒改", file = "ITEMS", from = "CanBeEquipped = base:fannypackback,\n        CanHaveHoles = false,\n        Capacity = 3,", to = "CanBeEquipped = base:fannypackfront,\n        CanHaveHoles = false,\n        Capacity = 3," },
+        { name = "變體容量和原款不同", file = "ITEMS", from = "Capacity = 4,\n        WeightReduction = 85,\n        RunSpeedModifier = 0.99,\n        ClothingItem = MDB_MedicHipPouchFront_Navy,", to = "Capacity = 5,\n        WeightReduction = 85,\n        RunSpeedModifier = 0.99,\n        ClothingItem = MDB_MedicHipPouchFront_Navy," },
+        { name = "變體少放入限制", file = "ITEMS", from = "        AcceptItemFunction = MDB.acceptFirstAid,\n    }\n\n    /* 自製模型（scripts/blender/bags/build.py）；欄位照原版 Base.AmmoStrap_Shells */", to = "    }\n\n    /* 自製模型（scripts/blender/bags/build.py）；欄位照原版 Base.AmmoStrap_Shells */" },
+        { name = "變體 XML 換了貼圖", file = "VARIANT_XML", from = "MDB_MedicHipPouch_Olive</textureChoices>", to = "MDB_MedicHipPouchFront_Olive</textureChoices>" },
+        { name = "變體 XML 借原款模型", file = "VARIANT_XML", from = "MDB_MedicHipPouchFront_M.X", to = "MDB_MedicHipPouch_M.X" },
+        { name = "變體 GUID 沒登記", file = "GUIDTABLE", from = "MDB_ToolBeltPouchBack_Olive.xml</path>", to = "MDB_ToolBeltPouchBack_OliveX.xml</path>" },
+        { name = "升級清單漏變體", file = "RECIPES", from = "MinidoracatBags.MedicHipPouchFront_Olive;", to = "" },
+        { name = "變體名稱和原款不同", file = "I18N_ITEMS", from = '"MinidoracatBags.ToolBeltPouchBack_Navy": "S.T.A.R.S. Tool Belt Pouch"', to = '"MinidoracatBags.ToolBeltPouchBack_Navy": "S.T.A.R.S. Tool Belt Pouch (Back)"' },
+        { name = "變體放進警局戰利品", file = "LOOT", from = '"CourierSatchel", 0.1, "ToolBeltPouch", 0.2 } },', to = '"CourierSatchel", 0.1, "ToolBeltPouch", 0.2, "ToolBeltPouchBack", 0.1 } },' },
     }
     rawPrint("== 突變（每個都應至少讓一項 FAIL）")
     local survived = 0

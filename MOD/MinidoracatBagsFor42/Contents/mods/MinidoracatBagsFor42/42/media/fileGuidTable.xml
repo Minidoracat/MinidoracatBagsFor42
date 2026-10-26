@@ -165,6 +165,22 @@
 		<guid>17e71d7e-7456-48b0-9051-8a43c983775b</guid>
 	</files>
 	<files>
+		<path>media/clothing/clothingItems/MDB_ToolBeltPouchBack_Navy.xml</path>
+		<guid>bbd2738a-35a2-4f84-8bca-605a00048710</guid>
+	</files>
+	<files>
+		<path>media/clothing/clothingItems/MDB_ToolBeltPouchBack_Olive.xml</path>
+		<guid>72f8a726-2859-4491-9b30-3229a536e920</guid>
+	</files>
+	<files>
+		<path>media/clothing/clothingItems/MDB_MedicHipPouchFront_Navy.xml</path>
+		<guid>1b81b91e-119b-4989-b55b-7a1b8df1aad6</guid>
+	</files>
+	<files>
+		<path>media/clothing/clothingItems/MDB_MedicHipPouchFront_Olive.xml</path>
+		<guid>6778d699-603f-4961-b32a-2d399b1943bb</guid>
+	</files>
+	<files>
 		<path>media/clothing/clothingItems/MDB_AmmoBandolier_Navy.xml</path>
 		<guid>aebb1a96-429d-4c56-8504-b80e53f9d443</guid>
 	</files>
@@ -587,6 +603,22 @@
 	<files>
 		<path>media/clothing/clothingItems/MDB_MedicHipPouch_Olive_Reinforced.xml</path>
 		<guid>4dae46c3-7983-57c5-9af5-6c41f655fba9</guid>
+	</files>
+	<files>
+		<path>media/clothing/clothingItems/MDB_ToolBeltPouchBack_Navy_Reinforced.xml</path>
+		<guid>478954c0-de87-5ccb-8074-5d37379cc2e9</guid>
+	</files>
+	<files>
+		<path>media/clothing/clothingItems/MDB_ToolBeltPouchBack_Olive_Reinforced.xml</path>
+		<guid>9896a9ba-fbf6-5b3e-9656-c1582f931492</guid>
+	</files>
+	<files>
+		<path>media/clothing/clothingItems/MDB_MedicHipPouchFront_Navy_Reinforced.xml</path>
+		<guid>8f9ba5f1-165d-5815-bc89-e617ed8b117d</guid>
+	</files>
+	<files>
+		<path>media/clothing/clothingItems/MDB_MedicHipPouchFront_Olive_Reinforced.xml</path>
+		<guid>dca9b8f9-d923-5aa7-bbf5-981d1a5c76ea</guid>
 	</files>
 	<files>
 		<path>media/clothing/clothingItems/MDB_AmmoBandolier_Navy_Reinforced.xml</path>

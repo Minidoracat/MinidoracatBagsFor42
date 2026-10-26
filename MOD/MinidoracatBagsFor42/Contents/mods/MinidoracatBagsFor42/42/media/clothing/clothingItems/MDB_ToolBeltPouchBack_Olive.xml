@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 腰掛工具包改背後腰：自製模型（scripts/blender/bags/build.py ToolBeltPouchBack），貼圖沿用原款 -->
+<clothingItem>
+	<m_MaleModel>media\models_X\Skinned\BackPacks\MDB_ToolBeltPouchBack_M.X</m_MaleModel>
+	<m_FemaleModel>media\models_X\Skinned\BackPacks\MDB_ToolBeltPouchBack_F.X</m_FemaleModel>
+	<m_GUID>72f8a726-2859-4491-9b30-3229a536e920</m_GUID>
+	<m_Static>false</m_Static>
+	<m_AllowRandomTint>false</m_AllowRandomTint>
+	<m_AttachBone></m_AttachBone>
+	<textureChoices>Clothes\Bag\MDB_ToolBeltPouch_Olive</textureChoices>
+</clothingItem>

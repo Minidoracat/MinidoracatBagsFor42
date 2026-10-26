@@ -8,6 +8,7 @@ import numpy as np
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.abspath(os.path.join(HERE, "..", "..", ".."))
 TEMP_ROOT = os.path.join(REPO, "temp", "bags")
+MEDIA = os.path.join(REPO, "MOD", "MinidoracatBagsFor42", "Contents", "mods", "MinidoracatBagsFor42", "42", "media")   # 變體讀原款已安裝的貼圖與 .X
 PZ = "D:/SteamLibrary/steamapps/common/ProjectZomboid/media"
 BLENDER = r"C:\Program Files\Blender Foundation\Blender 5.2\blender.exe"
 TRIPO_ROOT = "D:/github/tripo-refs/collections/MinidoracatBagsFor42/items"

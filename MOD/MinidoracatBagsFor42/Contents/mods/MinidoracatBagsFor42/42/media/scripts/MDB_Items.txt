@@ -1,4 +1,5 @@
-/* MinidoracatBags 新背包：7 款 × S.T.A.R.S.（_Navy）／保護傘（_Olive）。
+/* MinidoracatBags 新背包：7 款 × S.T.A.R.S.（_Navy）／保護傘（_Olive），另有兩種腰包換背另一面的變體（ToolBeltPouchBack、MedicHipPouchFront，
+   照原版 Bag_FannyPackFront／Back 用 ClothingItemExtra 互換，只能從換穿法取得）。
    外觀：日行背包已用自製模型與貼圖；其餘 6 款的 Icon、WorldStaticModel、手持模型與 ClothingItem 的模型貼圖暫借原版替代款，自製模型完成後替換。
    ClothingItem 名稱一律 MDB_<型號>_<外觀>，不沿用原版名稱（ScriptManager.java:1883-1891 名稱反查會被覆蓋）。 */
 module MinidoracatBags
@@ -21,6 +22,9 @@ module MinidoracatBags
         WeightReduction = 80,
         RunSpeedModifier = 0.98,
         ClothingItem = MDB_ToolBeltPouch_Navy,
+        ClothingItemExtra = MinidoracatBags.ToolBeltPouchBack_Navy,
+        ClothingItemExtraOption = FannyPack_WearBack,
+        ClothingExtraSubmenu = FannyPack_WearFront,
         BodyLocation = base:fannypackfront,
         CloseSound = CloseLeatherBag,
         EquipSound = EquipFannyPack,
@@ -42,7 +46,58 @@ module MinidoracatBags
         WeightReduction = 80,
         RunSpeedModifier = 0.98,
         ClothingItem = MDB_ToolBeltPouch_Olive,
+        ClothingItemExtra = MinidoracatBags.ToolBeltPouchBack_Olive,
+        ClothingItemExtraOption = FannyPack_WearBack,
+        ClothingExtraSubmenu = FannyPack_WearFront,
         BodyLocation = base:fannypackfront,
+        CloseSound = CloseLeatherBag,
+        EquipSound = EquipFannyPack,
+        OpenSound = OpenLeatherBag,
+        PutInSound = StoreItemLeatherBag,
+        WorldStaticModel = MinidoracatBags.MDB_ToolBeltPouch_Ground,
+    }
+
+    /* 腰掛工具包改背後腰（換穿法）：欄位同 ToolBeltPouch_Navy，只改穿戴位置與 ClothingItem；貼圖、圖示、地面模型沿用原款 */
+    item ToolBeltPouchBack_Navy
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        Weight = 0.3,
+        Icon = MDB_ToolBeltPouch_Navy,
+        CanBeEquipped = base:fannypackback,
+        CanHaveHoles = false,
+        Capacity = 3,
+        WeightReduction = 80,
+        RunSpeedModifier = 0.98,
+        ClothingItem = MDB_ToolBeltPouchBack_Navy,
+        ClothingItemExtra = MinidoracatBags.ToolBeltPouch_Navy,
+        ClothingItemExtraOption = FannyPack_WearFront,
+        ClothingExtraSubmenu = FannyPack_WearBack,
+        BodyLocation = base:fannypackback,
+        CloseSound = CloseLeatherBag,
+        EquipSound = EquipFannyPack,
+        OpenSound = OpenLeatherBag,
+        PutInSound = StoreItemLeatherBag,
+        WorldStaticModel = MinidoracatBags.MDB_ToolBeltPouch_Ground,
+    }
+
+    /* 腰掛工具包改背後腰（換穿法）：欄位同 ToolBeltPouch_Olive，只改穿戴位置與 ClothingItem；貼圖、圖示、地面模型沿用原款 */
+    item ToolBeltPouchBack_Olive
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        Weight = 0.3,
+        Icon = MDB_ToolBeltPouch_Olive,
+        CanBeEquipped = base:fannypackback,
+        CanHaveHoles = false,
+        Capacity = 3,
+        WeightReduction = 80,
+        RunSpeedModifier = 0.98,
+        ClothingItem = MDB_ToolBeltPouchBack_Olive,
+        ClothingItemExtra = MinidoracatBags.ToolBeltPouch_Olive,
+        ClothingItemExtraOption = FannyPack_WearFront,
+        ClothingExtraSubmenu = FannyPack_WearBack,
+        BodyLocation = base:fannypackback,
         CloseSound = CloseLeatherBag,
         EquipSound = EquipFannyPack,
         OpenSound = OpenLeatherBag,
@@ -63,6 +118,9 @@ module MinidoracatBags
         WeightReduction = 85,
         RunSpeedModifier = 0.99,
         ClothingItem = MDB_MedicHipPouch_Navy,
+        ClothingItemExtra = MinidoracatBags.MedicHipPouchFront_Navy,
+        ClothingItemExtraOption = FannyPack_WearFront,
+        ClothingExtraSubmenu = FannyPack_WearBack,
         BodyLocation = base:fannypackback,
         CloseSound = CloseLeatherBag,
         EquipSound = EquipFannyPack,
@@ -85,7 +143,60 @@ module MinidoracatBags
         WeightReduction = 85,
         RunSpeedModifier = 0.99,
         ClothingItem = MDB_MedicHipPouch_Olive,
+        ClothingItemExtra = MinidoracatBags.MedicHipPouchFront_Olive,
+        ClothingItemExtraOption = FannyPack_WearFront,
+        ClothingExtraSubmenu = FannyPack_WearBack,
         BodyLocation = base:fannypackback,
+        CloseSound = CloseLeatherBag,
+        EquipSound = EquipFannyPack,
+        OpenSound = OpenLeatherBag,
+        PutInSound = StoreItemLeatherBag,
+        WorldStaticModel = MinidoracatBags.MDB_MedicHipPouch_Ground,
+        AcceptItemFunction = MDB.acceptFirstAid,
+    }
+
+    /* 醫療腰包改背前面（換穿法）：欄位同 MedicHipPouch_Navy，只改穿戴位置與 ClothingItem；貼圖、圖示、地面模型沿用原款 */
+    item MedicHipPouchFront_Navy
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        Weight = 0.3,
+        Icon = MDB_MedicHipPouch_Navy,
+        CanBeEquipped = base:fannypackfront,
+        CanHaveHoles = false,
+        Capacity = 4,
+        WeightReduction = 85,
+        RunSpeedModifier = 0.99,
+        ClothingItem = MDB_MedicHipPouchFront_Navy,
+        ClothingItemExtra = MinidoracatBags.MedicHipPouch_Navy,
+        ClothingItemExtraOption = FannyPack_WearBack,
+        ClothingExtraSubmenu = FannyPack_WearFront,
+        BodyLocation = base:fannypackfront,
+        CloseSound = CloseLeatherBag,
+        EquipSound = EquipFannyPack,
+        OpenSound = OpenLeatherBag,
+        PutInSound = StoreItemLeatherBag,
+        WorldStaticModel = MinidoracatBags.MDB_MedicHipPouch_Ground,
+        AcceptItemFunction = MDB.acceptFirstAid,
+    }
+
+    /* 醫療腰包改背前面（換穿法）：欄位同 MedicHipPouch_Olive，只改穿戴位置與 ClothingItem；貼圖、圖示、地面模型沿用原款 */
+    item MedicHipPouchFront_Olive
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        Weight = 0.3,
+        Icon = MDB_MedicHipPouch_Olive,
+        CanBeEquipped = base:fannypackfront,
+        CanHaveHoles = false,
+        Capacity = 4,
+        WeightReduction = 85,
+        RunSpeedModifier = 0.99,
+        ClothingItem = MDB_MedicHipPouchFront_Olive,
+        ClothingItemExtra = MinidoracatBags.MedicHipPouch_Olive,
+        ClothingItemExtraOption = FannyPack_WearBack,
+        ClothingExtraSubmenu = FannyPack_WearFront,
+        BodyLocation = base:fannypackfront,
         CloseSound = CloseLeatherBag,
         EquipSound = EquipFannyPack,
         OpenSound = OpenLeatherBag,

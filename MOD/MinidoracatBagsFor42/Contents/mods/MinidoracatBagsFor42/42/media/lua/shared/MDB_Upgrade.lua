@@ -30,9 +30,10 @@ MDB.REINFORCED_SOURCES = {
     "Base.Bag_ShotgunDblSawnoffBag", "Base.Bag_ShotgunSawnoffBag", "Base.Bag_SurvivorBag",
     "Base.Bag_TarpFramepack_Large", "Base.Bag_TarpFramepack_Small", "Base.Bag_TarpSlingBag", "Base.Bag_TennisBag",
     "Base.Bag_ToolBag", "Base.Bag_WeaponBag", "Base.Bag_WorkerBag",
-    -- 本 MOD
+    -- 本 MOD（腰包的換穿變體和原款互指 ClothingItemExtra，要一起在表裡）
     "MinidoracatBags.ToolBeltPouch_Navy", "MinidoracatBags.ToolBeltPouch_Olive", "MinidoracatBags.MedicHipPouch_Navy",
-    "MinidoracatBags.MedicHipPouch_Olive", "MinidoracatBags.AmmoBandolier_Navy",
+    "MinidoracatBags.MedicHipPouch_Olive", "MinidoracatBags.ToolBeltPouchBack_Navy", "MinidoracatBags.ToolBeltPouchBack_Olive",
+    "MinidoracatBags.MedicHipPouchFront_Navy", "MinidoracatBags.MedicHipPouchFront_Olive", "MinidoracatBags.AmmoBandolier_Navy",
     "MinidoracatBags.AmmoBandolier_Olive", "MinidoracatBags.CourierSatchel_Navy",
     "MinidoracatBags.CourierSatchel_Olive", "MinidoracatBags.DayPack_Navy", "MinidoracatBags.DayPack_Olive",
     "MinidoracatBags.ExpeditionPack_Navy", "MinidoracatBags.ExpeditionPack_Olive",

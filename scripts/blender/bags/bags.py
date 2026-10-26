@@ -19,6 +19,8 @@
   clearance closed＝身體頂點不能在封閉本體裡（背在背後的）；skin＝每個頂點沿最近身體頂點法線的距離不比原版差 5 mm 以上（繞身體的）
   bedroll   AttachmentsProvided 的睡袋掛點 y（本體底部要在它上面）
   emblem    深藍款的 S.T.A.R.S. 隊徽（decal.py）：每個舊徽章一項，seed＝1024 烘焙貼圖上舊金星的一點，h＝隊徽高（.X 單位，約黑底高×0.9）
+  variant_of 換穿位置的變體（腰包前後）：沿用這一款的低模、UV、貼圖、圖示、地面模型，只換 worn／bones／place，重寫男女穿戴 .X。
+            place 兩邊都要是 back 擺法、同高度、不後傾，低模照兩邊擺法的差剛體搬過去（build.py relocate）；其餘欄位沒寫就沿用原款
 """
 from common import TRIPO_ROOT
 
@@ -164,6 +166,21 @@ BAGS = {
         clearance="skin", bedroll=None,
         emblem=[dict(seed=(638, 947), h=0.0147)],  # 插扣上方的小黑底 18×16 mm
     ),
+    # ---- 換穿位置的變體（ClothingItemExtra 互指原款）：低模、UV、貼圖沿用原款 ----
+    "MedicHipPouchFront": dict(   # 醫療腰包改背前面：位置與骨頭照 Base.Bag_FannyPackFront
+        variant_of="MedicHipPouch",
+        worn=dict(M="models_X/Skinned/BackPacks/M_FannyPackFront.x", F="models_X/Skinned/BackPacks/F_FannyPackFront.x"),
+        bones=["Bip01_Pelvis", "Bip01_Spine", "Bip01_Spine1", "Bip01_L_Thigh", "Bip01_R_Thigh"],
+        # 原版前背的腰帶比後背高約 8 mm（y 0.554-0.577 對 0.548-0.568）；背面照工具腰包放 z −0.05，肚子由 skin_push 推出
+        place=dict(mode="back", side="front", y0=0.498, height=0.113, back_z=0.05, lean=0.0, back_y=0.035),
+    ),
+    "ToolBeltPouchBack": dict(    # 腰掛工具包改背後腰：位置與骨頭照 Base.Bag_FannyPackBack
+        variant_of="ToolBeltPouch",
+        worn=dict(M="models_X/Skinned/BackPacks/M_FannyPactBack.x", F="models_X/Skinned/BackPacks/F_FannyPactBack.x"),
+        bones=["Bip01_Pelvis"],
+        # 腰帶比前背低約 8 mm。背面放 z 0.065（0.085 時實機側面看包和下背之間空一截，mdb-toolback-art-1026a），臀部由 skin_push 推出
+        place=dict(mode="back", y0=0.489, height=0.091, back_z=0.065, lean=0.0, back_y=0.066),
+    ),
     "AmmoBandolier": dict(    # 借 Base.AmmoStrap_Shells
         tripo=dict(glb=TRIPO_ROOT + "/彈藥背帶(AmmoBandolier)/model/AmmoBandolier.glb",
                    navy=TRIPO_ROOT + "/彈藥背帶(AmmoBandolier)/model/fbx/tripo_convert_4505984a-9858-4d36-b08e-0bd42676b4e9.fbm/bandolier_ammo_belt_3d_model_basecolor.JPEG",
@@ -195,6 +212,8 @@ BAGS = {
 
 def get(name):
     cfg = dict(BAGS[name], name=name)
+    if "variant_of" in cfg:
+        cfg = dict(BAGS[cfg["variant_of"]], **cfg)
     missing = [k for k in ("tripo", "place", "keep", "weight_ref", "tris") if k not in cfg]
     if missing:
         raise SystemExit(f"{name} 的設定缺 {missing}：Tripo 模型到了才填（bags.py）")
