@@ -2,5 +2,5 @@
     "Tooltip_MDB_UpgradeBagTier1": "A bolsa precisa estar no nível 0 e não pode estar sendo usada. Os itens dentro podem ficar. O servidor define o nível máximo.",
     "Tooltip_MDB_UpgradeBagTier2": "A bolsa precisa estar no nível 1 e não pode estar sendo usada. Os itens dentro podem ficar. O servidor define o nível máximo.",
     "Tooltip_MDB_UpgradeBagTier3": "A bolsa precisa estar no nível 2 e não pode estar sendo usada. Os itens dentro podem ficar. O servidor define o nível máximo.",
-    "Tooltip_MDB_LegacyBag": "Bolsa Plus antiga: você pode tirar itens, mas não colocar. Esvazie-a e converta-a em uma bolsa nova com agulha e linha."
+    "Tooltip_MDB_LegacyBag": "Bolsa Plus antiga: você pode tirar itens, mas não colocar. Com agulha e linha, converta-a na versão reforçada da mesma bolsa, no nível máximo; os itens dentro podem ficar."
 }

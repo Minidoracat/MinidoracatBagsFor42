@@ -16,10 +16,8 @@
     "MDB_UpgradeBagTier1": "Çantayı 1. Seviyeye Güçlendir",
     "MDB_UpgradeBagTier2": "Çantayı 2. Seviyeye Güçlendir",
     "MDB_UpgradeBagTier3": "Çantayı 3. Seviyeye Güçlendir",
-    "MDB_ConvertLegacyBack_Navy": "Eski Plus Sırt Çantasını S.T.A.R.S. Ekspedisyon Çerçeveli Sırt Çantasına Dönüştür",
-    "MDB_ConvertLegacyBack_Olive": "Eski Plus Sırt Çantasını Umbrella Ekspedisyon Çerçeveli Sırt Çantasına Dönüştür",
-    "MDB_ConvertLegacySatchel_Navy": "Eski Plus El Çantasını S.T.A.R.S. Kurye Çantasına Dönüştür",
-    "MDB_ConvertLegacySatchel_Olive": "Eski Plus El Çantasını Umbrella Kurye Çantasına Dönüştür",
-    "MDB_ConvertLegacyFanny_Navy": "Eski Plus Bel Çantasını S.T.A.R.S. Alet Bel Çantasına Dönüştür",
-    "MDB_ConvertLegacyFanny_Olive": "Eski Plus Bel Çantasını Umbrella Alet Bel Çantasına Dönüştür"
+    "MDB_ConvertLegacyBag": "Eski Plus Çantayı Güçlendirilmiş Sürüme Dönüştür",
+    "MDB_RestoreReinforced": "Güçlendirilmiş Çantayı Orijinaline Döndür",
+    "MDB_ReinforceUpgradedBag": "1. Seviye ve Üstü Çantayı Güçlendirilmiş Sürüme Dönüştür",
+    "MDB_MakeSheetSlingBag_Reinforced": "Çarşaftan Omuz Çantası Yap (Güçlendirilmiş)"
 }

@@ -2,5 +2,5 @@
     "Tooltip_MDB_UpgradeBagTier1": "The bag must be at tier 0 and not worn. Items inside can stay. The server sets the highest tier.",
     "Tooltip_MDB_UpgradeBagTier2": "The bag must be at tier 1 and not worn. Items inside can stay. The server sets the highest tier.",
     "Tooltip_MDB_UpgradeBagTier3": "The bag must be at tier 2 and not worn. Items inside can stay. The server sets the highest tier.",
-    "Tooltip_MDB_LegacyBag": "Old Plus bag: items can be taken out but not put in. Empty it, then convert it into a new bag with a needle and thread."
+    "Tooltip_MDB_LegacyBag": "Old Plus bag: items can be taken out but not put in. With a needle and thread, convert it into the reinforced version of the same bag at the highest tier; items inside can stay."
 }

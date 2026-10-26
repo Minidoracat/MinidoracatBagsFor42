@@ -28,6 +28,9 @@ local F = {
     DAYPACK_LHAND_XML = MEDIA .. "clothing/clothingItems/MDB_DayPack_Olive_LHand.xml",
     CHESTRIG_XML = MEDIA .. "clothing/clothingItems/MDB_ScoutChestRig_Navy.xml",
     I18N_RECIPES = TRANSLATE .. "EN/Recipes.json",
+    I18N_ITEMS = TRANSLATE .. "EN/ItemName.json",
+    REIN = MEDIA .. "scripts/MDB_Reinforced.txt",
+    REIN_XML = MEDIA .. "clothing/clothingItems/MDB_Bag_Satchel_Reinforced.xml",
 }
 -- conventions.md「介面語系」：12 種語言＋ES 的 AR／ES_CL／ES_MX、PTBR 的 PT
 local LANGS = { "AR", "CH", "CN", "DE", "EN", "ES", "ES_CL", "ES_MX", "FR", "JP", "KO", "PL", "PT", "PTBR", "RU", "TR" }
@@ -136,6 +139,16 @@ local MODELS = {
     ScoutChestRig = { eq = "base:webbing", cap = { 6, 49 }, wr = { 85, 100 }, w = 0.5, run = 0.98, maxSize = "1.3" },
 }
 local SKINS = { "Navy", "Olive" }
+-- 有強化版的 38 種原版背包（全是 Base.）
+local REIN_SPEC = {
+    "Bag_SurvivorBag", "Bag_ALICEpack", "Bag_ALICEpack_Army", "Bag_ALICEpack_DesertCamo", "Bag_DuffelBag", "Bag_MedicalBag",
+    "Bag_Military", "Bag_Police", "Bag_Sheriff", "Bag_SWAT", "Bag_BreakdownBag", "Bag_BurglarBag", "Bag_BaseballBag",
+    "Bag_TennisBag", "Bag_WeaponBag", "Bag_InmateEscapedBag", "Bag_MoneyBag", "Bag_WorkerBag", "Bag_ShotgunBag",
+    "Bag_ShotgunSawnoffBag", "Bag_ShotgunDblBag", "Bag_ShotgunDblSawnoffBag", "Bag_FoodCanned", "Bag_FoodSnacks", "Bag_ToolBag",
+    "Bag_FannyPackBack", "Bag_FannyPackFront", "Bag_HydrationBackpack", "Bag_HydrationBackpack_Camo", "Bag_NormalHikingBag",
+    "Bag_BigHikingBag", "Bag_HikingBag_Travel", "Bag_Schoolbag", "Bag_Satchel", "Bag_Satchel_Fishing", "Bag_Satchel_Medical",
+    "Bag_Satchel_Military", "Bag_SheetSlingBag",
+}
 local LOOT_SPEC = {
     { "PoliceStorageArmor", "_Navy", { DayPack = 1, CourierSatchel = 1, ScoutChestRig = 1, ToolBeltPouch = 1.5, AmmoBandolier = 1, MedicHipPouch = 0.5, ExpeditionPack = 0.3 } },
     { "PoliceStorageGuns", "_Navy", { AmmoBandolier = 3, ScoutChestRig = 1.5, ToolBeltPouch = 1.5, DayPack = 1, CourierSatchel = 1, ExpeditionPack = 0.2 } },
@@ -164,7 +177,7 @@ local SANDBOX_SPEC = {
 -- ===== 假引擎 =====
 local env = {}
 local function resetEnv()
-    env = { server = false, client = false, sent = {}, rand = {}, randCalls = 0, printed = {}, parsed = 0 }
+    env = { server = false, client = false, sent = {}, replaced = {}, rand = {}, randCalls = 0, printed = {}, parsed = 0 }
     Events = setmetatable({}, { __index = function(t, k)
         local e = { handlers = {} }
         function e.Add(f) e.handlers[#e.handlers + 1] = f end
@@ -174,11 +187,18 @@ local function resetEnv()
     MDB = nil
     SandboxVars = { MinidoracatBags = { LockLegacyBags = true, MaxTier = 3, FullCapacityPercent = 100,
         FullWeightReduction = 100, LootMultiplier = 1 } }
-    -- MDB_Upgrade 會 require 並包住原版的 createItemNew；每次載入給新表，突變才不會吃到上一輪的包裝
+    -- MDB_Upgrade 會 require 並包住原版的 createItemNew；每次載入給新表，突變才不會吃到上一輪的包裝。
+    -- 照原版（ISClothingExtraAction.lua:66-112）搬內容物、改名、液體（依新容量截斷）、modData（先清空再複製，InventoryItem.java:3003-3011）
     ISClothingExtraAction = {}
     function ISClothingExtraAction:createItemNew(item, newItem)
+        if env.failCopy then error("copy failed") end
+        for _, c in ipairs(item.contents or {}) do newItem.contents[#newItem.contents + 1] = c end
+        item.contents = {}
+        newItem.name = item.name
+        if item.fc and newItem.fc then newItem.fc:copyFluidsFrom(item.fc) end
         if item:hasModData() then
-            for k, v in pairs(item:getModData()) do newItem:getModData()[k] = v end
+            newItem.md = {}
+            for k, v in pairs(item:getModData()) do newItem.md[k] = v end
         end
         return newItem
     end
@@ -188,6 +208,8 @@ function isServer() return env.server end
 function isClient() return env.client end
 ItemPickerJava = { Parse = function() env.parsed = env.parsed + 1 end }
 function sendReplaceItemInContainer(c, a, b) env.sent[#env.sent + 1] = { c, a, b } end
+function replaceItemInContainer(c, a, b) env.replaced[#env.replaced + 1] = { c, a, b } end
+function copyClothingItem(item, newItem) ISClothingExtraAction:createItemNew(item, newItem) end
 function instanceof(o, cls) return type(o) == "table" and rawget(o, "__class") == cls end
 function ZombRand(n)
     env.randCalls = env.randCalls + 1
@@ -216,12 +238,27 @@ local function resolve(path)
     return v
 end
 
-local CONTAINER = { name = "playerInv" }
+local function newContainer()
+    local c = { items = {} }
+    function c:AddItem(i) self.items[#self.items + 1] = i; i.container = self; return i end
+    function c:Remove(i)
+        for k, v in ipairs(self.items) do if v == i then table.remove(self.items, k); i.container = nil; return end end
+    end
+    return c
+end
+local CONTAINER = newContainer()
+local PLAYER = { getInventory = function() return CONTAINER end }
 -- weight＝腳本自重；instanceWeight 模擬 getActualWeight()（伺服器上顯示名稱等於全名時回 0，InventoryItem.java:2740-2742）
-local function newBag(cap, wr, weight)
-    local b = { __class = "InventoryContainer", cap = cap, wr = wr, weight = weight, md = {}, container = CONTAINER }
+local function newBag(cap, wr, weight, fullType)
+    local b = { __class = "InventoryContainer", cap = cap, wr = wr, weight = weight, md = {}, container = CONTAINER,
+        contents = {}, fullType = fullType, name = "name of " .. tostring(fullType), custom = false }
     local script = {}
     function script:getActualWeight() return weight end
+    function script:getDisplayName() return "name of " .. tostring(fullType) end
+    function b:getDisplayName() return self.name end
+    function b:setName(n) self.name = n end
+    function b:isCustomName() return self.custom end
+    function b:setCustomName(c) self.custom = c end
     function b:hasModData() return next(self.md) ~= nil end
     function b:getModData() return self.md end
     function b:getCapacity() return math.min(self.cap, 50, math.floor(50 - self.weight)) end
@@ -232,14 +269,35 @@ local function newBag(cap, wr, weight)
     function b:getScriptItem() return script end
     function b:getContainer() return self.container end
     function b:getFluidContainer() return self.fc end
+    function b:getFullType() return self.fullType end
     return b
 end
--- FluidContainer.setCapacity 下限 0.05（FluidContainer.java:683-685）
-local function newFluid(capacity)
-    local fc = { capacity = capacity }
+-- FluidContainer：setCapacity 下限 0.05，縮小時按比例截斷（FluidContainer.java:683-696）；
+-- copyFluidsFrom 先清空再加，超過容量的截掉（:179-194、:929-932）
+local function newFluid(capacity, amount)
+    local fc = { capacity = capacity, amount = amount or 0 }
     function fc:getCapacity() return self.capacity end
-    function fc:setCapacity(c) self.capacity = math.max(c, 0.05) end
+    function fc:getAmount() return self.amount end
+    function fc:setCapacity(c)
+        local old = self.capacity
+        self.capacity = math.max(c, 0.05)
+        if self.amount > self.capacity then self.amount = self.capacity * self.amount / old end
+    end
+    function fc:copyFluidsFrom(o) self.amount = math.min(o.amount, self.capacity) end
     return fc
+end
+-- instanceItem：照腳本（本 MOD 的物品與強化版、原版）建背包；腳本由 suite 解析後放進 SCRIPT_BLOCKS
+local SCRIPT_BLOCKS = {}
+function instanceItem(full)
+    local s = SCRIPT_BLOCKS[full] or VAN.items[full]
+    assert(s, "instanceItem: unknown item " .. tostring(full))
+    local b = newBag(tonumber(s.fields.Capacity), tonumber(s.fields.WeightReduction), tonumber(s.fields.Weight), full)
+    b.container = nil
+    for _, l in ipairs(s.lines) do
+        local c = l.text:match("^Capacity = ([%d.]+)$")   -- 第一層以下只有 FluidContainer 元件寫 Capacity
+        if c then b.fc = newFluid(tonumber(c)) end
+    end
+    return b
 end
 local function vanillaItem(fullType)
     local b = VAN.items[fullType]
@@ -261,8 +319,14 @@ local function suite()
     for _, b in ipairs(parseBlocks(readFile(F.ITEMS), "item")) do items[b.module .. "." .. b.name] = b end
     local recipes = {}
     for _, b in ipairs(parseBlocks(readFile(F.RECIPES), "craftRecipe")) do recipes[b.name] = b end
+    local rein, reinRecipes = {}, {}
+    for _, b in ipairs(parseBlocks(readFile(F.REIN), "item")) do rein[b.module .. "." .. b.name] = b end
+    for _, b in ipairs(parseBlocks(readFile(F.REIN), "craftRecipe")) do reinRecipes[b.name] = b end
+    SCRIPT_BLOCKS = {}
+    for full, b in pairs(items) do SCRIPT_BLOCKS[full] = b end
+    for full, b in pairs(rein) do SCRIPT_BLOCKS[full] = b end
     local function exists(full)
-        return items[full] ~= nil or VAN.items[full] ~= nil
+        return items[full] ~= nil or rein[full] ~= nil or VAN.items[full] ~= nil
     end
 
     -- 1. 物品欄位
@@ -300,6 +364,80 @@ local function suite()
     end
     check("clothing: unique non-vanilla names, XML present, GUID registered", clothingOk)
     check("clothing: GUIDs unique and not vanilla", dupOk)
+
+    -- 2a. 強化版（scripts/gen_reinforced.py 產生）：剛好 38 款；欄位逐一照原版，只差自重 0.1、跑速 1.0、自己的 ClothingItem、
+    --     腰包 ClothingItemExtra 指向對方的強化版；FluidContainer 照原版；XML 照原版只換 GUID（全新、登記、不重複）
+    local reinCount, reinFieldsOk, reinXmlOk = 0, true, true
+    for _ in pairs(rein) do reinCount = reinCount + 1 end
+    check("reinforced: exactly 38 items", reinCount == #REIN_SPEC)
+    local function plainXml(x) return (x:gsub("^\239\187\191", ""):gsub("\r\n", "\n"):gsub("<m_GUID>[^<]*</m_GUID>", "")) end
+    for _, s in ipairs(REIN_SPEC) do
+        local full = "MinidoracatBags." .. s .. "_Reinforced"
+        local r, v = rein[full], VAN.items["Base." .. s]
+        local ok = r ~= nil and v ~= nil
+        if ok then
+            local want = {}
+            for k, val in pairs(v.fields) do want[k] = val end
+            want.Weight, want.RunSpeedModifier, want.ClothingItem = "0.1", "1.0", "MDB_" .. s .. "_Reinforced"
+            if want.ClothingItemExtra then
+                want.ClothingItemExtra = want.ClothingItemExtra:gsub("^Base%.(.+)$", "MinidoracatBags.%1_Reinforced")
+            end
+            for k, val in pairs(want) do
+                if r.fields[k] ~= val then ok = false; diag("    reinforced " .. s .. " " .. k .. "=" .. tostring(r.fields[k]) .. " want " .. val) end
+            end
+            for k in pairs(r.fields) do if want[k] == nil then ok = false; diag("    reinforced " .. s .. " extra field " .. k) end end
+            ok = ok and #r.lines == #v.lines
+            for i, l in ipairs(v.lines) do ok = ok and r.lines[i] ~= nil and r.lines[i].text == l.text end
+        end
+        if not ok then reinFieldsOk = false end
+        local ci = "MDB_" .. s .. "_Reinforced"
+        local xml = readFile(MEDIA .. "clothing/clothingItems/" .. ci .. ".xml", true)
+        local vxml = v and readFile(PZ .. "clothing/clothingItems/" .. v.fields.ClothingItem .. ".xml", true)
+        local g = xml and xml:match("<m_GUID>%s*(.-)%s*</m_GUID>")
+        if not (xml and vxml and plainXml(xml) == plainXml(vxml) and not VAN.clothing[ci] and g
+            and guidOf["media/clothing/clothingItems/" .. ci .. ".xml"] == g:lower() and not VAN.guids[g:lower()]
+            and not seenGuid[g:lower()]) then
+            reinXmlOk = false; diag("    reinforced clothing problem: " .. ci)
+        end
+        if g then seenGuid[g:lower()] = true end
+    end
+    check("reinforced: fields copy vanilla except Weight 0.1, RunSpeedModifier 1.0, own ClothingItem, fanny extra -> reinforced",
+        reinFieldsOk)
+    check("reinforced: ClothingItem XML = vanilla XML with a new registered unique GUID, name not vanilla", reinXmlOk)
+    check("reinforced: never in loot or zombie drops", not readFile(F.LOOT):find("Reinforced", 1, true)
+        and not readFile(F.ZD):find("Reinforced", 1, true))
+    -- 還原與「已升級原版背包改成強化版」：背包 keep＋不能穿著、沒有產出，換型在 OnCreate
+    local function bagSet(r)
+        local set, n, line = {}, 0, nil
+        for _, l in ipairs(r and r.lines or {}) do
+            if l.section == "inputs" and l.text:find("mode:keep flags[IsNotWorn]", 1, true) then line = l.text end
+        end
+        for x in (line and line:match("%[(.-)%]") or ""):gmatch("[^;]+") do set[x] = true; n = n + 1 end
+        return set, n
+    end
+    local function hasLine(r, text)
+        for _, l in ipairs(r and r.lines or {}) do if l.text == text then return true end end
+        return false
+    end
+    local function noOutputs(r)
+        for _, l in ipairs(r and r.lines or {}) do if l.section == "outputs" then return false end end
+        return r ~= nil
+    end
+    local rset, rn = bagSet(reinRecipes.MDB_RestoreReinforced)
+    local mset, mn = bagSet(reinRecipes.MDB_ReinforceUpgradedBag)
+    local covered = rn == #REIN_SPEC and mn == #REIN_SPEC
+    for _, s in ipairs(REIN_SPEC) do covered = covered and rset["MinidoracatBags." .. s .. "_Reinforced"] and mset["Base." .. s] end
+    local rr, mr = reinRecipes.MDB_RestoreReinforced, reinRecipes.MDB_ReinforceUpgradedBag
+    local recipeCount = 0
+    for _ in pairs(reinRecipes) do recipeCount = recipeCount + 1 end
+    check("restore / reinforce-upgraded recipes: exactly these 2, bag lists cover all 38 (reinforced / vanilla)",
+        recipeCount == 2 and covered == true)
+    check("MDB_RestoreReinforced: scissors kept, no other input, no outputs, MDB.onSwapKeepTier, no OnTest",
+        rr ~= nil and #rr.lines == 2 and hasLine(rr, "item 1 tags[base:scissors] mode:keep flags[IsNotDull;MayDegradeLight]")
+        and noOutputs(rr) and rr.fields.OnCreate == "MDB.onSwapKeepTier" and rr.fields.OnTest == nil)
+    check("MDB_ReinforceUpgradedBag: needle kept, no outputs, OnTest MDB.onTestUpgraded, MDB.onSwapKeepTier",
+        mr ~= nil and #mr.lines == 2 and hasLine(mr, "item 1 tags[base:sewingneedle] mode:keep") and noOutputs(mr)
+        and mr.fields.OnTest == "MDB.onTestUpgraded" and mr.fields.OnCreate == "MDB.onSwapKeepTier")
 
     -- 2b. 自製資產的款式（scripts/blender/bags/build.py）：圖示、地面模型、左右手、穿戴模型、貼圖都指向 MOD 自己的檔，
     --     而且檔案存在。xml 的模型路徑要寫 media\ 開頭與副檔名（PopTemplateManager.java:272-275、FileTask_AbstractLoadModel.java:53-87）。
@@ -406,12 +544,13 @@ local function suite()
         end
         check("MDB_Make" .. k .. ": Navy and Olive use different fabric", fabric.Navy and fabric.Olive and fabric.Navy ~= fabric.Olive)
     end
-    -- 升級配方：背包清單＝原版可穿戴、無 AcceptItemFunction 的容器＋14 件新背包
+    -- 升級配方：背包清單＝原版可穿戴、無 AcceptItemFunction 的容器＋14 件新背包＋38 件強化版
     local expectBags = {}
     for full, b in pairs(VAN.items) do
         if b.fields.ItemType == "base:container" and b.fields.CanBeEquipped and not b.fields.AcceptItemFunction then expectBags[full] = true end
     end
     for k in pairs(MODELS) do for _, s in ipairs(SKINS) do expectBags["MinidoracatBags." .. k .. "_" .. s] = true end end
+    for _, s in ipairs(REIN_SPEC) do expectBags["MinidoracatBags." .. s .. "_Reinforced"] = true end
     for t = 1, 3 do
         local r = recipes["MDB_UpgradeBagTier" .. t]
         local bagLine, outputs = nil, 0
@@ -423,7 +562,7 @@ local function suite()
         for full in (bagLine and bagLine:match("%[(.-)%]") or ""):gmatch("[^;]+") do got[full] = true end
         for full in pairs(expectBags) do if not got[full] then setOk = false; diag("    upgrade missing: " .. full) end end
         for full in pairs(got) do if not expectBags[full] then setOk = false; diag("    upgrade extra: " .. full) end end
-        check("MDB_UpgradeBagTier" .. t .. ": bag list = wearable vanilla containers + 14 new", setOk)
+        check("MDB_UpgradeBagTier" .. t .. ": bag list = wearable vanilla containers + 14 new + 38 reinforced", setOk)
         check("MDB_UpgradeBagTier" .. t .. ": bag is keep + IsNotWorn, outputs empty", bagLine ~= nil
             and bagLine:find("mode:keep", 1, true) and bagLine:find("flags[IsNotWorn]", 1, true) and outputs == 0)
         check("MDB_UpgradeBagTier" .. t .. ": Tailoring " .. (t + 1) .. ", hooks wired", r ~= nil
@@ -450,7 +589,9 @@ local function suite()
         want.Sandbox[#want.Sandbox + 1] = "Sandbox_MinidoracatBags" .. k .. "_tooltip"
     end
     for full in pairs(items) do want.ItemName[#want.ItemName + 1] = full end
+    for full in pairs(rein) do want.ItemName[#want.ItemName + 1] = full end
     for n in pairs(expectNames) do want.Recipes[#want.Recipes + 1] = n end
+    for n in pairs(reinRecipes) do want.Recipes[#want.Recipes + 1] = n end
     for _, r in pairs(recipes) do if r.fields.Tooltip then want.Tooltip[#want.Tooltip + 1] = r.fields.Tooltip end end
     local i18nOk = true
     for _, lang in ipairs(LANGS) do
@@ -472,6 +613,7 @@ local function suite()
     end
     for _, b in pairs(items) do want(b.fields.AcceptItemFunction) end
     for _, r in pairs(recipes) do want(r.fields.OnTest); want(r.fields.OnCreate) end
+    for _, r in pairs(reinRecipes) do want(r.fields.OnTest); want(r.fields.OnCreate) end
     check("every AcceptItemFunction/OnTest/OnCreate resolves to a function", fnOk)
 
     -- 7. applyTier：最高階升滿（預設 49／100），中間平均分配，四捨五入
@@ -614,6 +756,128 @@ local function suite()
     local fixed = swapped(dropped, 2.0)
     check("swap: bag that already lost its tier (defaults + modData) is restored to tier 2 = 33/95, 4.0 L",
         fixed.cap == 33 and fixed.wr == 95 and near(fixed.fc.capacity, 4.0))
+
+    -- 8c. 強化版：對照表、各階數值、升級換型、還原、腰包換穿、0.1.0 升過級的原版背包
+    local specOk = #(MDB.REINFORCED_SOURCES or {}) == #REIN_SPEC
+    for _, s in ipairs(REIN_SPEC) do
+        local r = MDB.REINFORCED["Base." .. s]
+        specOk = specOk and r == "MinidoracatBags." .. s .. "_Reinforced" and MDB.ORIGINAL[r] == "Base." .. s
+    end
+    check("REINFORCED_SOURCES = the 38 vanilla bags, REINFORCED / ORIGINAL map both ways", specOk)
+    local tiersOk = true
+    for _, s in ipairs(REIN_SPEC) do
+        local b = instanceItem("MinidoracatBags." .. s .. "_Reinforced")
+        for t = 1, 3 do MDB.applyTier(b, t) end
+        if not (b.weight == 0.1 and b.cap == 49 and b.wr == 100) then tiersOk = false; diag("    reinforced tier 3: " .. s) end
+    end
+    check("reinforced: all 38 weigh 0.1 and reach 49/100 at tier 3", tiersOk)
+    check("reinforced ALICE (weight 0.1): 28/85 -> 35/90 -> 42/95 -> 49/100",
+        walk(28, 85, 0.1, { { 28, 85 }, { 35, 90 }, { 42, 95 }, { 49, 100 } }))
+
+    -- 放進主物品欄、裝東西、改名、帶自訂 modData 的背包
+    local function stocked(full, md, water)
+        CONTAINER.items = {}
+        local b = CONTAINER:AddItem(instanceItem(full))
+        b.contents, b.name, b.custom = { "nail", "apple" }, "My Bag", true   -- 玩家改過名
+        b.md = md or {}
+        b.md.custom = "kept"
+        if water then b.fc.amount = water end
+        return b
+    end
+    local function keepData(bag) return { getAllKeepInputItems = function() return javaList({ tool, bag }) end } end
+    local function swapped(old, newType)
+        local new = CONTAINER.items[1]
+        return #CONTAINER.items == 1 and new ~= old and new.fullType == newType and old.container == nil
+            and new.contents[1] == "nail" and new.contents[2] == "apple" and #old.contents == 0
+            and new.name == "My Bag" and new.custom == true and new.md.custom == "kept", new
+    end
+    local A, RA = "Base.Bag_ALICEpack", "MinidoracatBags.Bag_ALICEpack_Reinforced"
+    env.sent, env.replaced = {}, {}
+    local old = stocked(A)
+    MDB.onUpgrade(keepData(old), PLAYER)
+    local okSwap, new = swapped(old, RA)
+    check("upgrade (SP): vanilla tier 0 -> reinforced tier 1 = 35/90, contents/name/modData moved, old removed",
+        okSwap and new.md.MDB_tier == 1 and new.cap == 35 and new.wr == 90)
+    check("upgrade (SP): no replace packet, action queue updated once",
+        #env.sent == 0 and #env.replaced == 1 and env.replaced[1][1] == CONTAINER and env.replaced[1][2] == old and env.replaced[1][3] == new)
+    env.server, env.sent, env.replaced = true, {}, {}
+    old = stocked(A, { MDB_tier = 1, MDB_cap = 28, MDB_wr = 85 })   -- 0.1.0 升到第 1 階：換穿法包裝也會套一次 applyTier
+    MDB.onUpgrade(keepData(old), PLAYER)
+    okSwap, new = swapped(old, RA)
+    check("upgrade (server): tier 1 vanilla -> reinforced tier 2 = 42/95, exactly one replace (container, old, new)",
+        okSwap and new.md.MDB_tier == 2 and new.cap == 42 and new.wr == 95 and #env.sent == 1
+        and env.sent[1][1] == CONTAINER and env.sent[1][2] == old and env.sent[1][3] == new and #env.replaced == 0)
+    env.sent = {}
+    MDB.onUpgrade(keepData(new), PLAYER)
+    check("upgrade (server): reinforced bag upgrades in place, one replace of itself",
+        CONTAINER.items[1] == new and new.md.MDB_tier == 3 and new.cap == 49 and #env.sent == 1 and env.sent[1][2] == new)
+    env.server = false
+    old = stocked("Base.Bag_HydrationBackpack", nil, 2.0)
+    MDB.onUpgrade(keepData(old), PLAYER)
+    okSwap, new = swapped(old, "MinidoracatBags.Bag_HydrationBackpack_Reinforced")
+    check("upgrade: water bag 2.0 L full -> reinforced tier 1 with 3.0 L capacity, water kept",
+        okSwap and near(new.fc.capacity, 3.0) and near(new.fc.amount, 2.0))
+    old = stocked(A)
+    old.name, old.custom = "Bloody, name of " .. A, false   -- 沒改名，getName() 帶染血前綴
+    MDB.onUpgrade(keepData(old), PLAYER)
+    new = CONTAINER.items[1]
+    check("upgrade: un-renamed bag gets the reinforced script name (no stale prefix), not marked custom",
+        new.fullType == RA and new.name == "name of " .. RA and new.custom == false)
+    SandboxVars.MinidoracatBags.MaxTier = 0
+    old = stocked(A)
+    MDB.onUpgrade(keepData(old), PLAYER)
+    SandboxVars.MinidoracatBags.MaxTier = 3
+    check("upgrade: MaxTier 0 does not swap", CONTAINER.items[1] == old and #CONTAINER.items == 1)
+
+    -- 還原：階級、內容物、modData 照舊；水袋 5 升不截斷
+    env.server, env.sent = true, {}
+    old = stocked(RA)
+    MDB.applyTier(old, 2)
+    env.sent = {}
+    MDB.onSwapKeepTier(keepData(old), PLAYER)
+    okSwap, new = swapped(old, A)
+    check("restore (server): reinforced tier 2 -> vanilla tier 2 = 41/95 (top 48), one replace",
+        okSwap and new.md.MDB_tier == 2 and new.cap == 41 and new.wr == 95 and #env.sent == 1 and env.sent[1][3] == new)
+    env.server = false
+    old = stocked("MinidoracatBags.Bag_HydrationBackpack_Reinforced")
+    MDB.applyTier(old, 3)
+    old.fc.amount = 5.0
+    MDB.onSwapKeepTier(keepData(old), PLAYER)
+    okSwap, new = swapped(old, "Base.Bag_HydrationBackpack")
+    check("restore: tier-3 water bag keeps 5.0 L capacity and all 5.0 L of water",
+        okSwap and new.md.MDB_tier == 3 and near(new.fc.capacity, 5.0) and near(new.fc.amount, 5.0))
+
+    -- 強化版腰包換前後（原版換穿法 → 包裝依 MDB_tier 重算）
+    local front = instanceItem("MinidoracatBags.Bag_FannyPackFront_Reinforced")
+    for t = 1, 3 do MDB.applyTier(front, t) end
+    local back = ISClothingExtraAction:createItemNew(front, instanceItem("MinidoracatBags.Bag_FannyPackBack_Reinforced"))
+    check("reinforced fanny pack front -> back keeps tier 3 = 49/100", back.md.MDB_tier == 3 and back.cap == 49 and back.wr == 100)
+
+    -- 0.1.0 升過級的原版背包：改成強化版、階級照舊；第 0 階不放行
+    local v0, v3 = instanceItem(A), instanceItem(A)
+    v3.md = { MDB_tier = 3, MDB_cap = 28, MDB_wr = 85 }; v3.cap, v3.wr = 48, 100
+    check("onTestUpgraded: tools pass, tier 0 blocked, tier 1+ passes",
+        MDB.onTestUpgraded(tool) and not MDB.onTestUpgraded(v0) and MDB.onTestUpgraded(v3))
+    old = stocked(A, { MDB_tier = 3, MDB_cap = 28, MDB_wr = 85 })
+    old.cap, old.wr = 48, 100
+    MDB.onSwapKeepTier(keepData(old), PLAYER)
+    okSwap, new = swapped(old, RA)
+    check("0.1.0 tier-3 vanilla -> reinforced stays tier 3 (49/100), no further upgrade",
+        okSwap and new.md.MDB_tier == 3 and new.cap == 49 and new.wr == 100
+        and not MDB.onTestTier1(new) and not MDB.onTestTier2(new) and not MDB.onTestTier3(new))
+
+    -- 換型中途出錯：舊背包與內容物原地不動，之後的升級照常重送
+    env.server, env.sent = true, {}
+    old = stocked(A)
+    env.failCopy = true
+    local failed = not pcall(MDB.swapBag, old, RA, 1, PLAYER)
+    env.failCopy = false
+    check("swap error: old bag and contents stay, nothing sent", failed and old.container == CONTAINER
+        and old.contents[1] == "nail" and #env.sent == 0)
+    MDB.applyTier(old, 1)
+    check("swap error: later applyTier on the server still resends", #env.sent == 1)
+    env.server = false
+    CONTAINER.items = {}
 
     -- 9. 放入限制（原版物品的真實 tag 與分類）
     check("acceptFirstAid: bandage, disinfectant, pills accepted", MDB.acceptFirstAid(nil, vanillaItem("Base.Bandage"))
@@ -773,6 +1037,16 @@ end
 rawPrint("== 新背包")
 suite()
 
+-- 產生器：已提交的強化版檔案和 scripts/gen_reinforced.py 的產生結果一致（遊戲或 LangFor42 更新後會在這裡失敗）
+local function genCheck()
+    local p = io.popen("uv run --quiet scripts/gen_reinforced.py --check 2>&1")
+    local out = p:read("a")
+    local ok = p:close() == true
+    if not ok and not quiet then rawPrint(out) end
+    return ok
+end
+check("gen_reinforced.py --check: committed files match the generator", genCheck())
+
 if arg and arg[1] == "--mutants" then
     local mutants = {
         { name = "容量不四捨五入", file = "UPG", from = " + 50) / 100)", to = ") / 100)" },
@@ -789,12 +1063,37 @@ if arg and arg[1] == "--mutants" then
         { name = "每次重讀 base", file = "UPG", from = "if md.MDB_cap == nil then", to = "if true then" },
         { name = "不記階級", file = "UPG", from = "md.MDB_tier = tier", to = "" },
         { name = "伺服器不重送", file = "UPG", from = "sendReplaceItemInContainer(container, bag, bag)", to = "" },
-        { name = "單機也重送", file = "UPG", from = "if isServer() and container then", to = "if container then" },
+        { name = "單機也重送", file = "UPG", from = "if isServer() and container and not swapping then", to = "if container and not swapping then" },
         { name = "非背包輸入被擋", file = "UPG", from = 'if not instanceof(item, "InventoryContainer") then return true end', to = 'if not instanceof(item, "InventoryContainer") then return false end' },
         { name = "OnTest 不看 MaxTier", file = "UPG", from = 'return tier <= MDB.opt("MaxTier") and', to = "return" },
         { name = "OnTest 階級差一", file = "UPG", from = "tierOf(item) == tier - 1", to = "tierOf(item) <= tier - 1" },
-        { name = "onUpgrade 不看 MaxTier", file = "UPG", from = 'if tier <= MDB.opt("MaxTier") then', to = "if true then" },
+        { name = "onUpgrade 不看 MaxTier", file = "UPG", from = 'if tier > MDB.opt("MaxTier") then return end', to = "" },
         { name = "換穿法沒包裝", file = "UPG", from = "function ISClothingExtraAction:createItemNew(item, newItem)", to = "function MDB:unusedCreateItemNew(item, newItem)" },
+        { name = "升級不換型", file = "UPG", from = "local target = MDB.REINFORCED[bag:getFullType()]", to = "local target = nil" },
+        { name = "換型途中照送", file = "UPG", from = "if isServer() and container and not swapping then", to = "if isServer() and container then" },
+        { name = "換型最後不送", file = "UPG", from = "        sendReplaceItemInContainer(cont, old, new)\n", to = "" },
+        { name = "單機不換動作佇列", file = "UPG", from = "        replaceItemInContainer(cont, old, new)", to = "" },
+        { name = "舊背包沒移除", file = "UPG", from = "    cont:Remove(old)", to = "" },
+        { name = "液體沒在容量設好後重搬", file = "UPG", from = "if ofc and nfc then nfc:copyFluidsFrom(ofc) end", to = "" },
+        { name = "出錯沒復原旗標", file = "UPG", from = "    swapping = false\n    if not ok", to = "    if not ok" },
+        { name = "新背包沒先放進容器", file = "UPG", from = "    cont:AddItem(new)\n", to = "" },
+        { name = "改名旗標沒搬", file = "UPG", from = "            new:setCustomName(true)\n", to = "" },
+        { name = "沒改名也沿用舊名", file = "UPG", from = "            new:setName(new:getScriptItem():getDisplayName())\n", to = "" },
+        { name = "還原掉級", file = "UPG", from = "MDB.ORIGINAL[ft] or MDB.REINFORCED[ft], tierOf(bag)", to = "MDB.ORIGINAL[ft] or MDB.REINFORCED[ft], 0" },
+        { name = "第 0 階也能改強化版", file = "UPG", from = "tierOf(item) >= 1", to = "tierOf(item) >= 0" },
+        { name = "對照表少一款", file = "UPG", from = '"Base.Bag_SWAT", ', to = "" },
+        { name = "強化版自重錯", file = "REIN", from = "Weight = 0.1,", to = "Weight = 0.2," },
+        { name = "強化版跑速沒改", file = "REIN", from = "RunSpeedModifier = 1.0,", to = "RunSpeedModifier = 0.94," },
+        { name = "強化版沿用原版 ClothingItem", file = "REIN", from = "ClothingItem = MDB_Bag_Satchel_Reinforced,", to = "ClothingItem = Bag_Satchel," },
+        { name = "強化腰包換穿指回原版", file = "REIN", from = "ClothingItemExtra = MinidoracatBags.Bag_FannyPackBack_Reinforced,", to = "ClothingItemExtra = Base.Bag_FannyPackBack," },
+        { name = "強化版多一個欄位", file = "REIN", from = "ClothingItem = MDB_Bag_Satchel_Reinforced,", to = "ClothingItem = MDB_Bag_Satchel_Reinforced,\n        AcceptItemFunction = MDB.acceptAmmo," },
+        { name = "強化版水袋容量改了", file = "REIN", from = "Capacity = 2.0,", to = "Capacity = 5.0," },
+        { name = "還原配方漏一款", file = "REIN", from = "MinidoracatBags.Bag_SWAT_Reinforced;", to = "" },
+        { name = "還原配方可用穿著中的背包", file = "REIN", from = "_Reinforced] mode:keep flags[IsNotWorn],", to = "_Reinforced] mode:keep," },
+        { name = "改強化版配方沒 OnTest", file = "REIN", from = "OnTest = MDB.onTestUpgraded,", to = "" },
+        { name = "強化版 XML 換了模型", file = "REIN_XML", from = "<m_MaleModel>", to = "<m_MaleModel>x" },
+        { name = "升級清單漏強化版", file = "RECIPES", from = "MinidoracatBags.Bag_SWAT_Reinforced;", to = "" },
+        { name = "翻譯缺強化版名稱", file = "I18N_ITEMS", from = '"MinidoracatBags.Bag_SWAT_Reinforced"', to = '"MinidoracatBags.Bag_SWATX_Reinforced"' },
         { name = "彈藥背帶收彈藥盒", file = "FIL", from = "return item:hasTag(ItemTag.AMMO)", to = 'return item:getDisplayCategory() == "Ammo"' },
         { name = "彈藥背帶不收霰彈", file = "FIL", from = "return item:hasTag(ItemTag.AMMO)", to = "return item:hasTag(ItemTag.AMMO) and not item:hasTag(ItemTag.SHOTGUN_SHELL)" },
         { name = "醫療腰包分類錯", file = "FIL", from = '== "FirstAid"', to = '== "Medical"' },
@@ -847,6 +1146,17 @@ if arg and arg[1] == "--mutants" then
         pass, fail, MUTATION, quiet = keepPass, keepFail, nil, false
     end
     check("所有突變都被抓到", survived == 0)
+
+    -- 產生器 --check 抓得到差異：暫時改一份產生的 XML，跑完立刻還原
+    local path = F.REIN_XML
+    local fh = io.open(path, "rb"); local original = fh:read("a"); fh:close()
+    fh = io.open(path, "wb"); fh:write((original:gsub("<m_Static>", "<m_Static>x", 1))); fh:close()
+    quiet = true
+    local caught = not genCheck()
+    quiet = false
+    fh = io.open(path, "wb"); fh:write(original); fh:close()
+    rawPrint(string.format("  %s  產生器 --check 發現手改的強化版 XML", caught and "KILLED " or "SURVIVED"))
+    check("產生器 --check 抓得到手改的產生檔", caught)
 end
 
 rawPrint(string.format("結果：%d PASS，%d FAIL", pass, fail))

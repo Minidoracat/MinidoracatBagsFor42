@@ -16,10 +16,8 @@
     "MDB_UpgradeBagTier1": "強化背包至第 1 階",
     "MDB_UpgradeBagTier2": "強化背包至第 2 階",
     "MDB_UpgradeBagTier3": "強化背包至第 3 階",
-    "MDB_ConvertLegacyBack_Navy": "改裝舊 Plus 背包為 S.T.A.R.S. 遠征框架背包",
-    "MDB_ConvertLegacyBack_Olive": "改裝舊 Plus 背包為 保護傘 遠征框架背包",
-    "MDB_ConvertLegacySatchel_Navy": "改裝舊 Plus 側背包為 S.T.A.R.S. 信差側背包",
-    "MDB_ConvertLegacySatchel_Olive": "改裝舊 Plus 側背包為 保護傘 信差側背包",
-    "MDB_ConvertLegacyFanny_Navy": "改裝舊 Plus 腰包為 S.T.A.R.S. 腰掛工具包",
-    "MDB_ConvertLegacyFanny_Olive": "改裝舊 Plus 腰包為 保護傘 腰掛工具包"
+    "MDB_ConvertLegacyBag": "改裝舊 Plus 背包為強化版",
+    "MDB_RestoreReinforced": "強化版改回原版背包",
+    "MDB_ReinforceUpgradedBag": "已升級背包改成強化版",
+    "MDB_MakeSheetSlingBag_Reinforced": "製作床單斜背包（強化）"
 }

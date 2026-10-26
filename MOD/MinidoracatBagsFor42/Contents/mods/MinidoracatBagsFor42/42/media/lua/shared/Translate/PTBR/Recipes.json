@@ -16,10 +16,8 @@
     "MDB_UpgradeBagTier1": "Reforçar Bolsa ao Nível 1",
     "MDB_UpgradeBagTier2": "Reforçar Bolsa ao Nível 2",
     "MDB_UpgradeBagTier3": "Reforçar Bolsa ao Nível 3",
-    "MDB_ConvertLegacyBack_Navy": "Converter Mochila Plus Antiga em Mochila de Expedição com Armação S.T.A.R.S.",
-    "MDB_ConvertLegacyBack_Olive": "Converter Mochila Plus Antiga em Mochila de Expedição com Armação Umbrella",
-    "MDB_ConvertLegacySatchel_Navy": "Converter Bolsa Transversal Plus Antiga em Bolsa Transversal de Mensageiro S.T.A.R.S.",
-    "MDB_ConvertLegacySatchel_Olive": "Converter Bolsa Transversal Plus Antiga em Bolsa Transversal de Mensageiro Umbrella",
-    "MDB_ConvertLegacyFanny_Navy": "Converter Pochete Plus Antiga em Pochete de Ferramentas S.T.A.R.S.",
-    "MDB_ConvertLegacyFanny_Olive": "Converter Pochete Plus Antiga em Pochete de Ferramentas Umbrella"
+    "MDB_ConvertLegacyBag": "Converter Bolsa Plus Antiga em Versão Reforçada",
+    "MDB_RestoreReinforced": "Reverter Bolsa Reforçada ao Original",
+    "MDB_ReinforceUpgradedBag": "Converter Bolsa de Nível 1 ou Mais em Versão Reforçada",
+    "MDB_MakeSheetSlingBag_Reinforced": "Fazer Bolsa Transversal de Lençol (Versão Reforçada)"
 }

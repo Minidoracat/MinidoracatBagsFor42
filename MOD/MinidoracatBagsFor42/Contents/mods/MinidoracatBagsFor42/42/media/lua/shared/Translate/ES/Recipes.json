@@ -16,10 +16,8 @@
     "MDB_UpgradeBagTier1": "Reforzar bolsa al nivel 1",
     "MDB_UpgradeBagTier2": "Reforzar bolsa al nivel 2",
     "MDB_UpgradeBagTier3": "Reforzar bolsa al nivel 3",
-    "MDB_ConvertLegacyBack_Navy": "Convertir mochila Plus antigua en mochila de expedición con armazón S.T.A.R.S.",
-    "MDB_ConvertLegacyBack_Olive": "Convertir mochila Plus antigua en mochila de expedición con armazón Umbrella",
-    "MDB_ConvertLegacySatchel_Navy": "Convertir cartera Plus antigua en cartera de mensajero S.T.A.R.S.",
-    "MDB_ConvertLegacySatchel_Olive": "Convertir cartera Plus antigua en cartera de mensajero Umbrella",
-    "MDB_ConvertLegacyFanny_Navy": "Convertir riñonera Plus antigua en riñonera de herramientas S.T.A.R.S.",
-    "MDB_ConvertLegacyFanny_Olive": "Convertir riñonera Plus antigua en riñonera de herramientas Umbrella"
+    "MDB_ConvertLegacyBag": "Convertir bolsa Plus antigua en versión reforzada",
+    "MDB_RestoreReinforced": "Devolver bolsa reforzada a la original",
+    "MDB_ReinforceUpgradedBag": "Convertir bolsa de nivel 1 o superior en versión reforzada",
+    "MDB_MakeSheetSlingBag_Reinforced": "Crear bolsa con sábana (versión reforzada)"
 }

@@ -16,10 +16,8 @@
     "MDB_UpgradeBagTier1": "가방을 1단계로 강화하기",
     "MDB_UpgradeBagTier2": "가방을 2단계로 강화하기",
     "MDB_UpgradeBagTier3": "가방을 3단계로 강화하기",
-    "MDB_ConvertLegacyBack_Navy": "구 Plus 배낭을 S.T.A.R.S. 원정용 등지게 배낭으로 개조하기",
-    "MDB_ConvertLegacyBack_Olive": "구 Plus 배낭을 엄브렐라 원정용 등지게 배낭으로 개조하기",
-    "MDB_ConvertLegacySatchel_Navy": "구 Plus 책가방을 S.T.A.R.S. 쿠리어 책가방으로 개조하기",
-    "MDB_ConvertLegacySatchel_Olive": "구 Plus 책가방을 엄브렐라 쿠리어 책가방으로 개조하기",
-    "MDB_ConvertLegacyFanny_Navy": "구 Plus 허리 가방을 S.T.A.R.S. 공구 허리 가방으로 개조하기",
-    "MDB_ConvertLegacyFanny_Olive": "구 Plus 허리 가방을 엄브렐라 공구 허리 가방으로 개조하기"
+    "MDB_ConvertLegacyBag": "구 Plus 가방을 강화판으로 개조하기",
+    "MDB_RestoreReinforced": "강화판 가방을 원래대로 되돌리기",
+    "MDB_ReinforceUpgradedBag": "1단계 이상 가방을 강화판으로 바꾸기",
+    "MDB_MakeSheetSlingBag_Reinforced": "천 어깨 가방 만들기 (강화)"
 }

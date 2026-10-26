@@ -2,5 +2,5 @@
     "Tooltip_MDB_UpgradeBagTier1": "Die Tasche muss auf Stufe 0 sein und darf nicht getragen werden. Gegenstände darin können drinbleiben. Die höchste Stufe legt der Server fest.",
     "Tooltip_MDB_UpgradeBagTier2": "Die Tasche muss auf Stufe 1 sein und darf nicht getragen werden. Gegenstände darin können drinbleiben. Die höchste Stufe legt der Server fest.",
     "Tooltip_MDB_UpgradeBagTier3": "Die Tasche muss auf Stufe 2 sein und darf nicht getragen werden. Gegenstände darin können drinbleiben. Die höchste Stufe legt der Server fest.",
-    "Tooltip_MDB_LegacyBag": "Alte Plus-Tasche: Du kannst Gegenstände herausnehmen, aber nichts hineinlegen. Leere sie und baue sie dann mit Nadel und Faden zu einer neuen Tasche um."
+    "Tooltip_MDB_LegacyBag": "Alte Plus-Tasche: Du kannst Gegenstände herausnehmen, aber nichts hineinlegen. Mit Nadel und Faden kannst du sie in die verstärkte Version derselben Tasche auf höchster Stufe umbauen; Gegenstände darin können drinbleiben."
 }

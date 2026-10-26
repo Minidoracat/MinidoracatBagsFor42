@@ -16,10 +16,8 @@
     "MDB_UpgradeBagTier1": "Reinforce Bag to Tier 1",
     "MDB_UpgradeBagTier2": "Reinforce Bag to Tier 2",
     "MDB_UpgradeBagTier3": "Reinforce Bag to Tier 3",
-    "MDB_ConvertLegacyBack_Navy": "Convert Old Plus Backpack to S.T.A.R.S. Expedition Frame Pack",
-    "MDB_ConvertLegacyBack_Olive": "Convert Old Plus Backpack to Umbrella Expedition Frame Pack",
-    "MDB_ConvertLegacySatchel_Navy": "Convert Old Plus Satchel to S.T.A.R.S. Courier Satchel",
-    "MDB_ConvertLegacySatchel_Olive": "Convert Old Plus Satchel to Umbrella Courier Satchel",
-    "MDB_ConvertLegacyFanny_Navy": "Convert Old Plus Fanny Pack to S.T.A.R.S. Tool Belt Pouch",
-    "MDB_ConvertLegacyFanny_Olive": "Convert Old Plus Fanny Pack to Umbrella Tool Belt Pouch"
+    "MDB_ConvertLegacyBag": "Convert Old Plus Bag to Reinforced",
+    "MDB_RestoreReinforced": "Revert Reinforced Bag to Original",
+    "MDB_ReinforceUpgradedBag": "Convert Upgraded Bag to Reinforced",
+    "MDB_MakeSheetSlingBag_Reinforced": "Make Sheet Sling Bag (Reinforced)"
 }

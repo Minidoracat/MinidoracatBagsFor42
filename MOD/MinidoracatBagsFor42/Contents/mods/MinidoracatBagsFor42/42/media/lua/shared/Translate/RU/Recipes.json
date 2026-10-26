@@ -16,10 +16,8 @@
     "MDB_UpgradeBagTier1": "Укрепить сумку до уровня 1",
     "MDB_UpgradeBagTier2": "Укрепить сумку до уровня 2",
     "MDB_UpgradeBagTier3": "Укрепить сумку до уровня 3",
-    "MDB_ConvertLegacyBack_Navy": "Переделать старый рюкзак Plus в экспедиционный станковый рюкзак S.T.A.R.S.",
-    "MDB_ConvertLegacyBack_Olive": "Переделать старый рюкзак Plus в экспедиционный станковый рюкзак «Амбрелла»",
-    "MDB_ConvertLegacySatchel_Navy": "Переделать старую сумку Plus в курьерскую сумку S.T.A.R.S.",
-    "MDB_ConvertLegacySatchel_Olive": "Переделать старую сумку Plus в курьерскую сумку «Амбрелла»",
-    "MDB_ConvertLegacyFanny_Navy": "Переделать старую поясную сумку Plus в поясную сумку для инструментов S.T.A.R.S.",
-    "MDB_ConvertLegacyFanny_Olive": "Переделать старую поясную сумку Plus в поясную сумку для инструментов «Амбрелла»"
+    "MDB_ConvertLegacyBag": "Переделать старую сумку Plus в укреплённую версию",
+    "MDB_RestoreReinforced": "Вернуть укреплённую сумку к исходной",
+    "MDB_ReinforceUpgradedBag": "Переделать сумку уровня 1 и выше в укреплённую версию",
+    "MDB_MakeSheetSlingBag_Reinforced": "Сделать наплечную сумку из простыни (укреплённая версия)"
 }

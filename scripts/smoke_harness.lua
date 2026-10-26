@@ -78,8 +78,9 @@ for _, r in ipairs(registered) do
     seen[r.name] = (seen[r.name] or 0) + 1
 end
 for _, name in ipairs(ALLOWED) do check(seen[name] == 1, name .. " 剛好掛一次") end
-for _, fn in ipairs({ "acceptLegacy", "acceptFirstAid", "acceptAmmo", "applyTier", "onConvert", "onUpgrade",
-                      "onTestTier1", "onTestTier2", "onTestTier3", "addLoot", "reapplyLoot", "onZombieDead", "warnDuplicates", "opt" }) do
+for _, fn in ipairs({ "acceptLegacy", "acceptFirstAid", "acceptAmmo", "applyTier", "swapBag", "keepBag", "onConvertLegacy",
+                      "onCraftFull", "onSwapKeepTier", "onTestUpgraded", "onUpgrade", "onTestTier1", "onTestTier2", "onTestTier3",
+                      "addLoot", "reapplyLoot", "onZombieDead", "warnDuplicates", "opt" }) do
     check(type(MDB[fn]) == "function", "MDB." .. fn .. " 存在")
 end
 

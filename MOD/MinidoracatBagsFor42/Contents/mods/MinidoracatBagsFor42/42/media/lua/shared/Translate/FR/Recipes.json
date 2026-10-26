@@ -16,10 +16,8 @@
     "MDB_UpgradeBagTier1": "Renforcer un sac au niveau 1",
     "MDB_UpgradeBagTier2": "Renforcer un sac au niveau 2",
     "MDB_UpgradeBagTier3": "Renforcer un sac au niveau 3",
-    "MDB_ConvertLegacyBack_Navy": "Convertir un ancien sac à dos Plus en sac à dos d'expédition à armature S.T.A.R.S.",
-    "MDB_ConvertLegacyBack_Olive": "Convertir un ancien sac à dos Plus en sac à dos d'expédition à armature Umbrella",
-    "MDB_ConvertLegacySatchel_Navy": "Convertir une ancienne sacoche Plus en sacoche de coursier S.T.A.R.S.",
-    "MDB_ConvertLegacySatchel_Olive": "Convertir une ancienne sacoche Plus en sacoche de coursier Umbrella",
-    "MDB_ConvertLegacyFanny_Navy": "Convertir un ancien sac banane Plus en sac banane à outils S.T.A.R.S.",
-    "MDB_ConvertLegacyFanny_Olive": "Convertir un ancien sac banane Plus en sac banane à outils Umbrella"
+    "MDB_ConvertLegacyBag": "Convertir un ancien sac Plus en version renforcée",
+    "MDB_RestoreReinforced": "Ramener un sac renforcé à l'original",
+    "MDB_ReinforceUpgradedBag": "Convertir un sac de niveau 1 ou plus en version renforcée",
+    "MDB_MakeSheetSlingBag_Reinforced": "Improviser un sac en bandoulière (version renforcée)"
 }

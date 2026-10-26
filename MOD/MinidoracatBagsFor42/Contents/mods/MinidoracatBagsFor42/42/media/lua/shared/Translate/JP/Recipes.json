@@ -16,10 +16,8 @@
     "MDB_UpgradeBagTier1": "バッグを第1段階に強化する",
     "MDB_UpgradeBagTier2": "バッグを第2段階に強化する",
     "MDB_UpgradeBagTier3": "バッグを第3段階に強化する",
-    "MDB_ConvertLegacyBack_Navy": "旧 Plus のバックパックをS.T.A.R.S. 遠征用フレームパックに改造する",
-    "MDB_ConvertLegacyBack_Olive": "旧 Plus のバックパックをアンブレラ 遠征用フレームパックに改造する",
-    "MDB_ConvertLegacySatchel_Navy": "旧 Plus のサッチェルをS.T.A.R.S. クーリエサッチェルに改造する",
-    "MDB_ConvertLegacySatchel_Olive": "旧 Plus のサッチェルをアンブレラ クーリエサッチェルに改造する",
-    "MDB_ConvertLegacyFanny_Navy": "旧 Plus のウエストポーチをS.T.A.R.S. 工具用ウエストポーチに改造する",
-    "MDB_ConvertLegacyFanny_Olive": "旧 Plus のウエストポーチをアンブレラ 工具用ウエストポーチに改造する"
+    "MDB_ConvertLegacyBag": "旧 Plus のバッグを強化版に改造する",
+    "MDB_RestoreReinforced": "強化版のバッグを元に戻す",
+    "MDB_ReinforceUpgradedBag": "第1段階以上のバッグを強化版にする",
+    "MDB_MakeSheetSlingBag_Reinforced": "布シートのスリングバッグを作る（強化）"
 }

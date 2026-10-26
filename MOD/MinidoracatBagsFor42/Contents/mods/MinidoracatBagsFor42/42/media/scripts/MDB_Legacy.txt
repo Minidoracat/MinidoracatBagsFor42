@@ -1,5 +1,5 @@
 /* 舊 Bag Upgrade Plus 背包的外殼：保留存檔裡的舊全名，數值與外觀照原版同款。
-   只能取出（MDB.acceptLegacy），清空後用 MDB_Convert.txt 改裝。不出現在戰利品、殭屍或配方產出。
+   只能取出（MDB.acceptLegacy），用 MDB_Convert.txt 改裝成對應原版背包的強化版。不出現在戰利品、殭屍或配方產出。
    BagUpgradePlus／ExtraCraft 模組刻意不寫 imports（上游 BUP 也沒寫）：BUP 的配方檔寫 module Base { imports { BagUpgradePlus } }，
    兩邊互相 import 時，Base 查不到的名稱會在兩個模組間無限遞迴（ScriptBucket.get 依 imports 往下查），伺服器開機 StackOverflowError。 */
 

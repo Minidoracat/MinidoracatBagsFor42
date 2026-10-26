@@ -1,6 +1,26 @@
 -- 背包升級：容量與負重減輕存在每個背包自己身上（InventoryContainer 存檔會帶 capacity／weightReduction，
--- InventoryContainer.java:70-73），不改物品類型。公式見 AGENTS.md「設計定案」。
+-- InventoryContainer.java:70-73）。下表的原版背包升級時先換成強化版再套階級；公式見 AGENTS.md「設計定案」。
 MDB = MDB or {}
+
+-- 有強化版的背包。強化版 MinidoracatBags.<物品名>_Reinforced：自重 0.1、不減速，其餘欄位照原版。
+-- scripts/gen_reinforced.py 讀這張表產生物品腳本、外觀、16 語名稱與配方清單；要加款式只加這裡再跑產生器。
+MDB.REINFORCED_SOURCES = {
+    "Base.Bag_SurvivorBag", "Base.Bag_ALICEpack", "Base.Bag_ALICEpack_Army", "Base.Bag_ALICEpack_DesertCamo",
+    "Base.Bag_DuffelBag", "Base.Bag_MedicalBag", "Base.Bag_Military", "Base.Bag_Police", "Base.Bag_Sheriff",
+    "Base.Bag_SWAT", "Base.Bag_BreakdownBag", "Base.Bag_BurglarBag", "Base.Bag_BaseballBag", "Base.Bag_TennisBag",
+    "Base.Bag_WeaponBag", "Base.Bag_InmateEscapedBag", "Base.Bag_MoneyBag", "Base.Bag_WorkerBag", "Base.Bag_ShotgunBag",
+    "Base.Bag_ShotgunSawnoffBag", "Base.Bag_ShotgunDblBag", "Base.Bag_ShotgunDblSawnoffBag", "Base.Bag_FoodCanned",
+    "Base.Bag_FoodSnacks", "Base.Bag_ToolBag", "Base.Bag_FannyPackBack", "Base.Bag_FannyPackFront",
+    "Base.Bag_HydrationBackpack", "Base.Bag_HydrationBackpack_Camo", "Base.Bag_NormalHikingBag", "Base.Bag_BigHikingBag",
+    "Base.Bag_HikingBag_Travel", "Base.Bag_Schoolbag", "Base.Bag_Satchel", "Base.Bag_Satchel_Fishing",
+    "Base.Bag_Satchel_Medical", "Base.Bag_Satchel_Military", "Base.Bag_SheetSlingBag",
+}
+MDB.REINFORCED, MDB.ORIGINAL = {}, {}   -- 原版全名 → 強化版全名；反查
+for _, ft in ipairs(MDB.REINFORCED_SOURCES) do
+    local r = "MinidoracatBags." .. ft:match("[^.]+$") .. "_Reinforced"
+    MDB.REINFORCED[ft] = r
+    MDB.ORIGINAL[r] = ft
+end
 
 local DEFAULTS = {
     LockLegacyBags = true,
@@ -21,6 +41,9 @@ end
 
 -- Bag Upgrade Plus 水袋的液體容量（使用者 2026-10-26：升滿要和 BUP 一樣）
 local FULL_FLUID = 5.0
+
+-- 換型途中為 true：applyTier 不重送，最後由 swapBag 送一次
+local swapping = false
 
 -- 最高階（MaxTier）升滿，中間各階平均分配；MaxTier 0 維持原值
 function MDB.applyTier(bag, tier)
@@ -52,13 +75,70 @@ function MDB.applyTier(bag, tier)
     md.MDB_tier = tier
     -- 客戶端的容量與負重減輕要整件重送才會更新；單機無作用（LuaManager.java:12404-12412、RecipeCodeOnCreate.java:892-894）
     local container = bag:getContainer()
-    if isServer() and container then
+    if isServer() and container and not swapping then
         sendReplaceItemInContainer(container, bag, bag)
     end
 end
 
+-- 換成另一種背包（升級換成強化版、還原、舊 Plus 改裝），再套 tier。
+-- copyClothingItem 搬內容物（同一批物件，ID 不變）、外觀、改名、顏色、耐久、最愛、液體與 modData（ISClothingExtraAction.lua:62-112）。
+-- 新背包先放進同一個容器再搬：中途出錯時內容物分在兩個背包裡，不會落在沒有容器的物品上。
+-- 伺服器最後只送一次 replace：客戶端依舊 ID 移除、加入整件新背包，並換掉動作佇列裡的舊參照
+-- （ReplaceInventoryItemInContainerPacket.java:57-82）；單機改呼叫 replaceItemInContainer 換動作佇列（LuaManager.java:12442-12449）。
+function MDB.swapBag(old, newType, tier, character)
+    local cont = old:getContainer()
+    local new = instanceItem(newType)
+    cont:AddItem(new)
+    swapping = true
+    local ok, err = pcall(function()
+        copyClothingItem(old, new)
+        -- copyClothingItem 拿 getName() 比對腳本名稱，染血、磨損的前綴或水袋的液體名稱也會被當成改名寫進新背包
+        -- （InventoryItem.java:2435-2480），名稱不同就跟著存檔（:1711）。只有玩家改過名才沿用原名（ISInventoryPaneContextMenu.lua:2741-2750）
+        if old:isCustomName() then
+            new:setName(old:getDisplayName())
+            new:setCustomName(true)
+        else
+            new:setName(new:getScriptItem():getDisplayName())
+        end
+        MDB.applyTier(new, tier)
+        -- copyClothingItem 搬液體時新背包還是腳本容量，多的被截掉（FluidContainer.java:179-194、:929-932）；容量設好後再搬一次
+        local ofc, nfc = old:getFluidContainer(), new:getFluidContainer()
+        if ofc and nfc then nfc:copyFluidsFrom(ofc) end
+    end)
+    swapping = false
+    if not ok then error(err) end
+    cont:Remove(old)   -- 也會把它從手上拿掉（ItemContainer.java:2036-2039）
+    if isServer() then
+        sendReplaceItemInContainer(cont, old, new)
+    elseif character and cont == character:getInventory() then
+        replaceItemInContainer(cont, old, new)   -- 會把容器的 parent 轉成 IsoPlayer，只能用在主物品欄
+    end
+    return new
+end
+
 local function tierOf(bag)
     return bag:getModData().MDB_tier or 0
+end
+
+-- 配方的 keep 輸入裡第一個背包（不是 CanBeDoneFromFloor 的配方，輸入開工前都搬進主物品欄，ISWidgetHandCraftControl.lua:342-351）
+function MDB.keepBag(data)
+    local items = data:getAllKeepInputItems()
+    for i = 0, items:size() - 1 do
+        if instanceof(items:get(i), "InventoryContainer") then return items:get(i) end
+    end
+end
+
+-- 還原（強化版→原版）與 0.1.0 升過級的原版背包改成強化版：只換型，階級照舊
+function MDB.onSwapKeepTier(data, character)
+    local bag = MDB.keepBag(data)
+    if not bag then return end
+    local ft = bag:getFullType()
+    MDB.swapBag(bag, MDB.ORIGINAL[ft] or MDB.REINFORCED[ft], tierOf(bag), character)
+end
+
+-- 已升級原版背包改成強化版：只放行第 1 階以上的背包，第 0 階要走升級（不然免費拿到自重 0.1）
+function MDB.onTestUpgraded(item, character)
+    return not instanceof(item, "InventoryContainer") or tierOf(item) >= 1
 end
 
 -- OnTest（item, character）：每個候選輸入都會呼叫（CraftRecipe.java:1010-1030），工具與材料一律放行
@@ -71,18 +151,18 @@ function MDB.onTestTier1(item, character) return gate(item, 1) end
 function MDB.onTestTier2(item, character) return gate(item, 2) end
 function MDB.onTestTier3(item, character) return gate(item, 3) end
 
--- OnCreate（data, character）：只在單機或伺服器執行（ISHandcraftAction.lua:221-234）
+-- OnCreate（data, character）：只在單機或伺服器執行（ISHandcraftAction.lua:221-234）。
+-- 有強化版的原版背包先換成強化版再套新階級
 function MDB.onUpgrade(data, character)
-    local items = data:getAllKeepInputItems()
-    for i = 0, items:size() - 1 do
-        local bag = items:get(i)
-        if instanceof(bag, "InventoryContainer") then
-            local tier = tierOf(bag) + 1
-            if tier <= MDB.opt("MaxTier") then
-                MDB.applyTier(bag, tier)
-            end
-            return
-        end
+    local bag = MDB.keepBag(data)
+    if not bag then return end
+    local tier = tierOf(bag) + 1
+    if tier > MDB.opt("MaxTier") then return end
+    local target = MDB.REINFORCED[bag:getFullType()]
+    if target then
+        MDB.swapBag(bag, target, tier, character)
+    else
+        MDB.applyTier(bag, tier)
     end
 end
 
@@ -92,6 +172,7 @@ end
 -- MP 的 complete() 在伺服器跑（NetTimedAction.java:132-139；客戶端不跑，LuaTimedActionNew.java:164-170）。
 -- 新物品這時還沒放進容器，applyTier 不重送；接著 sendAddItemToContainer 整件送出，負重減輕與容量都在裡面
 -- （AddInventoryItemToContainerPacket.java:54-58、InventoryContainer.java:57-58、ItemContainer.java:2439）。
+-- MDB.swapBag 呼叫 copyClothingItem 時新背包已在容器裡，由 swapping 擋下這次重送。
 require "TimedActions/ISClothingExtraAction"
 local createItemNew = ISClothingExtraAction.createItemNew
 function ISClothingExtraAction:createItemNew(item, newItem)

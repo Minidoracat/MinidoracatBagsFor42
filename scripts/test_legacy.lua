@@ -1,4 +1,4 @@
--- 離線測試：舊 Bag Upgrade Plus 外殼、放入鎖、改裝配方、重複定義警告、翻譯鍵。
+-- 離線測試：舊 Bag Upgrade Plus 外殼、放入鎖、改裝成強化版、強化版布吊帶包直接製作、重複定義警告、翻譯鍵。
 --   lua scripts/test_legacy.lua             腳本不變式與 Lua 行為
 --   lua scripts/test_legacy.lua --mutants   另對腳本與 Lua 植入違規，確認測試抓得到
 -- 直接解析真的 MDB_Legacy.txt／MDB_Convert.txt、原版 media/scripts，並以假的 PZ 全域載入真的 MOD Lua。
@@ -141,9 +141,6 @@ local SHELLS = {
 }
 local COPIED = { "DisplayCategory", "ItemType", "Weight", "RunSpeedModifier", "Capacity", "WeightReduction",
     "CanBeEquipped", "Icon", "IconsForTexture", "WorldStaticModel", "AttachmentsProvided", "SoundParameter", "Tags" }
-local GROUP_OF_EQUIP = { ["base:back"] = "Back", ["base:satchel"] = "Satchel",
-    ["base:fannypackfront"] = "Fanny", ["base:fannypackback"] = "Fanny" }
-local OUTPUT = { Back = "ExpeditionPack", Satchel = "CourierSatchel", Fanny = "ToolBeltPouch" }
 
 local function resolve(path)
     local v = _G
@@ -160,11 +157,23 @@ end
 
 local printed
 local bootHandlers
+local env
 local function bootLua()
     MDB, SandboxVars, printed, bootHandlers = nil, nil, {}, {}
+    env = { server = false, sent = {}, replaced = {} }
     Events = { OnGameBoot = { Add = function(fn) bootHandlers[#bootHandlers + 1] = fn end } }
-    -- MDB_Upgrade 會 require 並包住原版的換穿法；行為由 test_newbags.lua 測，這裡只讓它載得起來
-    ISClothingExtraAction = { createItemNew = function(_, _, newItem) return newItem end }
+    -- MDB_Upgrade 會 require 並包住原版的換穿法。照原版搬內容物、液體（依新容量截斷）、modData（ISClothingExtraAction.lua:66-112）
+    ISClothingExtraAction = {}
+    function ISClothingExtraAction:createItemNew(item, newItem)
+        for _, c in ipairs(item.contents) do newItem.contents[#newItem.contents + 1] = c end
+        item.contents = {}
+        if item.fc and newItem.fc then newItem.fc.amount = math.min(item.fc.amount, newItem.fc.capacity) end
+        if next(item.md) then
+            newItem.md = {}
+            for k, v in pairs(item.md) do newItem.md[k] = v end
+        end
+        return newItem
+    end
     package.loaded["TimedActions/ISClothingExtraAction"] = true
     print = function(...)
         local parts = {}
@@ -176,6 +185,57 @@ local function bootLua()
         assert(code, "missing " .. f)
         assert(load(code, "@" .. f))()
     end
+end
+
+-- ===== 假背包（只模擬 swapBag／applyTier 用到的方法）=====
+function isServer() return env.server end
+function sendReplaceItemInContainer(c, a, b) env.sent[#env.sent + 1] = { c, a, b } end
+function replaceItemInContainer(c, a, b) env.replaced[#env.replaced + 1] = { c, a, b } end
+function copyClothingItem(item, newItem) ISClothingExtraAction:createItemNew(item, newItem) end
+function instanceof(o, cls) return type(o) == "table" and rawget(o, "__class") == cls end
+local INV = { items = {} }
+function INV:AddItem(i) self.items[#self.items + 1] = i; i.container = self; return i end
+function INV:Remove(i) for k, v in ipairs(self.items) do if v == i then table.remove(self.items, k); i.container = nil end end end
+local PLAYER = { getInventory = function() return INV end }
+local function newFluid(capacity, amount)
+    local fc = { capacity = capacity, amount = amount or 0 }
+    function fc:getCapacity() return self.capacity end
+    function fc:setCapacity(c)
+        local old = self.capacity
+        self.capacity = math.max(c, 0.05)
+        if self.amount > self.capacity then self.amount = self.capacity * self.amount / old end   -- FluidContainer.java:683-696
+    end
+    function fc:copyFluidsFrom(o) self.amount = math.min(o.amount, self.capacity) end
+    return fc
+end
+local function newBag(fullType, cap, wr, weight, fluid)
+    local b = { __class = "InventoryContainer", fullType = fullType, cap = cap, wr = wr, md = {}, contents = {},
+        fc = fluid and newFluid(fluid) }
+    local script = { getActualWeight = function() return weight end, getDisplayName = function() return "name of " .. fullType end }
+    b.name = script.getDisplayName()
+    function b:getFullType() return self.fullType end
+    function b:getDisplayName() return self.name end
+    function b:setName(n) self.name = n end
+    function b:isCustomName() return self.custom == true end
+    function b:setCustomName(c) self.custom = c end
+    function b:getModData() return self.md end
+    function b:hasModData() return next(self.md) ~= nil end
+    function b:getCapacity() return math.min(self.cap, math.floor(50 - weight)) end
+    function b:setCapacity(c) self.cap = c end
+    function b:getWeightReduction() return self.wr end
+    function b:setWeightReduction(w) self.wr = w end
+    function b:getScriptItem() return script end
+    function b:getContainer() return self.container end
+    function b:getFluidContainer() return self.fc end
+    return b
+end
+-- 強化版＝原版的容量、負重減輕與液體容量，自重 0.1（MDB_Reinforced.txt 照原版產生，test_newbags.lua 逐欄位驗）
+local VANILLA_FLUID = { ["Base.Bag_HydrationBackpack"] = 2.0, ["Base.Bag_HydrationBackpack_Camo"] = 3.0 }
+function instanceItem(full)
+    local orig = MDB.ORIGINAL[full]
+    assert(orig, "instanceItem: not a reinforced bag " .. tostring(full))
+    local v = vanillaItems[orig].fields
+    return newBag(full, tonumber(v.Capacity), tonumber(v.WeightReduction), 0.1, VANILLA_FLUID[orig])
 end
 
 local function suite()
@@ -236,8 +296,6 @@ local function suite()
                 check(ft .. "：FluidContainer 與原版一致", (it.components.FluidContainer or false) == (v.components.FluidContainer or false))
                 check(ft .. "：沒有 BodyLocation／ClothingItemExtra",
                     f.BodyLocation == nil and f.ClothingItemExtra == nil and f.ClothingItemExtraOption == nil)
-                check(ft .. "：改裝組與 CanBeEquipped 一致", GROUP_OF_EQUIP[f.CanBeEquipped] == (group == "back" and "Back"
-                    or group == "satchel" and "Satchel" or "Fanny"))
             end
             check(ft .. "：guard 清單有它", guardSet[ft] == true)
         end
@@ -284,47 +342,52 @@ local function suite()
         end
     end
 
-    -- 6. 改裝配方：每種外觀各自剛好涵蓋每個背包外殼一次，水瓶不在裡面
-    for _, look in ipairs({ "Navy", "Olive" }) do
-        local covered, dup, wrong = {}, {}, {}
-        for g, out in pairs(OUTPUT) do
-            local name = "MDB_ConvertLegacy" .. g .. "_" .. look
-            local r = recipes[name]
-            check(name .. "：存在", r ~= nil)
-            if r then
-                local bagLine = r.inputs[1] or ""
-                for ft in (bagLine:match("%[(.-)%]") or ""):gmatch("[^;]+") do
-                    if covered[ft] then dup[#dup + 1] = ft end
-                    covered[ft] = true
-                    local it = items[ft]
-                    if not it or GROUP_OF_EQUIP[it.fields.CanBeEquipped] ~= g then wrong[#wrong + 1] = ft end
-                end
-                check(name .. "：舊背包 flags[IsEmpty;IsNotWorn]", bagLine:find("flags[IsEmpty;IsNotWorn]", 1, true) ~= nil)
-                local needle, thread = false, false
-                for i = 2, #r.inputs do
-                    local l = r.inputs[i]
-                    needle = needle or (l:find("tags[base:sewingneedle]", 1, true) and l:find("mode:keep", 1, true)) ~= nil
-                    thread = thread or l:match("^item 2 tags%[base:thread%],?$") ~= nil
-                end
-                check(name .. "：縫衣針 keep、線 2 用量", needle and thread and #r.inputs == 3)
-                check(name .. "：產出 MinidoracatBags." .. out .. "_" .. look,
-                    #r.outputs == 1 and r.outputs[1]:match("^item 1 (%S-),?$") == "MinidoracatBags." .. out .. "_" .. look)
-                check(name .. "：OnCreate = MDB.onConvert、無技能門檻", r.fields.OnCreate == "MDB.onConvert"
-                    and r.fields.SkillRequired == nil and r.fields.NeedToBeLearn == nil)
-            end
-        end
-        local notCovered = {}
-        for _, s in ipairs(SHELLS) do
-            if s[3] ~= "bottle" and not covered[s[1]] then notCovered[#notCovered + 1] = s[1] end
-            if s[3] == "bottle" and covered[s[1]] then wrong[#wrong + 1] = s[1] end
-        end
-        check(look .. "：每個背包外殼都涵蓋（缺：" .. table.concat(notCovered, ",") .. "）", #notCovered == 0)
-        check(look .. "：沒有重複（" .. table.concat(dup, ",") .. "）", #dup == 0)
-        check(look .. "：沒有錯組或水瓶（" .. table.concat(wrong, ",") .. "）", #wrong == 0)
+    -- 6. 改裝配方：一條涵蓋 38 個背包外殼各一次、不含水瓶；背包 keep（OnCreate 換型）、不能穿著、不必清空
+    local r = recipes.MDB_ConvertLegacyBag
+    check("MDB_ConvertLegacyBag：存在", r ~= nil)
+    local covered, dup, wrong = {}, {}, {}
+    local bagLine = r and r.inputs[1] or ""
+    for ft in (bagLine:match("%[(.-)%]") or ""):gmatch("[^;]+") do
+        if covered[ft] then dup[#dup + 1] = ft end
+        covered[ft] = true
+        if not items[ft] or (expected[ft] and expected[ft][3] == "bottle") then wrong[#wrong + 1] = ft end
     end
+    local notCovered = {}
+    for _, s in ipairs(SHELLS) do
+        if s[3] ~= "bottle" and not covered[s[1]] then notCovered[#notCovered + 1] = s[1] end
+    end
+    check("改裝：38 個背包外殼都涵蓋（缺：" .. table.concat(notCovered, ",") .. "）", #notCovered == 0)
+    check("改裝：沒有重複（" .. table.concat(dup, ",") .. "）", #dup == 0)
+    check("改裝：沒有水瓶或不存在的物品（" .. table.concat(wrong, ",") .. "）", #wrong == 0)
+    check("改裝：舊背包 mode:keep flags[IsNotWorn]（不必清空）", bagLine:match("%] mode:keep flags%[IsNotWorn%],?$") ~= nil)
+    local needle, thread = false, false
+    for i = 2, #(r and r.inputs or {}) do
+        local l = r.inputs[i]
+        needle = needle or (l:find("tags[base:sewingneedle]", 1, true) and l:find("mode:keep", 1, true)) ~= nil
+        thread = thread or l:match("^item 2 tags%[base:thread%],?$") ~= nil
+    end
+    check("改裝：縫衣針 keep、線 2 用量", r ~= nil and needle and thread and #r.inputs == 3)
+    check("改裝：沒有產出（OnCreate 換型）、OnCreate = MDB.onConvertLegacy、無技能門檻", r ~= nil and #r.outputs == 0
+        and r.fields.OnCreate == "MDB.onConvertLegacy" and r.fields.SkillRequired == nil and r.fields.NeedToBeLearn == nil)
+    -- 38 個舊外殼全部有對應：LEGACY_TARGET＝BUP 升級配方的對照表，對到的原版背包都有強化版
+    local mapWrong, mapCount = {}, 0
+    for _ in pairs(MDB.LEGACY_TARGET or {}) do mapCount = mapCount + 1 end
+    for _, s in ipairs(SHELLS) do
+        local target = (MDB.LEGACY_TARGET or {})[s[1]]
+        if s[3] ~= "bottle" and (target ~= "Base." .. s[2] or not MDB.REINFORCED[target]) then mapWrong[#mapWrong + 1] = s[1] end
+    end
+    check("改裝對照：38 個外殼各對到原版同款、而且有強化版（錯：" .. table.concat(mapWrong, ",") .. "）",
+        #mapWrong == 0 and mapCount == 38)
+    -- 強化版布吊帶包直接製作：BUP 同材料（床單 1、鈔票 5），不需工具與技能
+    local sl = recipes.MDB_MakeSheetSlingBag_Reinforced
+    check("布吊帶包直接製作：床單 1＋鈔票 5、沒有工具、無技能門檻", sl ~= nil and #sl.inputs == 2
+        and sl.inputs[1]:match("^item 1 %[Base%.Sheet%],?$") ~= nil and sl.inputs[2]:match("^item 5 %[Base%.Money%],?$") ~= nil
+        and sl.fields.SkillRequired == nil and sl.fields.NeedToBeLearn == nil)
+    check("布吊帶包直接製作：產出強化版、OnCreate = MDB.onCraftFull", sl ~= nil and #sl.outputs == 1
+        and sl.outputs[1]:match("^item 1 (%S-),?$") == "MinidoracatBags.Bag_SheetSlingBag_Reinforced" and sl.fields.OnCreate == "MDB.onCraftFull")
     local convertCount = 0
     for _ in pairs(recipes) do convertCount = convertCount + 1 end
-    check("改裝配方剛好 6 條", convertCount == 6)
+    check("MDB_Convert.txt 剛好 2 條配方", convertCount == 2)
 
     -- 7. acceptLegacy：鎖開、鎖關、沙盒缺席
     SandboxVars = { MinidoracatBags = { LockLegacyBags = true } }
@@ -336,21 +399,72 @@ local function suite()
     SandboxVars = nil
     check("SandboxVars 缺席：當成鎖住", MDB.acceptLegacy({}, {}) == false)
 
-    -- 8. onConvert：以 MaxTier 呼叫 applyTier（假的 applyTier）
-    local calls = {}
-    MDB.applyTier = function(bag, tier) calls[#calls + 1] = { bag = bag, tier = tier } end
-    local bagA, bagB = { id = "A" }, { id = "B" }
-    local data = { getAllCreatedItems = function() return javaList({ bagA, bagB }) end }
+    -- 8. onConvertLegacy：38 個外殼都換成對應的強化版、給 MaxTier（假的 swapBag）
+    local swaps = {}
+    local realSwap = MDB.swapBag
+    MDB.swapBag = function(bag, newType, tier, chr) swaps[#swaps + 1] = { bag = bag, type = newType, tier = tier, chr = chr } end
+    local tool = { __class = "HandWeapon" }
+    local function keepData(bag) return { getAllKeepInputItems = function() return javaList({ tool, bag }) end } end
+    local allOk = true
     SandboxVars = { MinidoracatBags = { MaxTier = 2 } }
-    MDB.onConvert(data, {})
-    check("onConvert：第一個產出物、MaxTier=2", #calls == 1 and calls[1].bag == bagA and calls[1].tier == 2)
-    calls = {}
-    SandboxVars = nil
-    MDB.onConvert(data, {})
-    check("onConvert：沙盒缺席時用預設 3", #calls == 1 and calls[1].tier == 3)
-    calls = {}
-    MDB.onConvert({ getAllCreatedItems = function() return javaList({}) end }, {})
-    check("onConvert：沒有產出物時不呼叫", #calls == 0)
+    for _, s in ipairs(SHELLS) do
+        if s[3] ~= "bottle" then
+            swaps = {}
+            local shell = newBag(s[1], 49, 100, 0.1)
+            MDB.onConvertLegacy(keepData(shell), PLAYER)
+            local w = swaps[1]
+            if not (#swaps == 1 and w.bag == shell and w.type == "MinidoracatBags." .. s[2] .. "_Reinforced" and w.tier == 2 and w.chr == PLAYER) then
+                allOk = false
+                if not quiet then rawPrint("    convert wrong: " .. s[1]) end
+            end
+        end
+    end
+    check("onConvertLegacy：38 個外殼都換成對應原版的強化版、MaxTier=2", allOk)
+    swaps, SandboxVars = {}, nil
+    MDB.onConvertLegacy(keepData(newBag("BagUpgradePlus.SatchelPlus", 49, 100, 0.1)), PLAYER)
+    check("onConvertLegacy：沙盒缺席時用預設 3", #swaps == 1 and swaps[1].tier == 3)
+    MDB.swapBag = realSwap
+
+    -- 8b. 真的換型：舊水袋 5 升水、內容物、modData 都在；伺服器只送一次 replace
+    local function convertWater(maxTier)
+        INV.items, env.sent = {}, {}
+        SandboxVars = { MinidoracatBags = { MaxTier = maxTier } }
+        local shell = INV:AddItem(newBag("BagUpgradePlus.HydrationBackpackPlus", 49, 100, 1.0, 5.0))
+        shell.fc.amount, shell.contents, shell.md = 5.0, { "bandage" }, { note = "kept" }
+        shell.name, shell.custom = "My Plus", true
+        MDB.onConvertLegacy(keepData(shell), PLAYER)
+        return INV.items[1], shell
+    end
+    env.server = true
+    local new, shell = convertWater(3)
+    check("改裝水袋（伺服器）：強化版第 3 階 49／100、液體 5.0 升、5 升水全在",
+        #INV.items == 1 and new.fullType == "MinidoracatBags.Bag_HydrationBackpack_Reinforced" and new.md.MDB_tier == 3
+        and new.cap == 49 and new.wr == 100 and math.abs(new.fc.capacity - 5.0) < 1e-6 and math.abs(new.fc.amount - 5.0) < 1e-6)
+    check("改裝水袋：內容物、modData、玩家改的名稱搬過去，舊背包移除、只送一次 replace",
+        new.contents[1] == "bandage" and new.md.note == "kept" and new.name == "My Plus" and new.custom == true
+        and shell.container == nil
+        and #env.sent == 1 and env.sent[1][1] == INV and env.sent[1][2] == shell and env.sent[1][3] == new)
+    env.server = false
+    new = convertWater(0)
+    check("改裝（MaxTier 0）：強化版第 0 階＝原版數值 12／85、液體 2.0 升", new.md.MDB_tier == 0 and new.cap == 12 and new.wr == 85
+        and math.abs(new.fc.capacity - 2.0) < 1e-6 and #env.replaced == 1)
+    INV.items = {}
+
+    -- 8c. 強化版布吊帶包直接製作：產出直接給 MaxTier（真的 applyTier）
+    local function craftSling(maxTier)
+        SandboxVars = { MinidoracatBags = { MaxTier = maxTier } }
+        local bag = instanceItem("MinidoracatBags.Bag_SheetSlingBag_Reinforced")
+        MDB.onCraftFull({ getAllCreatedItems = function() return javaList({ bag, { id = "other" } }) end }, PLAYER)
+        return bag
+    end
+    local sling = craftSling(3)
+    check("布吊帶包直接製作：第 3 階 49／100", sling.md.MDB_tier == 3 and sling.cap == 49 and sling.wr == 100)
+    sling = craftSling(0)
+    check("布吊帶包直接製作（MaxTier 0）：第 0 階＝原版 10／50", sling.md.MDB_tier == 0 and sling.cap == 10 and sling.wr == 50)
+    local calls = {}
+    MDB.applyTier = function(bag, tier) calls[#calls + 1] = bag end
+    MDB.onCraftFull({ getAllCreatedItems = function() return javaList({}) end }, PLAYER)
+    check("布吊帶包直接製作：沒有產出物時不呼叫", #calls == 0)
 
     -- 9. guard：定義被蓋掉、合併、BUP 啟用時印警告；乾淨時不印
     check("guard 掛在 OnGameBoot", #bootHandlers == 1 and bootHandlers[1] == MDB.warnDuplicates)
@@ -389,12 +503,10 @@ local function suite()
         check("guard：" .. id .. " 啟用 → 印", #out == 1 and out[1]:find((id:gsub("^\\", "")), 1, true) ~= nil)
     end
 
-    -- 10. 翻譯：40 個外殼名稱、說明、6 條改裝配方在 16 個語言的正式檔都有鍵（引擎依檔名分表，Translator.java:137-146）
-    local want = { ItemName = {}, Tooltip = { "Tooltip_MDB_LegacyBag" }, Recipes = {} }
+    -- 10. 翻譯：40 個外殼名稱、說明、2 條配方在 16 個語言的正式檔都有鍵（引擎依檔名分表，Translator.java:137-146）
+    local want = { ItemName = {}, Tooltip = { "Tooltip_MDB_LegacyBag" },
+        Recipes = { "MDB_ConvertLegacyBag", "MDB_MakeSheetSlingBag_Reinforced" } }
     for _, s in ipairs(SHELLS) do want.ItemName[#want.ItemName + 1] = s[1] end
-    for g in pairs(OUTPUT) do
-        for _, look in ipairs({ "Navy", "Olive" }) do want.Recipes[#want.Recipes + 1] = "MDB_ConvertLegacy" .. g .. "_" .. look end
-    end
     local missingKeys = {}
     for _, lang in ipairs(LANGS) do
         for file, keys in pairs(want) do
@@ -405,7 +517,7 @@ local function suite()
             end
         end
     end
-    check("翻譯：外殼名稱、說明、6 條改裝配方在 16 個語言都有鍵（缺：" .. table.concat(missingKeys, ",") .. "）", #missingKeys == 0)
+    check("翻譯：外殼名稱、說明、2 條配方在 16 個語言都有鍵（缺：" .. table.concat(missingKeys, ",") .. "）", #missingKeys == 0)
 end
 
 rawPrint("== 舊 BUP 外殼與改裝")
@@ -429,16 +541,28 @@ if arg and arg[1] == "--mutants" then
         { name = "XML 少一份", file = "Bag_DuffelPlus.xml", from = "<clothingItem>", to = "<clothingItemX>" },
         { name = "fileGuidTable 對不上", file = "fileGuidTable.xml", from = "<guid>", to = "<guid>0" },
         { name = "改裝漏一個背包", file = C, from = "BagUpgradePlus.DuffelPlus;", to = "" },
-        { name = "改裝放進水瓶", file = C, from = "[BagUpgradePlus.SatchelPlus;", to = "[Base.WaterBottleFull;BagUpgradePlus.SatchelPlus;" },
-        { name = "改裝背包放錯組", file = C, from = "[BagUpgradePlus.SatchelPlus;", to = "[BagUpgradePlus.ALICEpackPlus;BagUpgradePlus.SatchelPlus;" },
-        { name = "改裝拿掉 IsEmpty", file = C, from = "flags[IsEmpty;IsNotWorn]", to = "flags[IsNotWorn]" },
+        { name = "改裝放進水瓶", file = C, from = "[BagUpgradePlus.ALICEpackPlus;", to = "[Base.WaterBottleFull;BagUpgradePlus.ALICEpackPlus;" },
+        { name = "改裝重複一個背包", file = C, from = "[BagUpgradePlus.ALICEpackPlus;", to = "[BagUpgradePlus.ALICEpackPlus;BagUpgradePlus.ALICEpackPlus;" },
+        { name = "改裝可用穿著中的背包", file = C, from = "] mode:keep flags[IsNotWorn],", to = "] mode:keep," },
+        { name = "改裝消耗舊背包", file = C, from = "] mode:keep flags[IsNotWorn],", to = "] flags[IsNotWorn]," },
+        { name = "改裝又要清空", file = C, from = "] mode:keep flags[IsNotWorn],", to = "] mode:keep flags[IsEmpty;IsNotWorn]," },
         { name = "線改成整捲銷毀", file = C, from = "item 2 tags[base:thread],", to = "item 2 tags[base:thread] mode:destroy," },
-        { name = "產出外觀錯", file = C, from = "item 1 MinidoracatBags.ExpeditionPack_Navy,", to = "item 1 MinidoracatBags.ExpeditionPack_Olive," },
-        { name = "OnCreate 名稱打錯", file = C, from = "OnCreate = MDB.onConvert,", to = "OnCreate = MDB.onConvrt," },
+        { name = "改裝多一個產出", file = C, from = "OnCreate = MDB.onConvertLegacy,", to = "OnCreate = MDB.onConvertLegacy,\n        outputs\n        {\n            item 1 Base.Bag_ALICEpack,\n        }" },
+        { name = "OnCreate 名稱打錯", file = C, from = "OnCreate = MDB.onConvertLegacy,", to = "OnCreate = MDB.onConvrtLegacy," },
+        { name = "布吊帶包產出原版", file = C, from = "item 1 MinidoracatBags.Bag_SheetSlingBag_Reinforced,", to = "item 1 Base.Bag_SheetSlingBag," },
+        { name = "布吊帶包多要工具", file = C, from = "item 5 [Base.Money],", to = "item 5 [Base.Money],\n            item 1 tags[base:scissors] mode:keep," },
+        { name = "布吊帶包鈔票數錯", file = C, from = "item 5 [Base.Money]", to = "item 4 [Base.Money]" },
+        { name = "布吊帶包要技能", file = C, from = "OnCreate = MDB.onCraftFull,", to = "OnCreate = MDB.onCraftFull,\n        SkillRequired = Tailoring:1," },
         { name = "鎖永遠放行", file = "MDB_Legacy.lua", from = 'return MDB.opt("LockLegacyBags") == false', to = "return true" },
         { name = "鎖永遠擋", file = "MDB_Legacy.lua", from = 'return MDB.opt("LockLegacyBags") == false', to = "return false" },
-        { name = "改裝固定給 3 階", file = "MDB_Legacy.lua", from = 'MDB.opt("MaxTier")', to = "3" },
-        { name = "改裝取最後一個產出物", file = "MDB_Legacy.lua", from = "created:get(0)", to = "created:get(created:size() - 1)" },
+        { name = "改裝固定給 3 階", file = "MDB_Legacy.lua", from = 'MDB.LEGACY_TARGET[bag:getFullType()]], MDB.opt("MaxTier")', to = "MDB.LEGACY_TARGET[bag:getFullType()]], 3" },
+        { name = "改裝不換型", file = "MDB_Legacy.lua", from = 'MDB.swapBag(bag, MDB.REINFORCED[MDB.LEGACY_TARGET[bag:getFullType()]], MDB.opt("MaxTier"), character)', to = 'MDB.applyTier(bag, MDB.opt("MaxTier"))' },
+        { name = "對照表錯一款", file = "MDB_Legacy.lua", from = '["BagUpgradePlus.SWATPlus"] = "Base.Bag_SWAT"', to = '["BagUpgradePlus.SWATPlus"] = "Base.Bag_Police"' },
+        { name = "對照表少一款", file = "MDB_Legacy.lua", from = '    ["BagUpgradePlus.MoneyBagPlus"] = "Base.Bag_MoneyBag",\n', to = "" },
+        { name = "直接製作固定 3 階", file = "MDB_Legacy.lua", from = 'MDB.applyTier(created:get(0), MDB.opt("MaxTier"))', to = "MDB.applyTier(created:get(0), 3)" },
+        { name = "直接製作取最後一個產出物", file = "MDB_Legacy.lua", from = "created:get(0)", to = "created:get(created:size() - 1)" },
+        { name = "換型液體沒重搬", file = "MDB_Upgrade.lua", from = "if ofc and nfc then nfc:copyFluidsFrom(ofc) end", to = "" },
+        { name = "換型不搬內容物", file = "MDB_Upgrade.lua", from = "        copyClothingItem(old, new)\n", to = "" },
         { name = "guard 不比 modID", file = "MDB_Guard.lua", from = "s:getModID() ~= MOD_ID", to = "false" },
         { name = "guard 不看合併欄位", file = "MDB_Guard.lua", from = "s:getBodyLocation() ~= nil or ", to = "" },
         { name = "guard 不看啟用的 BUP", file = "MDB_Guard.lua", from = 'mods:contains(id) or mods:contains("\\\\" .. id)', to = "false" },

@@ -16,10 +16,8 @@
     "MDB_UpgradeBagTier1": "Tasche auf Stufe 1 verstärken",
     "MDB_UpgradeBagTier2": "Tasche auf Stufe 2 verstärken",
     "MDB_UpgradeBagTier3": "Tasche auf Stufe 3 verstärken",
-    "MDB_ConvertLegacyBack_Navy": "Alten Plus-Rucksack zum S.T.A.R.S. Expeditions-Tragegestell umbauen",
-    "MDB_ConvertLegacyBack_Olive": "Alten Plus-Rucksack zum Umbrella Expeditions-Tragegestell umbauen",
-    "MDB_ConvertLegacySatchel_Navy": "Alte Plus-Umhängetasche zur S.T.A.R.S. Kurier-Umhängetasche umbauen",
-    "MDB_ConvertLegacySatchel_Olive": "Alte Plus-Umhängetasche zur Umbrella Kurier-Umhängetasche umbauen",
-    "MDB_ConvertLegacyFanny_Navy": "Alte Plus-Gürteltasche zur S.T.A.R.S. Werkzeug-Gürteltasche umbauen",
-    "MDB_ConvertLegacyFanny_Olive": "Alte Plus-Gürteltasche zur Umbrella Werkzeug-Gürteltasche umbauen"
+    "MDB_ConvertLegacyBag": "Alte Plus-Tasche in verstärkte Version umbauen",
+    "MDB_RestoreReinforced": "Verstärkte Tasche zurück zum Original umbauen",
+    "MDB_ReinforceUpgradedBag": "Tasche ab Stufe 1 in verstärkte Version umbauen",
+    "MDB_MakeSheetSlingBag_Reinforced": "Laken-Tragetasche nähen (verstärkt)"
 }

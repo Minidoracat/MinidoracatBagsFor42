@@ -1,0 +1,951 @@
+/* 由 scripts/gen_reinforced.py 產生，不要手改；來源表是 MDB_Upgrade.lua 的 MDB.REINFORCED_SOURCES。
+   強化版：欄位照原版，自重 0.1、不減速、自己的 ClothingItem；容量、負重減輕、液體由 MDB.applyTier 依階級升。
+   不放進戰利品與殭屍掉落；只從升級、舊 Plus 改裝、布吊帶包直接製作取得。
+   還原：強化版改回原版，階級、內容物、modData 照舊（MDB.onSwapKeepTier）。
+   已升級原版背包改成強化版：給 0.1.0 升過級的原版背包，只換型、階級照舊（OnTest 只放行第 1 階以上）。 */
+module MinidoracatBags
+{
+    imports
+    {
+        Base
+    }
+
+    item Bag_SurvivorBag_Reinforced
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        Weight = 0.1,
+        IconsForTexture = AliceBag;AliceBag_Camo;AliceBag_SandCamo,
+        AttachmentReplacement = Bag,
+        BloodLocation = Bag,
+        CanBeEquipped = base:back,
+        CanHaveHoles = false,
+        Capacity = 28,
+        CloseSound = CloseBag,
+        ClothingItem = MDB_Bag_SurvivorBag_Reinforced,
+        EquipSound = EquipBackpackLarge,
+        OpenSound = OpenBag,
+        PutInSound = PutItemInBag,
+        ReplaceInPrimaryHand = Bag_SurvivorBag_RHand holdingbagright,
+        ReplaceInSecondHand = Bag_SurvivorBag_LHand holdingbagleft,
+        RunSpeedModifier = 1.0,
+        WeightReduction = 85,
+        WorldStaticModel = ALICE_Pack_Ground,
+        AttachmentsProvided = BedrollBottomALICE,
+        Tags = base:ignorezombiedensity;base:isfirefuel;base:isfiretinder,
+        Researchablerecipes = SewCrudeLeatherBackpack,
+    }
+
+    item Bag_ALICEpack_Reinforced
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        Weight = 0.1,
+        Icon = AliceBag,
+        AttachmentReplacement = Bag,
+        BloodLocation = Bag,
+        CanBeEquipped = base:back,
+        CanHaveHoles = false,
+        Capacity = 28,
+        CloseSound = CloseBag,
+        ClothingItem = MDB_Bag_ALICEpack_Reinforced,
+        EquipSound = EquipBackpackLarge,
+        OpenSound = OpenBag,
+        PutInSound = PutItemInBag,
+        ReplaceInPrimaryHand = Bag_ALICEpack_RHand holdingbagright,
+        ReplaceInSecondHand = Bag_ALICEpack_LHand holdingbagleft,
+        RunSpeedModifier = 1.0,
+        WeightReduction = 85,
+        WorldStaticModel = ALICE_Pack_Ground,
+        AttachmentsProvided = BedrollBottomALICE,
+        Tags = base:ignorezombiedensity;base:isfirefuel;base:isfiretinder,
+        Researchablerecipes = SewCrudeLeatherBackpack,
+    }
+
+    item Bag_ALICEpack_Army_Reinforced
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        Weight = 0.1,
+        Icon = AliceBag_Camo,
+        AttachmentReplacement = Bag,
+        BloodLocation = Bag,
+        CanBeEquipped = base:back,
+        CanHaveHoles = false,
+        Capacity = 28,
+        CloseSound = CloseBag,
+        ClothingItem = MDB_Bag_ALICEpack_Army_Reinforced,
+        EquipSound = EquipBackpackLarge,
+        OpenSound = OpenBag,
+        PutInSound = PutItemInBag,
+        ReplaceInPrimaryHand = Bag_ALICEpack_Army_RHand holdingbagright,
+        ReplaceInSecondHand = Bag_ALICEpack_Army_LHand holdingbagleft,
+        RunSpeedModifier = 1.0,
+        WeightReduction = 85,
+        WorldStaticModel = ALICE_Pack_Ground,
+        AttachmentsProvided = BedrollBottomALICE,
+        Tags = base:ignorezombiedensity;base:isfirefuel;base:isfiretinder,
+        Researchablerecipes = SewCrudeLeatherBackpack,
+    }
+
+    item Bag_ALICEpack_DesertCamo_Reinforced
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        Weight = 0.1,
+        Icon = AliceBag_SandCamo,
+        AttachmentReplacement = Bag,
+        BloodLocation = Bag,
+        CanBeEquipped = base:back,
+        CanHaveHoles = false,
+        Capacity = 28,
+        CloseSound = CloseBag,
+        ClothingItem = MDB_Bag_ALICEpack_DesertCamo_Reinforced,
+        EquipSound = EquipBackpackLarge,
+        OpenSound = OpenBag,
+        PutInSound = PutItemInBag,
+        ReplaceInPrimaryHand = Bag_ALICEpack_DesertCamo_RHand holdingbagright,
+        ReplaceInSecondHand = Bag_ALICEpack_DesertCamo_LHand holdingbagleft,
+        RunSpeedModifier = 1.0,
+        WeightReduction = 85,
+        WorldStaticModel = ALICE_Pack_Ground,
+        AttachmentsProvided = BedrollBottomALICE,
+        Tags = base:ignorezombiedensity;base:isfirefuel;base:isfiretinder,
+        Researchablerecipes = SewCrudeLeatherBackpack,
+    }
+
+    item Bag_DuffelBag_Reinforced
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        Weight = 0.1,
+        IconsForTexture = Duffelbag;DuffelBag_Green;DuffelBag_Grey;DuffelBagBlue;DuffelBagRed;Duffelbag_Sport;Duffelbag_Sport2,
+        CanBeEquipped = base:back,
+        CanHaveHoles = false,
+        Capacity = 18,
+        CloseSound = CloseBag,
+        ClothingItem = MDB_Bag_DuffelBag_Reinforced,
+        EquipSound = EquipDuffleBag,
+        OpenSound = OpenBag,
+        PutInSound = PutItemInBag,
+        ReplaceInPrimaryHand = Bag_DuffelBag_RHand holdingbagright,
+        ReplaceInSecondHand = Bag_DuffelBag_LHand holdingbagleft,
+        RunSpeedModifier = 1.0,
+        SoundParameter = EquippedBaggageContainer DuffleBag,
+        WeightReduction = 65,
+        WorldStaticModel = DuffelBag_Ground,
+        Tags = base:isfirefuel;base:isfiretinder,
+    }
+
+    item Bag_MedicalBag_Reinforced
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        ClothingItem = MDB_Bag_MedicalBag_Reinforced,
+        CanBeEquipped = base:back,
+        WeightReduction = 65,
+        Weight = 0.1,
+        Capacity = 18,
+        Icon = DuffelbagMedical,
+        OpenSound = OpenBag,
+        CloseSound = CloseBag,
+        PutInSound = PutItemInBag,
+        RunSpeedModifier = 1.0,
+        CanHaveHoles = false,
+        ReplaceInSecondHand = Bag_DuffelBag_LHandMedical holdingbagleft,
+        ReplaceInPrimaryHand = Bag_DuffelBag_RHandMedical holdingbagright,
+        WorldStaticModel = DuffelBag_Ground,
+        Tags = base:ignorezombiedensity;base:isfirefuel;base:isfiretinder,
+    }
+
+    item Bag_Military_Reinforced
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        ClothingItem = MDB_Bag_Military_Reinforced,
+        CanBeEquipped = base:back,
+        WeightReduction = 65,
+        Weight = 0.1,
+        Capacity = 18,
+        Icon = DuffelbagMilitary,
+        OpenSound = OpenBag,
+        CloseSound = CloseBag,
+        PutInSound = PutItemInBag,
+        RunSpeedModifier = 1.0,
+        CanHaveHoles = false,
+        ReplaceInSecondHand = Bag_DuffelBag_LHandMilitary holdingbagleft,
+        ReplaceInPrimaryHand = Bag_DuffelBag_RHandMilitary holdingbagright,
+        WorldStaticModel = DuffelBag_Ground,
+        Tags = base:ignorezombiedensity;base:isfirefuel;base:isfiretinder,
+    }
+
+    item Bag_Police_Reinforced
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        Weight = 0.1,
+        Icon = DuffelbagPolice,
+        CanBeEquipped = base:back,
+        CanHaveHoles = false,
+        Capacity = 18,
+        CloseSound = CloseBag,
+        ClothingItem = MDB_Bag_Police_Reinforced,
+        EquipSound = EquipDuffleBag,
+        OpenSound = OpenBag,
+        PutInSound = PutItemInBag,
+        ReplaceInPrimaryHand = Bag_DuffelBag_RHandPolice holdingbagright,
+        ReplaceInSecondHand = Bag_DuffelBag_LHandPolice holdingbagleft,
+        RunSpeedModifier = 1.0,
+        SoundParameter = EquippedBaggageContainer DuffleBag,
+        WeightReduction = 65,
+        WorldStaticModel = DuffelBag_Ground,
+        Tags = base:ignorezombiedensity;base:duffelbag;base:neverempty;base:isfirefuel;base:isfiretinder,
+    }
+
+    item Bag_Sheriff_Reinforced
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        Weight = 0.1,
+        Icon = DuffelbagSheriff,
+        CanBeEquipped = base:back,
+        CanHaveHoles = false,
+        Capacity = 18,
+        CloseSound = CloseBag,
+        ClothingItem = MDB_Bag_Sheriff_Reinforced,
+        EquipSound = EquipDuffleBag,
+        OpenSound = OpenBag,
+        PutInSound = PutItemInBag,
+        ReplaceInPrimaryHand = Bag_DuffelBag_RHandSheriff holdingbagright,
+        ReplaceInSecondHand = Bag_DuffelBag_LHandSheriff holdingbagleft,
+        RunSpeedModifier = 1.0,
+        SoundParameter = EquippedBaggageContainer DuffleBag,
+        WeightReduction = 65,
+        WorldStaticModel = DuffelBag_Ground,
+        Tags = base:ignorezombiedensity;base:duffelbag;base:neverempty;base:isfirefuel;base:isfiretinder,
+    }
+
+    item Bag_SWAT_Reinforced
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        Weight = 0.1,
+        Icon = DuffelbagSWAT,
+        CanBeEquipped = base:back,
+        CanHaveHoles = false,
+        Capacity = 18,
+        CloseSound = CloseBag,
+        ClothingItem = MDB_Bag_SWAT_Reinforced,
+        EquipSound = EquipDuffleBag,
+        OpenSound = OpenBag,
+        PutInSound = PutItemInBag,
+        ReplaceInPrimaryHand = Bag_DuffelBag_RHandSWAT holdingbagright,
+        ReplaceInSecondHand = Bag_DuffelBag_LHandSWAT holdingbagleft,
+        RunSpeedModifier = 1.0,
+        SoundParameter = EquippedBaggageContainer DuffleBag,
+        WeightReduction = 65,
+        WorldStaticModel = DuffelBag_Ground,
+        Tags = base:bagsfillexception;base:ignorezombiedensity;base:duffelbag;base:neverempty;base:isfirefuel;base:isfiretinder,
+    }
+
+    item Bag_BreakdownBag_Reinforced
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        Weight = 0.1,
+        IconsForTexture = Duffelbag;DuffelBag_Green;DuffelBag_Grey;DuffelBagBlue;DuffelBagRed;Duffelbag_Sport;Duffelbag_Sport2,
+        CanBeEquipped = base:back,
+        CanHaveHoles = false,
+        Capacity = 18,
+        CloseSound = CloseBag,
+        ClothingItem = MDB_Bag_BreakdownBag_Reinforced,
+        EquipSound = EquipDuffleBag,
+        OpenSound = OpenBag,
+        PutInSound = PutItemInBag,
+        ReplaceInPrimaryHand = Bag_DuffelBag_RHand holdingbagright,
+        ReplaceInSecondHand = Bag_DuffelBag_LHand holdingbagleft,
+        RunSpeedModifier = 1.0,
+        SoundParameter = EquippedBaggageContainer DuffleBag,
+        WeightReduction = 65,
+        WorldStaticModel = DuffelBag_Ground,
+        Tags = base:isfirefuel;base:isfiretinder,
+    }
+
+    item Bag_BurglarBag_Reinforced
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        ClothingItem = MDB_Bag_BurglarBag_Reinforced,
+        CanBeEquipped = base:back,
+        WeightReduction = 65,
+        Weight = 0.1,
+        CanHaveHoles = false,
+        Capacity = 18,
+        Icon = Duffelbag,
+        OpenSound = OpenBag,
+        CloseSound = CloseBag,
+        PutInSound = PutItemInBag,
+        RunSpeedModifier = 1.0,
+        ReplaceInSecondHand = Bag_DuffelBag_LHandTINT holdingbagleft,
+        ReplaceInPrimaryHand = Bag_DuffelBag_RHandTINT holdingbagright,
+        WorldStaticModel = DuffelBag_Ground,
+        Tags = base:neverempty;base:duffelbag;base:isfirefuel;base:isfiretinder,
+    }
+
+    item Bag_BaseballBag_Reinforced
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        ClothingItem = MDB_Bag_BaseballBag_Reinforced,
+        CanBeEquipped = base:back,
+        WeightReduction = 65,
+        Weight = 0.1,
+        Capacity = 18,
+        IconsForTexture = Duffelbag_Sport;Duffelbag_Sport2,
+        OpenSound = OpenBag,
+        CloseSound = CloseBag,
+        PutInSound = PutItemInBag,
+        RunSpeedModifier = 1.0,
+        CanHaveHoles = false,
+        ReplaceInSecondHand = Bag_BaseballBag_LHand holdingbagleft,
+        ReplaceInPrimaryHand = Bag_BaseballBag_RHand holdingbagright,
+        WorldStaticModel = DuffelBag_Ground,
+        Tags = base:isfirefuel;base:isfiretinder,
+    }
+
+    item Bag_TennisBag_Reinforced
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        ClothingItem = MDB_Bag_TennisBag_Reinforced,
+        CanBeEquipped = base:back,
+        WeightReduction = 65,
+        Weight = 0.1,
+        Capacity = 18,
+        IconsForTexture = Duffelbag_Sport;Duffelbag_Sport2,
+        OpenSound = OpenBag,
+        CloseSound = CloseBag,
+        PutInSound = PutItemInBag,
+        RunSpeedModifier = 1.0,
+        CanHaveHoles = false,
+        ReplaceInSecondHand = Bag_BaseballBag_LHand holdingbagleft,
+        ReplaceInPrimaryHand = Bag_BaseballBag_RHand holdingbagright,
+        WorldStaticModel = DuffelBag_Ground,
+        Tags = base:isfirefuel;base:isfiretinder,
+    }
+
+    item Bag_WeaponBag_Reinforced
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        Weight = 0.1,
+        Icon = Duffelbag,
+        CanBeEquipped = base:back,
+        CanHaveHoles = false,
+        Capacity = 18,
+        CloseSound = CloseBag,
+        ClothingItem = MDB_Bag_WeaponBag_Reinforced,
+        EquipSound = EquipDuffleBag,
+        OpenSound = OpenBag,
+        PutInSound = PutItemInBag,
+        ReplaceInPrimaryHand = Bag_DuffelBag_RHandTINT holdingbagright,
+        ReplaceInSecondHand = Bag_DuffelBag_LHandTINT holdingbagleft,
+        RunSpeedModifier = 1.0,
+        WeightReduction = 65,
+        WorldStaticModel = DuffelBag_Ground,
+        Tags = base:bagsfillexception;base:isfirefuel;base:isfiretinder,
+    }
+
+    item Bag_InmateEscapedBag_Reinforced
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        Weight = 0.1,
+        Icon = Duffelbag,
+        CanBeEquipped = base:back,
+        CanHaveHoles = false,
+        Capacity = 18,
+        CloseSound = CloseBag,
+        ClothingItem = MDB_Bag_InmateEscapedBag_Reinforced,
+        EquipSound = EquipDuffleBag,
+        OpenSound = OpenBag,
+        PutInSound = PutItemInBag,
+        ReplaceInPrimaryHand = Bag_DuffelBag_RHandTINT holdingbagright,
+        ReplaceInSecondHand = Bag_DuffelBag_LHandTINT holdingbagleft,
+        RunSpeedModifier = 1.0,
+        WeightReduction = 65,
+        WorldStaticModel = DuffelBag_Ground,
+        Tags = base:isfirefuel;base:isfiretinder,
+    }
+
+    item Bag_MoneyBag_Reinforced
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        Weight = 0.1,
+        Icon = DuffelBagWhite,
+        CanBeEquipped = base:back,
+        CanHaveHoles = false,
+        Capacity = 18,
+        CloseSound = CloseBag,
+        ClothingItem = MDB_Bag_MoneyBag_Reinforced,
+        EquipSound = EquipDuffleBag,
+        OpenSound = OpenBag,
+        PutInSound = PutItemInBag,
+        ReplaceInPrimaryHand = Bag_DuffelBag_RHandTINT holdingbagright,
+        ReplaceInSecondHand = Bag_DuffelBag_LHandTINT holdingbagleft,
+        RunSpeedModifier = 1.0,
+        WeightReduction = 65,
+        WorldStaticModel = DuffelBag_Ground,
+        Tags = base:isfirefuel;base:isfiretinder;base:neverempty,
+    }
+
+    item Bag_WorkerBag_Reinforced
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        Weight = 0.1,
+        Icon = Duffelbag,
+        CanBeEquipped = base:back,
+        CanHaveHoles = false,
+        Capacity = 18,
+        CloseSound = CloseBag,
+        ClothingItem = MDB_Bag_WorkerBag_Reinforced,
+        EquipSound = EquipDuffleBag,
+        OpenSound = OpenBag,
+        PutInSound = PutItemInBag,
+        ReplaceInPrimaryHand = Bag_DuffelBag_RHandTINT holdingbagright,
+        ReplaceInSecondHand = Bag_DuffelBag_LHandTINT holdingbagleft,
+        RunSpeedModifier = 1.0,
+        WeightReduction = 65,
+        WorldStaticModel = DuffelBag_Ground,
+        Tags = base:isfirefuel;base:isfiretinder,
+    }
+
+    item Bag_ShotgunBag_Reinforced
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        Weight = 0.1,
+        IconsForTexture = Duffelbag;DuffelBag_Green;DuffelBag_Grey;DuffelBagBlue;DuffelBagRed;Duffelbag_Sport;Duffelbag_Sport2,
+        CanBeEquipped = base:back,
+        CanHaveHoles = false,
+        Capacity = 18,
+        CloseSound = CloseBag,
+        ClothingItem = MDB_Bag_ShotgunBag_Reinforced,
+        OpenSound = OpenBag,
+        PutInSound = PutItemInBag,
+        ReplaceInPrimaryHand = Bag_DuffelBag_RHand holdingbagright,
+        ReplaceInSecondHand = Bag_DuffelBag_LHand holdingbagleft,
+        RunSpeedModifier = 1.0,
+        WeightReduction = 65,
+        WorldStaticModel = DuffelBag_Ground,
+        Tags = base:neverempty;base:isfiretinder;base:isfirefuel,
+    }
+
+    item Bag_ShotgunSawnoffBag_Reinforced
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        Weight = 0.1,
+        IconsForTexture = Duffelbag;DuffelBag_Green;DuffelBag_Grey;DuffelBagBlue;DuffelBagRed;Duffelbag_Sport;Duffelbag_Sport2,
+        CanBeEquipped = base:back,
+        CanHaveHoles = false,
+        Capacity = 18,
+        CloseSound = CloseBag,
+        ClothingItem = MDB_Bag_ShotgunSawnoffBag_Reinforced,
+        OpenSound = OpenBag,
+        PutInSound = PutItemInBag,
+        ReplaceInPrimaryHand = Bag_DuffelBag_RHand holdingbagright,
+        ReplaceInSecondHand = Bag_DuffelBag_LHand holdingbagleft,
+        RunSpeedModifier = 1.0,
+        WeightReduction = 65,
+        WorldStaticModel = DuffelBag_Ground,
+        Tags = base:neverempty;base:isfiretinder;base:isfirefuel,
+    }
+
+    item Bag_ShotgunDblBag_Reinforced
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        Weight = 0.1,
+        IconsForTexture = Duffelbag;DuffelBag_Green;DuffelBag_Grey;DuffelBagBlue;DuffelBagRed;Duffelbag_Sport;Duffelbag_Sport2,
+        CanBeEquipped = base:back,
+        CanHaveHoles = false,
+        Capacity = 18,
+        CloseSound = CloseBag,
+        ClothingItem = MDB_Bag_ShotgunDblBag_Reinforced,
+        OpenSound = OpenBag,
+        PutInSound = PutItemInBag,
+        ReplaceInPrimaryHand = Bag_DuffelBag_RHand holdingbagright,
+        ReplaceInSecondHand = Bag_DuffelBag_LHand holdingbagleft,
+        RunSpeedModifier = 1.0,
+        WeightReduction = 65,
+        WorldStaticModel = DuffelBag_Ground,
+        Tags = base:neverempty;base:isfiretinder;base:isfirefuel,
+    }
+
+    item Bag_ShotgunDblSawnoffBag_Reinforced
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        Weight = 0.1,
+        IconsForTexture = Duffelbag;DuffelBag_Green;DuffelBag_Grey;DuffelBagBlue;DuffelBagRed;Duffelbag_Sport;Duffelbag_Sport2,
+        CanBeEquipped = base:back,
+        CanHaveHoles = false,
+        Capacity = 18,
+        CloseSound = CloseBag,
+        ClothingItem = MDB_Bag_ShotgunDblSawnoffBag_Reinforced,
+        OpenSound = OpenBag,
+        PutInSound = PutItemInBag,
+        ReplaceInPrimaryHand = Bag_DuffelBag_RHand holdingbagright,
+        ReplaceInSecondHand = Bag_DuffelBag_LHand holdingbagleft,
+        RunSpeedModifier = 1.0,
+        WeightReduction = 65,
+        WorldStaticModel = DuffelBag_Ground,
+        Tags = base:neverempty;base:isfiretinder;base:isfirefuel,
+    }
+
+    item Bag_FoodCanned_Reinforced
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        ClothingItem = MDB_Bag_FoodCanned_Reinforced,
+        CanBeEquipped = base:back,
+        WeightReduction = 65,
+        Weight = 0.1,
+        Capacity = 18,
+        Icon = Duffelbag,
+        OpenSound = OpenBag,
+        CloseSound = CloseBag,
+        PutInSound = PutItemInBag,
+        RunSpeedModifier = 1.0,
+        CanHaveHoles = false,
+        ReplaceInSecondHand = Bag_DuffelBag_LHandTINT holdingbagleft,
+        ReplaceInPrimaryHand = Bag_DuffelBag_RHandTINT holdingbagright,
+        WorldStaticModel = DuffelBag_Ground,
+        Tags = base:neverempty;base:isfirefuel;base:isfiretinder,
+    }
+
+    item Bag_FoodSnacks_Reinforced
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        ClothingItem = MDB_Bag_FoodSnacks_Reinforced,
+        CanBeEquipped = base:back,
+        WeightReduction = 65,
+        Weight = 0.1,
+        Capacity = 18,
+        Icon = Duffelbag,
+        OpenSound = OpenBag,
+        CloseSound = CloseBag,
+        PutInSound = PutItemInBag,
+        RunSpeedModifier = 1.0,
+        CanHaveHoles = false,
+        ReplaceInSecondHand = Bag_DuffelBag_LHandTINT holdingbagleft,
+        ReplaceInPrimaryHand = Bag_DuffelBag_RHandTINT holdingbagright,
+        WorldStaticModel = DuffelBag_Ground,
+        Tags = base:neverempty;base:isfirefuel;base:isfiretinder,
+    }
+
+    item Bag_ToolBag_Reinforced
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        ClothingItem = MDB_Bag_ToolBag_Reinforced,
+        CanBeEquipped = base:back,
+        WeightReduction = 65,
+        Weight = 0.1,
+        Capacity = 18,
+        Icon = Duffelbag,
+        OpenSound = OpenBag,
+        CloseSound = CloseBag,
+        PutInSound = PutItemInBag,
+        RunSpeedModifier = 1.0,
+        CanHaveHoles = false,
+        ReplaceInSecondHand = Bag_DuffelBag_LHandTINT holdingbagleft,
+        ReplaceInPrimaryHand = Bag_DuffelBag_RHandTINT holdingbagright,
+        WorldStaticModel = DuffelBag_Ground,
+        Tags = base:ignorezombiedensity;base:isfirefuel;base:isfiretinder;base:neverempty,
+    }
+
+    item Bag_FannyPackBack_Reinforced
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        Weight = 0.1,
+        IconsForTexture = FannyPack;Fannypack_Sport;Fannypack_Sport2,
+        BodyLocation = base:fannypackback,
+        CanBeEquipped = base:fannypackback,
+        CanHaveHoles = false,
+        Capacity = 1,
+        CloseSound = CloseLeatherBag,
+        ClothingItem = MDB_Bag_FannyPackBack_Reinforced,
+        ClothingItemExtra = MinidoracatBags.Bag_FannyPackFront_Reinforced,
+        ClothingItemExtraOption = FannyPack_WearFront,
+        EquipSound = EquipFannyPack,
+        OpenSound = OpenLeatherBag,
+        PutInSound = StoreItemLeatherBag,
+        RunSpeedModifier = 1.0,
+        WeightReduction = 85,
+        ClothingExtraSubmenu = FannyPack_WearBack,
+        WorldStaticModel = FannyPack_Ground,
+        Tags = base:isfiretinder;base:isfirefuel,
+        Researchablerecipes = SewHideFannyBag,
+    }
+
+    item Bag_FannyPackFront_Reinforced
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        Weight = 0.1,
+        IconsForTexture = FannyPack;Fannypack_Sport;Fannypack_Sport2,
+        BodyLocation = base:fannypackfront,
+        CanBeEquipped = base:fannypackfront,
+        CanHaveHoles = false,
+        Capacity = 1,
+        CloseSound = CloseLeatherBag,
+        ClothingItem = MDB_Bag_FannyPackFront_Reinforced,
+        ClothingItemExtra = MinidoracatBags.Bag_FannyPackBack_Reinforced,
+        ClothingItemExtraOption = FannyPack_WearBack,
+        EquipSound = EquipFannyPack,
+        OpenSound = OpenLeatherBag,
+        PutInSound = StoreItemLeatherBag,
+        RunSpeedModifier = 1.0,
+        WeightReduction = 85,
+        ClothingExtraSubmenu = FannyPack_WearFront,
+        WorldStaticModel = FannyPack_Ground,
+        Tags = base:isfiretinder;base:isfirefuel,
+        Researchablerecipes = SewHideFannyBag,
+    }
+
+    item Bag_HydrationBackpack_Reinforced
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        Weight = 0.1,
+        IconsForTexture = Hydropack_Black;Hydropack_Blue;Hydropack_Neon,
+        AttachmentReplacement = Bag,
+        BloodLocation = Bag,
+        CanBeEquipped = base:back,
+        CanHaveHoles = false,
+        Capacity = 12,
+        CloseSound = CloseHydrationPack,
+        ClothingItem = MDB_Bag_HydrationBackpack_Reinforced,
+        EquipSound = EquipBackpackLarge,
+        OpenSound = OpenHydrationPack,
+        PutInSound = StoreItemHydrationPack,
+        ReplaceInPrimaryHand = Bag_HydrationBackpack_RHand holdingbagright,
+        ReplaceInSecondHand = Bag_HydrationBackpack_LHand holdingbagleft,
+        RunSpeedModifier = 1.0,
+        SoundParameter = EquippedBaggageContainer SchoolBag,
+        WeightReduction = 85,
+        WorldStaticModel = HydrationBackpack_Ground,
+        Tags = base:ignorezombiedensity,
+        component FluidContainer
+        {
+            ContainerName = HydrationBackpack,
+            Capacity = 2.0,
+            InitialPercentMin = 0.0,
+            InitialPercentMax = 1.0,
+            Fluids
+            {
+                fluid = Water:1.0,
+            }
+        }
+    }
+
+    item Bag_HydrationBackpack_Camo_Reinforced
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        Weight = 0.1,
+        Icon = Hydropack_Camo,
+        AttachmentReplacement = Bag,
+        BloodLocation = Bag,
+        CanBeEquipped = base:back,
+        CanHaveHoles = false,
+        Capacity = 12,
+        CloseSound = CloseHydrationPack,
+        ClothingItem = MDB_Bag_HydrationBackpack_Camo_Reinforced,
+        EquipSound = EquipBackpackLarge,
+        OpenSound = OpenHydrationPack,
+        PutInSound = StoreItemHydrationPack,
+        ReplaceInPrimaryHand = Bag_HydrationBackpack_Camo_RHand holdingbagright,
+        ReplaceInSecondHand = Bag_HydrationBackpack_Camo_LHand holdingbagleft,
+        RunSpeedModifier = 1.0,
+        SoundParameter = EquippedBaggageContainer SchoolBag,
+        WeightReduction = 85,
+        WorldStaticModel = HydrationBackpack_Ground,
+        Tags = base:ignorezombiedensity,
+        component FluidContainer
+        {
+            ContainerName = HydrationBackpack,
+            Capacity = 3.0,
+            InitialPercentMin = 0.0,
+            InitialPercentMax = 1.0,
+            Fluids
+            {
+                fluid = Water:1.0,
+            }
+        }
+    }
+
+    item Bag_NormalHikingBag_Reinforced
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        Weight = 0.1,
+        IconsForTexture = Hiking_Blue;Hiking_Green;Hiking_Red;Hiking_Green,
+        AttachmentReplacement = Bag,
+        BloodLocation = Bag,
+        CanBeEquipped = base:back,
+        CanHaveHoles = false,
+        Capacity = 20,
+        CloseSound = CloseBag,
+        ClothingItem = MDB_Bag_NormalHikingBag_Reinforced,
+        EquipSound = EquipBackpackLarge,
+        OpenSound = OpenBag,
+        PutInSound = PutItemInBag,
+        ReplaceInPrimaryHand = Bag_HikingBag_RHand holdingbagright,
+        ReplaceInSecondHand = Bag_HikingBag_LHand holdingbagleft,
+        RunSpeedModifier = 1.0,
+        SoundParameter = EquippedBaggageContainer HikingBag,
+        WeightReduction = 75,
+        WorldStaticModel = HikingBag_Ground,
+        AttachmentsProvided = BedrollBottom,
+        Tags = base:isfirefuel;base:isfiretinder,
+        Researchablerecipes = SewCrudeLeatherBackpack,
+    }
+
+    item Bag_BigHikingBag_Reinforced
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        Weight = 0.1,
+        IconsForTexture = BigHiking_Blue;BigHiking_Green;BigHiking_Red,
+        AttachmentReplacement = Bag,
+        BloodLocation = Bag,
+        CanBeEquipped = base:back,
+        CanHaveHoles = false,
+        Capacity = 22,
+        CloseSound = CloseBag,
+        ClothingItem = MDB_Bag_BigHikingBag_Reinforced,
+        EquipSound = EquipBackpackLarge,
+        OpenSound = OpenBag,
+        PutInSound = PutItemInBag,
+        ReplaceInPrimaryHand = Bag_BigHikingBag_RHand holdingbagright,
+        ReplaceInSecondHand = Bag_BigHikingBag_LHand holdingbagleft,
+        RunSpeedModifier = 1.0,
+        SoundParameter = EquippedBaggageContainer HikingBag,
+        WeightReduction = 80,
+        WorldStaticModel = BigHikingBag_Ground,
+        AttachmentsProvided = BedrollBottomBig,
+        Tags = base:isfirefuel;base:isfiretinder,
+        Researchablerecipes = SewCrudeLeatherBackpack,
+    }
+
+    item Bag_HikingBag_Travel_Reinforced
+    {
+        DisplayCategory = Memento,
+        ItemType = base:container,
+        Weight = 0.1,
+        IconsForTexture = Hiking_Blue;Hiking_Green;Hiking_Red,
+        AttachmentReplacement = Bag,
+        BloodLocation = Bag,
+        CanBeEquipped = base:back,
+        CanHaveHoles = false,
+        Capacity = 20,
+        CloseSound = CloseBag,
+        ClothingItem = MDB_Bag_HikingBag_Travel_Reinforced,
+        EquipSound = EquipBackpackLarge,
+        OpenSound = OpenBag,
+        PutInSound = PutItemInBag,
+        ReplaceInPrimaryHand = Bag_HikingBag_Travel_RHand holdingbagright,
+        ReplaceInSecondHand = Bag_HikingBag_Travel_LHand holdingbagleft,
+        RunSpeedModifier = 1.0,
+        SoundParameter = EquippedBaggageContainer HikingBag,
+        WeightReduction = 75,
+        WorldStaticModel = HikingBag_Ground,
+        AttachmentsProvided = BedrollBottom,
+        Tags = base:ignorezombiedensity;base:isfirefuel;base:isfiretinder;base:ismemento,
+        Researchablerecipes = SewCrudeLeatherBackpack,
+    }
+
+    item Bag_Schoolbag_Reinforced
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        Weight = 0.1,
+        IconsForTexture = Backpack_Black;Backpack_Blue;Backpack_Primary;Backpack_Teal,
+        AttachmentReplacement = Bag,
+        BloodLocation = Bag,
+        CanBeEquipped = base:back,
+        CanHaveHoles = false,
+        Capacity = 15,
+        CloseSound = CloseBag,
+        ClothingItem = MDB_Bag_Schoolbag_Reinforced,
+        EquipSound = EquipBackpackSmall,
+        OpenSound = OpenBag,
+        PutInSound = PutItemInBag,
+        ReplaceInPrimaryHand = Bag_SchoolBag_RHand holdingbagright,
+        ReplaceInSecondHand = Bag_SchoolBag_LHand holdingbagleft,
+        RunSpeedModifier = 1.0,
+        SoundParameter = EquippedBaggageContainer SchoolBag,
+        WeightReduction = 70,
+        WorldStaticModel = SchoolBag_Ground,
+        Tags = base:isfirefuel;base:isfiretinder,
+        Researchablerecipes = SewCrudeLeatherBackpack,
+    }
+
+    item Bag_Satchel_Reinforced
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        Weight = 0.1,
+        IconsForTexture = Satchel_Leather;Satchel_Green;Satchel_Khaki,
+        BloodLocation = Bag,
+        CanBeEquipped = base:satchel,
+        CanHaveHoles = false,
+        Capacity = 12,
+        CloseSound = CloseSatchel,
+        ClothingItem = MDB_Bag_Satchel_Reinforced,
+        EquipSound = EquipSatchel,
+        OpenSound = OpenSatchel,
+        PutInSound = StoreItemSatchel,
+        ReplaceInPrimaryHand = Bag_Satchel_RHand holdingbagright,
+        ReplaceInSecondHand = Bag_Satchel_LHand holdingbagleft,
+        RunSpeedModifier = 1.0,
+        WeightReduction = 65,
+        WorldStaticModel = Satchel_Ground,
+        Tags = base:isfiretinder;base:isfirefuel,
+    }
+
+    item Bag_Satchel_Fishing_Reinforced
+    {
+        DisplayCategory = Memento,
+        ItemType = base:container,
+        Weight = 0.1,
+        Icon = Satchel_Fishing,
+        BloodLocation = Bag,
+        CanBeEquipped = base:satchel,
+        CanHaveHoles = false,
+        Capacity = 12,
+        CloseSound = CloseSatchelFishing,
+        ClothingItem = MDB_Bag_Satchel_Fishing_Reinforced,
+        EquipSound = EquipSatchel,
+        OpenSound = OpenSatchelFishing,
+        PutInSound = StoreItemSatchelFishing,
+        ReplaceInPrimaryHand = Bag_Satchel_Fishing_RHand holdingbagright,
+        ReplaceInSecondHand = Bag_Satchel_Fishing_LHand holdingbagleft,
+        RunSpeedModifier = 1.0,
+        WeightReduction = 65,
+        WorldStaticModel = Satchel_Fishing_Ground,
+        Tags = base:ignorezombiedensity;base:isfirefuel;base:isfiretinder;base:ismemento,
+    }
+
+    item Bag_Satchel_Medical_Reinforced
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        Weight = 0.1,
+        Icon = Satchel_Medical,
+        BloodLocation = Bag,
+        CanBeEquipped = base:satchel,
+        CanHaveHoles = false,
+        Capacity = 12,
+        CloseSound = CloseSatchelMedical,
+        ClothingItem = MDB_Bag_Satchel_Medical_Reinforced,
+        EquipSound = EquipSatchel,
+        OpenSound = OpenSatchelMedical,
+        PutInSound = StoreItemSatchelMedical,
+        ReplaceInPrimaryHand = Bag_Satchel_Medical_RHand holdingbagright,
+        ReplaceInSecondHand = Bag_Satchel_Medical_LHand holdingbagleft,
+        RunSpeedModifier = 1.0,
+        WeightReduction = 65,
+        WorldStaticModel = Satchel_Medical_Ground,
+        Tags = base:ignorezombiedensity;base:isfirefuel;base:isfiretinder,
+    }
+
+    item Bag_Satchel_Military_Reinforced
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        Weight = 0.1,
+        Icon = Satchel_Military,
+        BloodLocation = Bag,
+        CanBeEquipped = base:satchel,
+        CanHaveHoles = false,
+        Capacity = 12,
+        CloseSound = CloseSatchelMilitary,
+        ClothingItem = MDB_Bag_Satchel_Military_Reinforced,
+        EquipSound = EquipSatchel,
+        OpenSound = OpenSatchelMilitary,
+        PutInSound = StoreItemSatchelMilitary,
+        ReplaceInPrimaryHand = Bag_Satchel_Military_RHand holdingbagright,
+        ReplaceInSecondHand = Bag_Satchel_Military_LHand holdingbagleft,
+        RunSpeedModifier = 1.0,
+        WeightReduction = 65,
+        WorldStaticModel = Satchel_Military_Ground,
+        Tags = base:ignorezombiedensity;base:isfirefuel;base:isfiretinder,
+    }
+
+    item Bag_SheetSlingBag_Reinforced
+    {
+        DisplayCategory = Bag,
+        ItemType = base:container,
+        Weight = 0.1,
+        Icon = SheetSlingBag,
+        CanBeEquipped = base:back,
+        CanHaveHoles = false,
+        Capacity = 10,
+        CloseSound = CloseSheetSlingBag,
+        ClothingItem = MDB_Bag_SheetSlingBag_Reinforced,
+        EquipSound = EquipSheetSling,
+        OpenSound = OpenSheetSlingBag,
+        PutInSound = StoreItemSheetSlingBag,
+        ReplaceInPrimaryHand = Bag_SheetSlingBag_RHand holdingbagright,
+        ReplaceInSecondHand = Bag_SheetSlingBag_LHand holdingbagleft,
+        RunSpeedModifier = 1.0,
+        WeightReduction = 50,
+        WorldStaticModel = SheetSlingBag_Ground,
+        Tags = base:isfirefuel;base:isfiretinder,
+    }
+
+    craftRecipe MDB_RestoreReinforced
+    {
+        timedAction = SewingCloth,
+        time = 100,
+        AllowBatchCraft = false,
+        Tags = AnySurfaceCraft,
+        category = Tailoring,
+        OnCreate = MDB.onSwapKeepTier,
+        inputs
+        {
+            item 1 [MinidoracatBags.Bag_SurvivorBag_Reinforced;MinidoracatBags.Bag_ALICEpack_Reinforced;MinidoracatBags.Bag_ALICEpack_Army_Reinforced;MinidoracatBags.Bag_ALICEpack_DesertCamo_Reinforced;MinidoracatBags.Bag_DuffelBag_Reinforced;MinidoracatBags.Bag_MedicalBag_Reinforced;MinidoracatBags.Bag_Military_Reinforced;MinidoracatBags.Bag_Police_Reinforced;MinidoracatBags.Bag_Sheriff_Reinforced;MinidoracatBags.Bag_SWAT_Reinforced;MinidoracatBags.Bag_BreakdownBag_Reinforced;MinidoracatBags.Bag_BurglarBag_Reinforced;MinidoracatBags.Bag_BaseballBag_Reinforced;MinidoracatBags.Bag_TennisBag_Reinforced;MinidoracatBags.Bag_WeaponBag_Reinforced;MinidoracatBags.Bag_InmateEscapedBag_Reinforced;MinidoracatBags.Bag_MoneyBag_Reinforced;MinidoracatBags.Bag_WorkerBag_Reinforced;MinidoracatBags.Bag_ShotgunBag_Reinforced;MinidoracatBags.Bag_ShotgunSawnoffBag_Reinforced;MinidoracatBags.Bag_ShotgunDblBag_Reinforced;MinidoracatBags.Bag_ShotgunDblSawnoffBag_Reinforced;MinidoracatBags.Bag_FoodCanned_Reinforced;MinidoracatBags.Bag_FoodSnacks_Reinforced;MinidoracatBags.Bag_ToolBag_Reinforced;MinidoracatBags.Bag_FannyPackBack_Reinforced;MinidoracatBags.Bag_FannyPackFront_Reinforced;MinidoracatBags.Bag_HydrationBackpack_Reinforced;MinidoracatBags.Bag_HydrationBackpack_Camo_Reinforced;MinidoracatBags.Bag_NormalHikingBag_Reinforced;MinidoracatBags.Bag_BigHikingBag_Reinforced;MinidoracatBags.Bag_HikingBag_Travel_Reinforced;MinidoracatBags.Bag_Schoolbag_Reinforced;MinidoracatBags.Bag_Satchel_Reinforced;MinidoracatBags.Bag_Satchel_Fishing_Reinforced;MinidoracatBags.Bag_Satchel_Medical_Reinforced;MinidoracatBags.Bag_Satchel_Military_Reinforced;MinidoracatBags.Bag_SheetSlingBag_Reinforced] mode:keep flags[IsNotWorn],
+            item 1 tags[base:scissors] mode:keep flags[IsNotDull;MayDegradeLight],
+        }
+        outputs
+        {
+        }
+    }
+
+    craftRecipe MDB_ReinforceUpgradedBag
+    {
+        timedAction = SewingCloth,
+        time = 100,
+        AllowBatchCraft = false,
+        Tags = AnySurfaceCraft,
+        category = Tailoring,
+        OnTest = MDB.onTestUpgraded,
+        OnCreate = MDB.onSwapKeepTier,
+        inputs
+        {
+            item 1 [Base.Bag_SurvivorBag;Base.Bag_ALICEpack;Base.Bag_ALICEpack_Army;Base.Bag_ALICEpack_DesertCamo;Base.Bag_DuffelBag;Base.Bag_MedicalBag;Base.Bag_Military;Base.Bag_Police;Base.Bag_Sheriff;Base.Bag_SWAT;Base.Bag_BreakdownBag;Base.Bag_BurglarBag;Base.Bag_BaseballBag;Base.Bag_TennisBag;Base.Bag_WeaponBag;Base.Bag_InmateEscapedBag;Base.Bag_MoneyBag;Base.Bag_WorkerBag;Base.Bag_ShotgunBag;Base.Bag_ShotgunSawnoffBag;Base.Bag_ShotgunDblBag;Base.Bag_ShotgunDblSawnoffBag;Base.Bag_FoodCanned;Base.Bag_FoodSnacks;Base.Bag_ToolBag;Base.Bag_FannyPackBack;Base.Bag_FannyPackFront;Base.Bag_HydrationBackpack;Base.Bag_HydrationBackpack_Camo;Base.Bag_NormalHikingBag;Base.Bag_BigHikingBag;Base.Bag_HikingBag_Travel;Base.Bag_Schoolbag;Base.Bag_Satchel;Base.Bag_Satchel_Fishing;Base.Bag_Satchel_Medical;Base.Bag_Satchel_Military;Base.Bag_SheetSlingBag] mode:keep flags[IsNotWorn],
+            item 1 tags[base:sewingneedle] mode:keep,
+        }
+        outputs
+        {
+        }
+    }
+}
