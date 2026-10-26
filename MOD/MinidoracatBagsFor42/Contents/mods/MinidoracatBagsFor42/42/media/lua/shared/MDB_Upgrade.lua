@@ -5,9 +5,8 @@ MDB = MDB or {}
 local DEFAULTS = {
     LockLegacyBags = true,
     MaxTier = 3,
-    CapacityStepPercent = 34,
-    WeightReductionStep = 10,
-    MaxWeightReduction = 100,
+    FullCapacityPercent = 100,
+    FullWeightReduction = 100,
     LootMultiplier = 1,
 }
 
@@ -20,21 +19,36 @@ function MDB.opt(name)
     return v
 end
 
+-- Bag Upgrade Plus 水袋的液體容量（使用者 2026-10-26：升滿要和 BUP 一樣）
+local FULL_FLUID = 5.0
+
+-- 最高階（MaxTier）升滿，中間各階平均分配；MaxTier 0 維持原值
 function MDB.applyTier(bag, tier)
     local md = bag:getModData()
     if md.MDB_cap == nil then
         md.MDB_cap = bag:getCapacity()
         md.MDB_wr = bag:getWeightReduction()
     end
+    local maxTier = MDB.opt("MaxTier")
+    local t = maxTier > 0 and math.min(tier, maxTier) or 0
+    local m = math.max(maxTier, 1)
+    local pct = MDB.opt("FullCapacityPercent")
+    -- base + round((full - base) * t / m)，round(x) = floor(x + 0.5)；全用整數算，免浮點誤差
+    local function step(base, full) return base + math.floor(((full - base) * t * 2 + m) / (2 * m)) end
     -- 上限＝50 減背包自重：腳本載入與 tooltip 都壓在這裡（Item.java:2493-2499、InventoryContainer.java:125-131），
     -- 原本的 Plus 背包就是 49。自重取腳本值（Item.java:533）：伺服器上 getActualWeight() 會回 0（顯示名稱等於全名時，InventoryItem.java:2740-2742）
     local top = math.floor(50 - bag:getScriptItem():getActualWeight())
-    -- 每階補上「原本容量到上限」差距的 CapacityStepPercent%，預設 34 時第 3 階補滿（使用者 2026-10-26：升滿要和 Bag Upgrade Plus 一樣）
-    local fill = math.min(100, MDB.opt("CapacityStepPercent") * tier)
-    local cap = md.MDB_cap + math.floor((math.max(top - md.MDB_cap, 0) * fill + 50) / 100)
-    local wr = math.min(md.MDB_wr + MDB.opt("WeightReductionStep") * tier, MDB.opt("MaxWeightReduction"))
-    bag:setCapacity(cap)
-    bag:setWeightReduction(wr)
+    local fullCap = md.MDB_cap + math.floor((math.max(top - md.MDB_cap, 0) * pct + 50) / 100)
+    bag:setCapacity(step(md.MDB_cap, fullCap))
+    bag:setWeightReduction(step(md.MDB_wr, math.max(md.MDB_wr, MDB.opt("FullWeightReduction"))))
+    -- 液體容量存在 FluidContainer 元件（GameEntity.java:183、FluidContainer.java:683、存檔 :1202-1205）
+    local fc = bag:getFluidContainer()
+    if fc then
+        if md.MDB_fluid == nil then md.MDB_fluid = fc:getCapacity() end
+        local base = md.MDB_fluid
+        local full = base + math.max(FULL_FLUID - base, 0) * pct / 100
+        fc:setCapacity(base + (full - base) * t / m)
+    end
     md.MDB_tier = tier
     -- 客戶端的容量與負重減輕要整件重送才會更新；單機無作用（LuaManager.java:12404-12412、RecipeCodeOnCreate.java:892-894）
     local container = bag:getContainer()

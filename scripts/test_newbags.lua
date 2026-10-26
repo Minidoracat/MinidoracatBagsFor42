@@ -156,8 +156,8 @@ local OUTFIT_SPEC = {
 }
 local SANDBOX_SPEC = {
     LockLegacyBags = { "boolean", "true" }, MaxTier = { "integer", "3", "0", "3" },
-    CapacityStepPercent = { "integer", "34", "0", "100" }, WeightReductionStep = { "integer", "10", "0", "20" },
-    MaxWeightReduction = { "integer", "100", "50", "100" }, LootMultiplier = { "double", "1.0", "0.0", "10.0" },
+    FullCapacityPercent = { "integer", "100", "0", "100" }, FullWeightReduction = { "integer", "100", "0", "100" },
+    LootMultiplier = { "double", "1.0", "0.0", "10.0" },
 }
 
 -- ===== 假引擎 =====
@@ -171,8 +171,8 @@ local function resetEnv()
         return e
     end })
     MDB = nil
-    SandboxVars = { MinidoracatBags = { LockLegacyBags = true, MaxTier = 3, CapacityStepPercent = 34,
-        WeightReductionStep = 10, MaxWeightReduction = 100, LootMultiplier = 1 } }
+    SandboxVars = { MinidoracatBags = { LockLegacyBags = true, MaxTier = 3, FullCapacityPercent = 100,
+        FullWeightReduction = 100, LootMultiplier = 1 } }
 end
 function isServer() return env.server end
 function isClient() return env.client end
@@ -220,7 +220,15 @@ local function newBag(cap, wr, weight)
     function b:getActualWeight() return self.instanceWeight or self.weight end
     function b:getScriptItem() return script end
     function b:getContainer() return self.container end
+    function b:getFluidContainer() return self.fc end
     return b
+end
+-- FluidContainer.setCapacity 下限 0.05（FluidContainer.java:683-685）
+local function newFluid(capacity)
+    local fc = { capacity = capacity }
+    function fc:getCapacity() return self.capacity end
+    function fc:setCapacity(c) self.capacity = math.max(c, 0.05) end
+    return fc
 end
 local function vanillaItem(fullType)
     local b = VAN.items[fullType]
@@ -455,48 +463,92 @@ local function suite()
     for _, r in pairs(recipes) do want(r.fields.OnTest); want(r.fields.OnCreate) end
     check("every AcceptItemFunction/OnTest/OnCreate resolves to a function", fnOk)
 
-    -- 7. applyTier：7 款 0～3 階
-    for k, s in pairs(MODELS) do
-        local f = items["MinidoracatBags." .. k .. "_Navy"].fields
-        local base, baseWr, w = tonumber(f.Capacity), tonumber(f.WeightReduction), tonumber(f.Weight)
-        local seq = newBag(base, baseWr, w)
-        local ok = true
-        for t = 0, 3 do
+    -- 7. applyTier：最高階升滿（預設 49／100），中間平均分配，四捨五入
+    local TIERS = {
+        ToolBeltPouch = { { 3, 80 }, { 18, 87 }, { 34, 93 }, { 49, 100 } },
+        MedicHipPouch = { { 4, 85 }, { 19, 90 }, { 34, 95 }, { 49, 100 } },
+        AmmoBandolier = { { 4, 85 }, { 19, 90 }, { 34, 95 }, { 49, 100 } },
+        CourierSatchel = { { 14, 70 }, { 26, 80 }, { 37, 90 }, { 49, 100 } },
+        DayPack = { { 20, 75 }, { 30, 83 }, { 39, 92 }, { 49, 100 } },
+        ExpeditionPack = { { 30, 80 }, { 36, 87 }, { 43, 93 }, { 49, 100 } },
+        ScoutChestRig = { { 6, 85 }, { 20, 90 }, { 35, 95 }, { 49, 100 } },
+    }
+    local function walk(base, baseWr, w, want)
+        local seq, ok = newBag(base, baseWr, w), true
+        for t = 0, #want - 1 do
             local fresh = newBag(base, baseWr, w)
             MDB.applyTier(fresh, t)
             MDB.applyTier(seq, t)
-            local gap = math.max(math.floor(50 - w) - base, 0)
-            local cap = base + math.floor((gap * math.min(100, 34 * t) + 50) / 100)
-            local wr = math.min(baseWr + 10 * t, 100)
-            if fresh.cap ~= cap or fresh.wr ~= wr or seq.cap ~= cap or seq.wr ~= wr or fresh.md.MDB_tier ~= t then ok = false end
+            local c, r = want[t + 1][1], want[t + 1][2]
+            if fresh.cap ~= c or fresh.wr ~= r or seq.cap ~= c or seq.wr ~= r or fresh.md.MDB_tier ~= t then
+                ok = false; diag(string.format("    tier %d: got %d/%d, want %d/%d", t, fresh.cap, fresh.wr, c, r))
+            end
         end
-        local fresh3 = newBag(base, baseWr, w); MDB.applyTier(fresh3, 3)
-        check(k .. ": tiers 0-3 match table " .. s.cap[1] .. "->" .. s.cap[2] .. " / " .. s.wr[1] .. "->" .. s.wr[2],
-            ok and seq.cap == s.cap[2] and seq.wr == s.wr[2] and seq.md.MDB_cap == s.cap[1] and seq.md.MDB_wr == s.wr[1]
-            and fresh3.cap == s.cap[2])
+        return ok and seq.md.MDB_cap == base and seq.md.MDB_wr == baseWr
     end
-    local tb = newBag(3, 80, 0.3)
-    local steps = {}
-    for t = 1, 3 do MDB.applyTier(tb, t); steps[t] = tb.cap end
-    check("applyTier: tool belt 3 -> 19 -> 34 -> 49 (gap filled 34% per tier)", steps[1] == 19 and steps[2] == 34 and steps[3] == 49)
+    for k, s in pairs(MODELS) do
+        local f = items["MinidoracatBags." .. k .. "_Navy"].fields
+        local want = TIERS[k]
+        check(k .. ": tiers 0-3 = " .. want[1][1] .. "/" .. want[1][2] .. " -> " .. want[4][1] .. "/" .. want[4][2]
+            .. " (table " .. s.cap[2] .. "/" .. s.wr[2] .. ")",
+            want[4][1] == s.cap[2] and want[4][2] == s.wr[2]
+            and walk(tonumber(f.Capacity), tonumber(f.WeightReduction), tonumber(f.Weight), want))
+    end
+    check("applyTier: vanilla school bag (weight 1.0) 15/70 -> 26/80 -> 38/90 -> 49/100",
+        walk(15, 70, 1.0, { { 15, 70 }, { 26, 80 }, { 38, 90 }, { 49, 100 } }))
+    check("applyTier: weight 2.0, 28/85 -> 35/90 -> 41/95 -> 48/100 (cap 50 - weight)",
+        walk(28, 85, 2.0, { { 28, 85 }, { 35, 90 }, { 41, 95 }, { 48, 100 } }))
     local big = newBag(45, 85, 1.2)
     MDB.applyTier(big, 3)
     check("applyTier: capacity capped at 50 - bag weight", big.cap == 48)
     local sv0 = newBag(20, 75, 0.8); sv0.instanceWeight = 0
     MDB.applyTier(sv0, 3)
     check("applyTier: cap uses the script weight when getActualWeight() is 0 (server)", sv0.cap == 49)
-    SandboxVars.MinidoracatBags.CapacityStepPercent = 100
-    local one = newBag(20, 75, 0.8); MDB.applyTier(one, 1)
-    check("applyTier: step 100 fills to the cap at tier 1", one.cap == 49)
-    SandboxVars.MinidoracatBags.CapacityStepPercent = 0
+    local o = SandboxVars.MinidoracatBags
+    o.MaxTier = 1
+    check("applyTier: MaxTier 1 fills at tier 1", walk(3, 80, 0.3, { { 3, 80 }, { 49, 100 } }))
+    o.MaxTier = 2
+    check("applyTier: MaxTier 2 splits in halves (3/80 -> 26/90 -> 49/100)", walk(3, 80, 0.3, { { 3, 80 }, { 26, 90 }, { 49, 100 } }))
+    local over = newBag(3, 80, 0.3); MDB.applyTier(over, 3)
+    check("applyTier: tier above MaxTier stays full", over.cap == 49 and over.wr == 100)
+    o.MaxTier = 0
+    local zero = newBag(20, 75, 0.8); zero.fc = newFluid(2.0); MDB.applyTier(zero, 3)
+    check("applyTier: MaxTier 0 keeps original values", zero.cap == 20 and zero.wr == 75 and zero.fc.capacity == 2.0)
+    o.MaxTier = 3
+    o.FullCapacityPercent = 50
+    check("applyTier: FullCapacityPercent 50 fills half the gap (3 -> 26 at full)",
+        walk(3, 80, 0.3, { { 3, 80 }, { 11, 87 }, { 18, 93 }, { 26, 100 } })
+        and walk(20, 75, 0.8, { { 20, 75 }, { 25, 83 }, { 30, 92 }, { 35, 100 } }))
+    o.FullCapacityPercent = 0
     local none = newBag(20, 75, 0.8); MDB.applyTier(none, 3)
-    check("applyTier: step 0 keeps the original capacity", none.cap == 20 and none.wr == 100)
-    SandboxVars.MinidoracatBags.CapacityStepPercent = 34
-    SandboxVars.MinidoracatBags.MaxWeightReduction = 90
-    local fanny = newBag(4, 85, 0.3); MDB.applyTier(fanny, 1)
-    local exp2 = newBag(30, 80, 1.2); MDB.applyTier(exp2, 3)
-    check("applyTier: MaxWeightReduction caps", fanny.wr == 90 and exp2.wr == 90)
-    SandboxVars.MinidoracatBags.MaxWeightReduction = 100
+    check("applyTier: FullCapacityPercent 0 keeps the original capacity", none.cap == 20 and none.wr == 100)
+    o.FullCapacityPercent = 100
+    o.FullWeightReduction = 90
+    check("applyTier: FullWeightReduction 90 is the full value", walk(4, 85, 0.3, { { 4, 85 }, { 19, 87 }, { 34, 88 }, { 49, 90 } }))
+    o.FullWeightReduction = 50
+    check("applyTier: FullWeightReduction below original never lowers it", walk(14, 70, 0.6, { { 14, 70 }, { 26, 70 }, { 37, 70 }, { 49, 70 } }))
+    o.FullWeightReduction = 100
+    -- 液體：BUP 水袋 5 升
+    local function fluidSteps(base)
+        local b, got = newBag(20, 75, 0.8), {}
+        b.fc = newFluid(base)
+        for t = 1, 3 do MDB.applyTier(b, t); got[t] = b.fc.capacity end
+        return got, b
+    end
+    local function near(a, b) return math.abs(a - b) < 1e-3 end
+    local wbag, wb = fluidSteps(2.0)
+    check("applyTier: water bag fluid 2.0 -> 3.0 -> 4.0 -> 5.0, base kept", near(wbag[1], 3.0) and near(wbag[2], 4.0)
+        and near(wbag[3], 5.0) and wb.md.MDB_fluid == 2.0)
+    local camo = fluidSteps(3.0)
+    check("applyTier: camo water bag fluid 3.0 -> 3.667 -> 4.333 -> 5.0", near(camo[1], 3.667) and near(camo[2], 4.333) and near(camo[3], 5.0))
+    local large = fluidSteps(6.0)
+    check("applyTier: fluid above 5.0 is never lowered", near(large[3], 6.0))
+    o.FullCapacityPercent = 50
+    local halfFluid = fluidSteps(2.0)
+    check("applyTier: FullCapacityPercent 50 -> fluid 3.5 at full", near(halfFluid[3], 3.5))
+    o.FullCapacityPercent = 100
+    local dry = newBag(20, 75, 0.8)
+    check("applyTier: bag without fluid container does not error", pcall(MDB.applyTier, dry, 1) and dry.md.MDB_fluid == nil)
     env.sent = {}
     local sp = newBag(20, 75, 0.8); MDB.applyTier(sp, 1)
     check("applyTier: single player sends nothing", #env.sent == 0)
@@ -523,7 +575,7 @@ local function suite()
     local ub = newBag(30, 80, 1.2)
     local data = { getAllKeepInputItems = function() return javaList({ tool, ub }) end }
     MDB.onUpgrade(data, nil)
-    check("onUpgrade: first keep bag goes 0 -> 1", ub.md.MDB_tier == 1 and ub.cap == 36 and ub.wr == 90)
+    check("onUpgrade: first keep bag goes 0 -> 1", ub.md.MDB_tier == 1 and ub.cap == 36 and ub.wr == 87)
     MDB.onUpgrade(data, nil); MDB.onUpgrade(data, nil)
     check("onUpgrade: reaches tier 3 = 48/100 (weight 1.2)", ub.md.MDB_tier == 3 and ub.cap == 48 and ub.wr == 100)
     MDB.onUpgrade(data, nil)
@@ -692,8 +744,14 @@ if arg and arg[1] == "--mutants" then
         { name = "容量不四捨五入", file = "UPG", from = " + 50) / 100)", to = ") / 100)" },
         { name = "上限不扣自重", file = "UPG", from = "math.floor(50 - bag:getScriptItem():getActualWeight())", to = "50" },
         { name = "上限用實例自重", file = "UPG", from = "bag:getScriptItem():getActualWeight()", to = "bag:getActualWeight()" },
-        { name = "補滿不封頂", file = "UPG", from = 'math.min(100, MDB.opt("CapacityStepPercent") * tier)', to = 'MDB.opt("CapacityStepPercent") * tier' },
-        { name = "負重減輕不封頂", file = "UPG", from = ', MDB.opt("MaxWeightReduction"))', to = ", 999)" },
+        { name = "容量不乘 FullCapacityPercent", file = "UPG", from = "* pct + 50) / 100)", to = "* 100 + 50) / 100)" },
+        { name = "階內不四捨五入", file = "UPG", from = "* t * 2 + m) / (2 * m))", to = "* t * 2) / (2 * m))" },
+        { name = "階數沒夾在 MaxTier", file = "UPG", from = "math.min(tier, maxTier)", to = "tier" },
+        { name = "分母寫死 3", file = "UPG", from = "local m = math.max(maxTier, 1)", to = "local m = 3" },
+        { name = "負重減輕被調低", file = "UPG", from = 'math.max(md.MDB_wr, MDB.opt("FullWeightReduction"))', to = 'MDB.opt("FullWeightReduction")' },
+        { name = "液體目標錯", file = "UPG", from = "local FULL_FLUID = 5.0", to = "local FULL_FLUID = 4.0" },
+        { name = "液體不乘 FullCapacityPercent", file = "UPG", from = "* pct / 100", to = "" },
+        { name = "液體每次重讀 base", file = "UPG", from = "if md.MDB_fluid == nil then", to = "if true then" },
         { name = "每次重讀 base", file = "UPG", from = "if md.MDB_cap == nil then", to = "if true then" },
         { name = "不記階級", file = "UPG", from = "md.MDB_tier = tier", to = "" },
         { name = "伺服器不重送", file = "UPG", from = "sendReplaceItemInContainer(container, bag, bag)", to = "" },

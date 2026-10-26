@@ -3,13 +3,11 @@
     "Sandbox_MinidoracatBagsLockLegacyBags": "Verrouiller les anciens sacs de Bag Upgrade Plus",
     "Sandbox_MinidoracatBagsLockLegacyBags_tooltip": "Activé (par défaut), les anciens sacs issus de sauvegardes avec Bag Upgrade Plus permettent seulement de retirer des objets. Rien ne peut y être ajouté. Les joueurs les convertissent en nouveaux sacs avec une recette de couture.\nDésactivez-le pour les utiliser de nouveau comme des sacs normaux.",
     "Sandbox_MinidoracatBagsMaxTier": "Niveau d'amélioration maximal",
-    "Sandbox_MinidoracatBagsMaxTier_tooltip": "Niveau le plus élevé qu'un sac peut atteindre avec les recettes Renforcer un sac. 0 désactive les améliorations.\nLes anciens sacs convertis commencent à ce niveau.",
-    "Sandbox_MinidoracatBagsCapacityStepPercent": "Gain de capacité par niveau (pourcentage)",
-    "Sandbox_MinidoracatBagsCapacityStepPercent_tooltip": "Chaque niveau ajoute ce pourcentage de la capacité d'origine du sac, arrondi à l'entier le plus proche. La capacité ne dépasse jamais 50 moins le poids du sac lui-même.\nS'applique aux sacs améliorés après le changement.",
-    "Sandbox_MinidoracatBagsWeightReductionStep": "Gain de réduction du poids par niveau",
-    "Sandbox_MinidoracatBagsWeightReductionStep_tooltip": "Chaque niveau ajoute cette réduction du poids, jusqu'à la réduction du poids maximale ci-dessous.\nS'applique aux sacs améliorés après le changement.",
-    "Sandbox_MinidoracatBagsMaxWeightReduction": "Réduction du poids maximale",
-    "Sandbox_MinidoracatBagsMaxWeightReduction_tooltip": "Les sacs améliorés et convertis ne dépassent jamais cette réduction du poids.",
+    "Sandbox_MinidoracatBagsMaxTier_tooltip": "Nombre d'améliorations nécessaires pour améliorer un sac au maximum. Le niveau le plus élevé correspond à l'amélioration complète. 0 désactive les améliorations.\nLes anciens sacs convertis commencent à ce niveau.",
+    "Sandbox_MinidoracatBagsFullCapacityPercent": "Capacité à l'amélioration complète (pourcentage de l'écart jusqu'au maximum)",
+    "Sandbox_MinidoracatBagsFullCapacityPercent_tooltip": "Au niveau le plus élevé, un sac comble ce pourcentage de l'écart entre sa capacité d'origine et sa capacité maximale, arrondi à l'entier le plus proche. Les niveaux intermédiaires se partagent le gain à parts égales. La capacité maximale est 50 moins le poids du sac lui-même (49 pour la plupart des sacs). Les sacs à dos d'hydratation augmentent leur capacité en eau de la même façon, jusqu'à 5 L.\nS'applique aux sacs améliorés après le changement.",
+    "Sandbox_MinidoracatBagsFullWeightReduction": "Réduction du poids à l'amélioration complète",
+    "Sandbox_MinidoracatBagsFullWeightReduction_tooltip": "Réduction du poids d'un sac au niveau le plus élevé. Les niveaux intermédiaires se partagent le gain à parts égales. Les sacs qui en ont déjà davantage gardent leur valeur.\nS'applique aux sacs améliorés après le changement.",
     "Sandbox_MinidoracatBagsLootMultiplier": "Multiplicateur du butin et des objets lâchés par les zombies",
     "Sandbox_MinidoracatBagsLootMultiplier_tooltip": "Règle la fréquence d'apparition des nouveaux sacs dans les conteneurs de police, militaires et médicaux, et la fréquence à laquelle les zombies policiers, soldats et soignants en lâchent un. 0 désactive les deux.\nLe butin des conteneurs lit cette valeur au chargement du monde."
 }

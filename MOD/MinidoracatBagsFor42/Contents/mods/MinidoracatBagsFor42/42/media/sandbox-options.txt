@@ -6,14 +6,11 @@ option MinidoracatBags.LockLegacyBags
 option MinidoracatBags.MaxTier
 {type = integer, min = 0, max = 3, default = 3, page = MinidoracatBags, translation = MinidoracatBagsMaxTier,}
 
-option MinidoracatBags.CapacityStepPercent
-{type = integer, min = 0, max = 100, default = 34, page = MinidoracatBags, translation = MinidoracatBagsCapacityStepPercent,}
+option MinidoracatBags.FullCapacityPercent
+{type = integer, min = 0, max = 100, default = 100, page = MinidoracatBags, translation = MinidoracatBagsFullCapacityPercent,}
 
-option MinidoracatBags.WeightReductionStep
-{type = integer, min = 0, max = 20, default = 10, page = MinidoracatBags, translation = MinidoracatBagsWeightReductionStep,}
-
-option MinidoracatBags.MaxWeightReduction
-{type = integer, min = 50, max = 100, default = 100, page = MinidoracatBags, translation = MinidoracatBagsMaxWeightReduction,}
+option MinidoracatBags.FullWeightReduction
+{type = integer, min = 0, max = 100, default = 100, page = MinidoracatBags, translation = MinidoracatBagsFullWeightReduction,}
 
 option MinidoracatBags.LootMultiplier
 {type = double, min = 0.0, max = 10.0, default = 1.0, page = MinidoracatBags, translation = MinidoracatBagsLootMultiplier,}
