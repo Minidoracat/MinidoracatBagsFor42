@@ -24,8 +24,9 @@
 local MEDIA = "MOD/MinidoracatBagsFor42/Contents/mods/MinidoracatBagsFor42/42/media/lua"
 
 -- ===== 假的 PZ 全域：只記錄掛了哪些事件 =====
--- MOD 的 Lua 在載入時只呼叫 Events.X.Add，另外 MDB_Upgrade 會 require 並包住原版的 ISClothingExtraAction.createItemNew；
--- 其餘引擎全域都在函式被呼叫時才用，那些行為由 scripts/test_legacy.lua、scripts/test_newbags.lua 用各自的假全域測。
+-- MOD 的 Lua 在載入時只呼叫 Events.X.Add，另外 MDB_Upgrade 會 require 並包住原版的 ISClothingExtraAction.createItemNew，
+-- MDB_FloorWear 會 require 原版 ISBaseTimedAction 並 derive 出計時動作；
+-- 其餘引擎全域都在函式被呼叫時才用，那些行為由 scripts/test_*.lua 用各自的假全域測。
 local registered = {}
 Events = setmetatable({}, {
     __index = function(_, name)
@@ -34,6 +35,8 @@ Events = setmetatable({}, {
 })
 ISClothingExtraAction = { createItemNew = function(_, _, newItem) return newItem end }
 package.loaded["TimedActions/ISClothingExtraAction"] = true
+ISBaseTimedAction = { derive = function(self, type) return setmetatable({ Type = type }, { __index = self }) end }
+package.loaded["TimedActions/ISBaseTimedAction"] = true
 
 -- ===== 測試工具 =====
 local failures = 0
@@ -57,7 +60,7 @@ local function listLua(dir)
 end
 
 -- ===== 情境一：整包載入，只掛允許的事件（效能不變式）=====
--- 設計定案：只在開機、開世界、製作、放東西、殭屍死亡時執行 Lua，不掛每幀或每次殭屍更新的事件。
+-- 設計定案：只在開機、開世界、製作、放東西、殭屍死亡時執行 Lua，不掛每幀或每次殭屍更新的事件；右鍵選單只在玩家按右鍵時跑。
 print("情境一：整包載入")
 local loadedCount = 0
 for _, dir in ipairs({ "shared", "server", "client" }) do   -- 遊戲也是 shared 先載入
@@ -69,7 +72,7 @@ for _, dir in ipairs({ "shared", "server", "client" }) do   -- 遊戲也是 shar
 end
 check(loadedCount >= 6, "載入 " .. loadedCount .. " 個 Lua 檔（列目錄失敗時會是 0）")
 
-local ALLOWED = { "OnGameBoot", "OnPreDistributionMerge", "OnInitGlobalModData", "OnZombieDead" }
+local ALLOWED = { "OnGameBoot", "OnPreDistributionMerge", "OnInitGlobalModData", "OnZombieDead", "OnFillInventoryObjectContextMenu" }
 local allowed, seen = {}, {}
 for _, name in ipairs(ALLOWED) do allowed[name] = true end
 for _, r in ipairs(registered) do
@@ -79,13 +82,15 @@ for _, r in ipairs(registered) do
 end
 for _, name in ipairs(ALLOWED) do check(seen[name] == 1, name .. " 剛好掛一次") end
 for _, fn in ipairs({ "acceptLegacy", "acceptFirstAid", "acceptAmmo", "applyTier", "onConvert", "onUpgrade",
-                      "onTestTier1", "onTestTier2", "onTestTier3", "addLoot", "reapplyLoot", "onZombieDead", "warnDuplicates", "opt" }) do
+                      "onTestTier1", "onTestTier2", "onTestTier3", "addLoot", "reapplyLoot", "onZombieDead", "warnDuplicates", "opt",
+                      "canWearFromFloor", "needsFloorWear", "onFillFloorWearMenu" }) do
     check(type(MDB[fn]) == "function", "MDB." .. fn .. " 存在")
 end
+check(type(MDB_WearFromFloor) == "table" and MDB_WearFromFloor.Type == "MDB_WearFromFloor", "計時動作 MDB_WearFromFloor 是同名全域")
 
 -- ===== 情境二：各部分的離線測試，含植入違規 =====
 print("情境二：離線測試")
-for _, test in ipairs({ "test_legacy.lua", "test_newbags.lua" }) do
+for _, test in ipairs({ "test_legacy.lua", "test_newbags.lua", "test_floor_wear.lua" }) do
     for _, mode in ipairs({ "", " --mutants" }) do
         local p = io.popen("lua scripts/" .. test .. mode .. " 2>&1")
         local last = ""
