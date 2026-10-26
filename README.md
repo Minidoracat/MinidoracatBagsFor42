@@ -1,6 +1,6 @@
 # Minidoracat Bags
 
-S.T.A.R.S. 與保護傘主題的 7 款戰術背包，可升三階，並接手 Bag Upgrade Plus 存檔裡的舊背包
+S.T.A.R.S. 與保護傘主題的 7 款戰術背包，能升級成強化版，並接手 Bag Upgrade Plus 存檔裡的舊背包
 
 Project Zomboid Build 42 MOD。
 
@@ -10,10 +10,15 @@ Project Zomboid Build 42 MOD。
 - 7 款背包：腰掛工具包、醫療腰包、彈藥背帶、信差側背包、日行背包、遠征框架背包、偵察胸掛
 - 專用收納：醫療腰包只收急救類物品；彈藥背帶只收散裝子彈與霰彈（不收盒裝）並加快裝填；偵察胸掛不收單件重量超過 1.3 的物品
 - 取得：警察局出 S.T.A.R.S.，軍事與醫療地點出保護傘；警察、軍人、醫護殭屍死亡時也可能掉落；也能用縫紉配方製作
-- 升級：原版背包與本 MOD 背包都能用縫紉升三階，容量變大、負重減輕；幅度、上限與最高階是沙盒選項
-- 接手 Bag Upgrade Plus（主版、Realistic 版、CloudBag 與舊分支）：舊存檔裡的背包照樣讀得到（預設只能取出），清空後可改裝成新背包（直接是最高階）
+- 升級：原版背包（80 種）與本 MOD 背包都能用縫紉升三階（縫紉 2／3／4 級），最高階升滿到容量 49、負重減輕 100，中間各階平均分配；最高階與升滿的值是沙盒選項
+- 強化版：第一次升級就換成同款的強化版，自重 0.1、跑速與戰鬥速度不減、水袋揹包最多 5 公升，內容物與玩家取的名字都保留；有改回原版、0.1.0 已升級背包換成強化版、強化版床單斜背包直接製作的配方
+- 第二個側背包位置：強化版側背包背在另一側，可以和一般側背包同時背
+- 腰包換穿：腰掛工具包、醫療腰包可以換穿前後（含強化版）；升級過的腰包換穿後保留升級
+- 背包掛點：強化版的大型背包、行李袋、登山包、大登山包多了快捷列掛點，可以掛工具、水瓶、玩偶、雨傘、鋸子與手電筒
+- 穿戴地上裝滿的背包：原版「穿戴」穿不起來時，右鍵「穿戴（連同內容物）」直接穿上，內容物留在包裡
+- 接手 Bag Upgrade Plus（主版、Realistic 版、CloudBag 與舊分支）：舊存檔裡的背包照樣讀得到（預設只能取出），可以改裝成同款的強化版（直接是最高階，裡面的東西不用拿出來）
 
-完整說明（數值、取得地點、配方、沙盒選項、已知限制）見 Steam 指南：繁中 https://steamcommunity.com/sharedfiles/filedetails/?id=3827498698 、英文 https://steamcommunity.com/sharedfiles/filedetails/?id=3827498713 （稿源 [`STEAM_GUIDE.md`](STEAM_GUIDE.md)、[`STEAM_GUIDE_EN.md`](STEAM_GUIDE_EN.md)）。
+完整說明（數值、取得地點、配方、強化版、沙盒選項、已知限制）見 Steam 指南：繁中 https://steamcommunity.com/sharedfiles/filedetails/?id=3827498698 、英文 https://steamcommunity.com/sharedfiles/filedetails/?id=3827498713 （稿源 [`STEAM_GUIDE.md`](STEAM_GUIDE.md)、[`STEAM_GUIDE_EN.md`](STEAM_GUIDE_EN.md)）。
 
 ## 從 Bag Upgrade Plus 換裝
 

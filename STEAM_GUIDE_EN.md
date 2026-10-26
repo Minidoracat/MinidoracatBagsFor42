@@ -1,7 +1,7 @@
 <!-- 指南網址：https://steamcommunity.com/sharedfiles/filedetails/?id=3827498713 -->
 <!-- Steam guide source (English): the full reference for this mod; the Workshop description only summarizes. Format and sync: pz-family-docs/release.md「完整說明：Steam 指南」 -->
-<!-- 標題：📖 Minidoracat Bags Mod Guide: Seven Bags, Upgrades and Bag Upgrade Plus Takeover -->
-<!-- 摘要：Illustrated guide to the Minidoracat Bags mod: stats, loot locations and sewing recipes for the seven S.T.A.R.S. and Umbrella bags, bag upgrades, taking over Bag Upgrade Plus saves with the server switch steps, and the sandbox options. -->
+<!-- 標題：📖 Minidoracat Bags Mod Guide: Seven Bags, Reinforced Upgrades and Bag Upgrade Plus Takeover -->
+<!-- 摘要：Illustrated guide to the Minidoracat Bags mod: stats, loot locations and sewing recipes for the seven S.T.A.R.S. and Umbrella bags, bag upgrades and reinforced bags, the second satchel slot, swapping fanny packs front and back, extra bag attachment slots, wearing full bags straight off the floor, taking over Bag Upgrade Plus saves with the server switch steps, and the sandbox options. -->
 === 🚀 Quick Start
 [b]繁體中文版：[/b][url=https://steamcommunity.com/sharedfiles/filedetails/?id=3827498698]Minidoracat Bags 完整說明[/url]
 
@@ -10,8 +10,9 @@ https://steamcommunity.com/sharedfiles/filedetails/?id=3827497087
 [olist]
 [*] [b]Find bags[/b]: police stations have S.T.A.R.S. bags, military and medical sites have Umbrella bags. Police, soldier and medic zombies can also drop one when they die.
 [*] [b]Sew your own[/b]: with enough Tailoring you can sew them from the Tailoring category of the crafting menu. No recipe to learn first.
-[*] [b]Upgrade[/b]: take the bag off and use "Reinforce Bag to Tier 1/2/3", one tier at a time. Vanilla bags can be upgraded too.
-[*] [b]Old bags[/b]: bags left over from Bag Upgrade Plus only let you take items out. Empty one and use "Convert Old Plus … to …" to turn it into a new bag.
+[*] [b]Upgrade[/b]: take the bag off and use "Reinforce Bag to Tier 1/2/3", one tier at a time. Vanilla bags can be upgraded too. The first upgrade turns the bag into its "Reinforced" version: it weighs 0.1 and does not slow you down.
+[*] [b]Old bags[/b]: bags left over from Bag Upgrade Plus only let you take items out. Use "Convert Old Plus Bag to Reinforced" to turn one into the reinforced version of the same bag; items can stay inside.
+[*] [b]Full bags on the floor[/b]: when the vanilla "Wear" option can't pick one up, right-click it and choose "Wear (with contents)".
 [/olist]
 [b]Server owners[/b]: if you are coming from Bag Upgrade Plus, read the "Bag Upgrade Plus Takeover: Server Switch" chapter first. Both mods must be swapped in the same restart.
 === 🧰 The Seven Bags
@@ -26,15 +27,18 @@ In each picture S.T.A.R.S. (navy) is on the left and Umbrella (olive khaki) on t
 
 [table]
 [tr][th]Bag[/th][th]Worn on[/th][th]Weight[/th][th]Capacity (tier 0→3)[/th][th]Encumbrance Reduction (tier 0→3)[/th][/tr]
-[tr][td]Tool Belt Pouch[/td][td]Front of waist[/td][td]0.3[/td][td]3 / 3 / 4 / 4[/td][td]80 / 85 / 90 / 95[/td][/tr]
-[tr][td]Medic Hip Pouch[/td][td]Back of waist[/td][td]0.3[/td][td]4 / 5 / 5 / 6[/td][td]85 / 90 / 95 / 95[/td][/tr]
-[tr][td]Ammo Bandolier[/td][td]Across the chest[/td][td]0.3[/td][td]4 / 5 / 5 / 6[/td][td]85 / 90 / 95 / 95[/td][/tr]
-[tr][td]Courier Satchel[/td][td]Satchel slot[/td][td]0.6[/td][td]14 / 16 / 18 / 20[/td][td]70 / 75 / 80 / 85[/td][/tr]
-[tr][td]Day Pack[/td][td]Back[/td][td]0.8[/td][td]20 / 23 / 26 / 29[/td][td]75 / 80 / 85 / 90[/td][/tr]
-[tr][td]Expedition Frame Pack[/td][td]Back[/td][td]1.2[/td][td]30 / 35 / 39 / 44[/td][td]80 / 85 / 90 / 95[/td][/tr]
-[tr][td]Scout Chest Rig[/td][td]Chest[/td][td]0.5[/td][td]6 / 7 / 8 / 9[/td][td]85 / 90 / 95 / 95[/td][/tr]
+[tr][td]Tool Belt Pouch[/td][td]Front of waist (can swap to back)[/td][td]0.3[/td][td]3 / 18 / 34 / 49[/td][td]80 / 87 / 93 / 100[/td][/tr]
+[tr][td]Medic Hip Pouch[/td][td]Back of waist (can swap to front)[/td][td]0.3[/td][td]4 / 19 / 34 / 49[/td][td]85 / 90 / 95 / 100[/td][/tr]
+[tr][td]Ammo Bandolier[/td][td]Across the chest[/td][td]0.3[/td][td]4 / 19 / 34 / 49[/td][td]85 / 90 / 95 / 100[/td][/tr]
+[tr][td]Courier Satchel[/td][td]Satchel slot[/td][td]0.6[/td][td]14 / 26 / 37 / 49[/td][td]70 / 80 / 90 / 100[/td][/tr]
+[tr][td]Day Pack[/td][td]Back[/td][td]0.8[/td][td]20 / 30 / 39 / 49[/td][td]75 / 83 / 92 / 100[/td][/tr]
+[tr][td]Expedition Frame Pack[/td][td]Back[/td][td]1.0[/td][td]30 / 36 / 43 / 49[/td][td]80 / 87 / 93 / 100[/td][/tr]
+[tr][td]Scout Chest Rig[/td][td]Chest[/td][td]0.5[/td][td]6 / 20 / 35 / 49[/td][td]85 / 90 / 95 / 100[/td][/tr]
 [/table]
-Upgraded values use the default sandbox settings (+15% capacity and +5 Encumbrance Reduction per tier, capped at 95). Servers can change them; see "Sandbox Options and Defaults".
+[list]
+[*] [b]Tier 1 and up are reinforced[/b]: the bag weighs 0.1, does not reduce run or combat speed, and gets "(Reinforced)" after its name. See "Reinforced Bags".
+[*] [b]Where the numbers come from[/b]: the default sandbox settings (full upgrade 49/100 in three tiers). Servers can change them; see "Sandbox Options and Defaults".
+[/list]
 
 [h3]Two looks[/h3]
 [list]
@@ -48,6 +52,7 @@ Upgraded values use the default sandbox settings (+15% capacity and +5 Encumbran
 [*] [b]Ammo Bandolier[/b]: only loose rounds and shotgun shells. Boxes of ammo do not fit.
 [*] [b]Ammo Bandolier reloading[/b]: wearing it makes reloading rounds, magazines and shells faster.
 [*] [b]Scout Chest Rig[/b]: no single item heavier than 1.3 (a Claw Hammer, for example), like the vanilla Chest Rig.
+[*] [b]Reinforced versions keep them[/b]: these three bags keep their restrictions and faster reloading after they become reinforced.
 [*] [b]The other four[/b]: no restrictions.
 [/list]
 
@@ -75,6 +80,7 @@ Upgraded values use the default sandbox settings (+15% capacity and +5 Encumbran
 [*] [b]Multiplier[/b]: chances are multiplied by the sandbox "Loot and zombie drop multiplier". At 0 they never appear.
 [*] [b]Not added[/b]: camping stores and ordinary houses do not get the new bags.
 [*] [b]Already generated containers[/b]: they are not refilled. If you add the mod mid-save, look in places you have not explored yet.
+[*] [b]No reinforced loot[/b]: loot and zombies only give tier 0 bags. Reinforced bags only come from upgrading, converting or the recipe in "Reinforced Bags".
 [/list]
 
 [h3]Zombie drops[/h3]
@@ -105,13 +111,14 @@ Upgraded values use the default sandbox settings (+15% capacity and +5 Encumbran
 [tr][td]Day Pack[/td][td]4[/td][td]4[/td][td]4[/td][td]Buckle 3, Denim Strips 4[/td][/tr]
 [tr][td]Expedition Frame Pack[/td][td]5[/td][td]6[/td][td]6[/td][td]Buckle 4, Leather Strips 4, Pack Frame 1[/td][/tr]
 [/table]
-Thread is used by amount; a whole spool is not consumed.
+Thread is used by amount; a whole spool is not consumed. Sewn bags start at tier 0 and become reinforced when upgraded.
 === 🧰 Upgrading Bags
 [list]
 [*] [b]Recipes[/b]: "Reinforce Bag to Tier 1", "Tier 2" and "Tier 3" in the Tailoring category of the crafting menu.
 [*] [b]One tier at a time[/b]: each recipe only accepts a bag from the tier below. You cannot skip tiers.
 [*] [b]Not worn[/b]: take the bag off first.
 [*] [b]Items can stay inside[/b]: the contents are kept after the upgrade.
+[*] [b]The first upgrade makes it reinforced[/b]: going from tier 0 to tier 1 turns the bag into the reinforced version of the same bag; see the next chapter.
 [*] [b]Tools[/b]: Scissors (not dull) and a Needle; kept but may wear down.
 [/list]
 [table]
@@ -123,20 +130,107 @@ Thread is used by amount; a whole spool is not consumed.
 
 [h3]Which bags can be upgraded[/h3]
 [list]
-[*] [b]This mod's 14 bags[/b]: all seven models in both looks.
-[*] [b]Vanilla bags[/b]: any wearable backpack, satchel, fanny pack or chest rig, such as the Small Backpack, Hiking Backpack, Military Backpack and Duffel Bag.
+[*] [b]This mod's bags[/b]: all seven models in both looks, plus the swapped-side fanny pouches.
+[*] [b]Vanilla bags[/b]: 80 wearable backpacks, satchels, fanny packs and chest rigs without item restrictions, such as the Small Backpack, Hiking Backpack, Military Backpack and Duffel Bag.
 [*] [b]Vanilla containers that cannot[/b]: the restricted Bullets Bandoliers and the Shoulder Holster, plus key rings and wallets.
-[*] [b]Old Bag Upgrade Plus bags[/b]: cannot be upgraded. Converting one gives a new bag that is already at the highest tier.
+[*] [b]Old Bag Upgrade Plus bags[/b]: not through the upgrade recipes. Converting one gives the reinforced version at the highest tier.
 [/list]
 
 [h3]How much each tier adds[/h3]
 [list]
-[*] [b]Capacity[/b]: 15% of the bag's original capacity per tier, rounded to the nearest whole number.
-[*] [b]Encumbrance Reduction[/b]: +5 per tier, up to 95.
-[*] [b]Capacity cap[/b]: never above 50 minus the bag's own weight. This is a game engine limit.
-[*] [b]Example[/b]: a vanilla Small Backpack goes 15/70 → 17/75 → 20/80 → 22/85 (capacity / Encumbrance Reduction).
-[*] [b]Server settings[/b]: the step sizes, the Encumbrance Reduction cap and the highest tier (0–3; 0 turns upgrading off) are sandbox options.
-[*] [b]Changing settings[/b]: only affects bags upgraded afterwards. Bags already upgraded keep their values.
+[*] [b]Full upgrade matches Bag Upgrade Plus[/b]: at the highest tier, capacity is 49 (50 minus the reinforced weight of 0.1) and Encumbrance Reduction is 100.
+[*] [b]Even steps in between[/b]: each tier adds the same share of the way from the original values to full, rounded to whole numbers.
+[*] [b]Examples[/b]: a vanilla Small Backpack goes 15/70 → 26/80 → 38/90 → 49/100; a vanilla Fanny Pack goes 1/85 → 17/90 → 33/95 → 49/100 (capacity / Encumbrance Reduction).
+[*] [b]Hydration Packs[/b]: water capacity rises the same way up to 5 L, for example 2 → 3 → 4 → 5 L for the vanilla Hydration Pack.
+[*] [b]Already higher[/b]: a bag whose Encumbrance Reduction is already above the full value keeps its own.
+[*] [b]Server settings[/b]: the highest tier (0–3) and the full capacity and Encumbrance Reduction are sandbox options; see "Sandbox Options and Defaults".
+[/list]
+=== 🧰 Reinforced Bags
+Every upgraded bag is a "Reinforced" bag: this mod's own item with the same look and icon as the original and "(Reinforced)" after its name, such as "Hiking Backpack (Reinforced)" or "S.T.A.R.S. Day Pack (Reinforced)".
+
+[h3]What is different from the original[/h3]
+[list]
+[*] [b]Weighs 0.1[/b]: the bag itself is almost weightless, so every bag reaches 49 when fully upgraded.
+[*] [b]No slowdown[/b]: wearing it does not reduce run or combat speed; only the weight of what is inside counts as usual.
+[*] [b]Hydration Packs[/b]: water capacity reaches 5 L when fully upgraded.
+[*] [b]Satchels[/b]: worn in a second satchel slot on the other side; see "Second Satchel Slot".
+[*] [b]Military Backpacks, Duffel Bags, Hiking and Big Hiking Backpacks[/b]: get extra hotbar attachment slots; see "Reinforced Bag Attachment Slots".
+[*] [b]Everything else stays[/b]: capacity and Encumbrance Reduction follow the tier; item restrictions, bedroll attachments and fanny pack swapping work like the original.
+[/list]
+
+[h3]What carries over when a bag becomes reinforced[/h3]
+[list]
+[*] [b]Contents[/b]: everything inside stays, including bags inside bags and liquids.
+[*] [b]Your name[/b]: a bag you renamed keeps your name. Other bags take the reinforced name (dirty or worn prefixes do not carry over).
+[*] [b]The rest[/b]: color, condition and favorite mark carry over.
+[/list]
+
+[h3]Which bags have a reinforced version[/h3]
+[list]
+[*] [b]Every upgradable bag[/b]: the 80 vanilla bags, this mod's seven bags in both looks, and the swapped-side fanny pouches: 98 in total.
+[*] [b]Not in loot or on zombies[/b]: you only get them by upgrading, converting old bags or the recipe below.
+[/list]
+
+[h3]Related recipes (Tailoring category of the crafting menu)[/h3]
+[table]
+[tr][th]Recipe[/th][th]What it does[/th][th]Needs[/th][/tr]
+[tr][td]Revert Reinforced Bag to Original[/td][td]Turns a reinforced bag back into the original; tier, contents and liquid stay[/td][td]Scissors (kept); not worn[/td][/tr]
+[tr][td]Convert Upgraded Bag to Reinforced[/td][td]Turns a bag upgraded in version 0.1.0 into its reinforced version; the tier stays and the values are recalculated with the new rules[/td][td]Needle (kept); not worn; tier 1 or higher only[/td][/tr]
+[tr][td]Make Sheet Sling Bag (Reinforced)[/td][td]Makes a reinforced Sheet Sling Bag at the highest tier, straight into your main inventory[/td][td]Sheet 1, Money 5; no tools or skill; gives 15 Tailoring XP[/td][/tr]
+[/table]
+[list]
+[*] [b]Capacity after reverting[/b]: the cap goes back to 50 minus the original bag's weight; a tier 3 Military Backpack becomes 48 when reverted.
+[*] [b]Tier 0 bags[/b]: cannot use "Convert Upgraded Bag to Reinforced"; use the normal upgrade recipe.
+[/list]
+=== 🧰 Second Satchel Slot
+[list]
+[*] [b]Two satchels at once[/b]: a reinforced satchel is worn in a second slot on the other side, so you can wear it together with one normal satchel. The inventory panel shows both containers.
+[*] [b]Which bags count as satchels[/b]: the 13 vanilla satchels (Satchel, Mail Satchel, Crafted Hide Satchel, crafted cloth satchels and others) and this mod's Courier Satchel. Their reinforced versions all go in this slot.
+[*] [b]Look[/b]: it hangs on the other hip, slightly to the back, and the two straps cross in an X on the chest and back. Text on the bag (ARMY, MAIL, FIRST AID, the S.T.A.R.S. badge) is not mirrored.
+[*] [b]One reinforced satchel at a time[/b]: two reinforced satchels both need the second slot, so they cannot be worn together.
+[*] [b]Bag Upgrade Plus satchels[/b]: become reinforced satchels when converted and use the second slot too.
+[/list]
+=== 🧰 Swapping Fanny Packs Front and Back
+[list]
+[*] [b]This mod's pouches[/b]: the Tool Belt Pouch can be moved to the back of the waist and the Medic Hip Pouch to the front, with the same "on Back" / "on Front" wear options as vanilla fanny packs.
+[*] [b]Reinforced versions swap too[/b]: the reinforced versions of the three vanilla fanny packs (regular, hide, tarp) and of this mod's two pouches stay reinforced after swapping.
+[*] [b]Upgrades are kept[/b]: tier, capacity, Encumbrance Reduction, contents and your custom name all stay.
+[*] [b]Medic Hip Pouch on the front[/b]: still only takes First Aid items.
+[*] [b]Swapped-side versions[/b]: only come from swapping; they are not in loot, on zombies or in crafting recipes.
+[*] [b]Fixed from 0.1.0[/b]: swapping an upgraded vanilla fanny pack used to drop its capacity and Encumbrance Reduction back to the original values. They are kept now, and a pouch that already lost them gets them back after one more swap.
+[/list]
+=== 🧰 Reinforced Bag Attachment Slots
+The reinforced Military Backpacks, Duffel Bags, Hiking Backpacks and Big Hiking Backpacks get extra hotbar attachment slots. Wear one and the hotbar shows the new slots, so you can hang things on the outside of the bag.
+
+[table]
+[tr][th]Family[/th][th]Bags[/th][th]Slots[/th][/tr]
+[tr][td]Military Backpack[/td][td]4 military backpacks[/td][td]Backpack Slot 1–3, Bottle Pocket (left and right), Plushie Clip, Side Strap (right), Flashlight Clip[/td][/tr]
+[tr][td]Duffel Bag[/td][td]22 duffel-style bags, including the Duffel Bag, Police and SWAT Duffel Bags and the Trauma Bag[/td][td]Backpack Slot 1–3, Bottle Pocket (right), Plushie Clip, Side Strap (right), Flashlight Clip[/td][/tr]
+[tr][td]Hiking Backpack[/td][td]2 hiking backpacks[/td][td]Backpack Slot 1–3, Bottle Pocket (left and right), Plushie Clip, Side Strap (left), Flashlight Clip[/td][/tr]
+[tr][td]Big Hiking Backpack[/td][td]2 big hiking backpacks[/td][td]Backpack Slot 1–3, Bottle Pocket (left and right), Plushie Clip, Side Strap (left), Flashlight Clip[/td][/tr]
+[/table]
+[list]
+[*] [b]Backpack slots[/b]: tools such as hammers, screwdrivers, knives, wrenches, meat cleavers, walkie-talkies, saucepans, frying pans and rope.
+[*] [b]Bottle pockets[/b]: water bottles, canteens, liquor bottles, juice, milk, soda and beer cans, pill bottles.
+[*] [b]Plushie clip[/b]: Spiffo and the other plushies, dolls.
+[*] [b]Side strap[/b]: closed umbrellas, saws, blowtorches.
+[*] [b]Flashlight clip[/b]: flashlights, penlights, crafted flashlights.
+[*] [b]Bedrolls still work[/b]: the Military, Hiking and Big Hiking Backpacks keep their original bedroll attachment.
+[*] [b]Multiplayer[/b]: other players see what you hang, and it is still there after you log back in.
+[*] [b]Items from other mods[/b]: items that use the same attachment types fit too.
+[*] [b]Not this mod's seven bags[/b]: their reinforced versions have no extra slots.
+[/list]
+=== 🧰 Wearing Full Bags Off the Floor
+When a bag on the floor is very full, the vanilla "Wear" option first moves it into your inventory and fails if it does not fit. In that case the right-click menu adds "Wear (with contents)".
+[list]
+[*] [b]How it works[/b]: your character walks to the bag and puts it on directly. Everything stays inside the bag the whole time; nothing spills onto the floor.
+[*] [b]When it shows up[/b]: only when the vanilla "Wear" would fail. Empty or half-full bags use the vanilla option.
+[*] [b]Which bags[/b]: any wearable bag, including vanilla bags and bags from other mods.
+[*] [b]Time[/b]: about the time to pick up the bag and put each item back, so more and heavier items take longer. For example, 49 items weighing 1 each take about 50 seconds; Dextrous halves it, All Thumbs or clumsy gloves double it.
+[*] [b]A bag already in that slot[/b]: it goes into your inventory if it fits, otherwise it drops at your feet with its contents.
+[*] [b]Where you stand[/b]: the bag must be on the same floor, on a square you can reach without a wall in between.
+[*] [b]Safehouses[/b]: you cannot take bags from someone else's safehouse.
+[*] [b]Multiplayer[/b]: if two players grab the same bag, only one gets it; nothing is duplicated.
 [/list]
 === 🧰 Bag Upgrade Plus Takeover
 Bag Upgrade Plus (BUP below) has been removed from the Workshop. This mod takes over the bags in its saves: after switching, the old bags still load and everything inside them is still there.
@@ -161,18 +255,15 @@ Bag Upgrade Plus (BUP below) has been removed from the Workshop. This mod takes 
 [*] [b]Water bottles[/b]: BUP's two water bottles keep working with their water. They are neither locked nor convertible. The empty soda bottle that only the older branches 3403697073 and 3640342538 have is not taken over and disappears after the switch.
 [/list]
 
-[h3]Converting to a new bag[/h3]
+[h3]Converting to a reinforced bag[/h3]
 [list]
-[*] [b]Requirements[/b]: the old bag must be empty and not worn.
+[*] [b]Recipe[/b]: "Convert Old Plus Bag to Reinforced" in the Tailoring category of the crafting menu.
+[*] [b]Requirements[/b]: the old bag must not be worn; items can stay inside.
 [*] [b]Materials[/b]: a Needle and 2 Thread. No Tailoring level needed.
-[*] [b]Result[/b]: the new bag is already at the highest tier (tier 3 by default). Every conversion comes in a S.T.A.R.S. and an Umbrella version.
+[*] [b]Result[/b]: the reinforced version of the matching vanilla bag, already at the highest tier (tier 3, 49/100 by default). An old ALICE pack becomes "Military Backpack (Reinforced)", an old fanny pack becomes "Fanny Pack (Reinforced)".
+[*] [b]Carried over[/b]: contents, liquids and your custom name. The 5 L of water in an old Hydration Pack stays.
+[*] [b]Satchels[/b]: after converting they go in the second satchel slot.
 [/list]
-[table]
-[tr][th]Old bag[/th][th]Converts to[/th][/tr]
-[tr][td]Worn on the back: ALICE, the duffel bags, hiking bags, school bag, hydration backpacks, sheet sling bag and so on[/td][td]Expedition Frame Pack[/td][/tr]
-[tr][td]Satchels (plain, fishing, medical, military)[/td][td]Courier Satchel[/td][/tr]
-[tr][td]Fanny packs (front, back)[/td][td]Tool Belt Pouch[/td][/tr]
-[/table]
 === 🧰 Bag Upgrade Plus Takeover: Server Switch
 [b]Do it in a single restart[/b]: disabling BUP and enabling this mod must happen together. If the server runs once without BUP and you add this mod later, every old bag loaded during that time is deleted along with its contents.
 
@@ -199,28 +290,31 @@ On the "Tactical Bags" page of the sandbox settings.
 [table]
 [tr][th]Option[/th][th]Default[/th][th]Range[/th][th]Notes[/th][/tr]
 [tr][td]Lock old Bag Upgrade Plus bags[/td][td]On[/td][td]On / Off[/td][td]On: old bags are take-out only. Off: they work as normal bags again[/td][/tr]
-[tr][td]Highest upgrade tier[/td][td]3[/td][td]0–3[/td][td]0 turns upgrading off; converted old bags start at this tier[/td][/tr]
-[tr][td]Capacity gain per tier (percent)[/td][td]15[/td][td]0–50[/td][td]Percentage of the bag's original capacity, rounded[/td][/tr]
-[tr][td]Encumbrance Reduction gain per tier[/td][td]5[/td][td]0–20[/td][td]Up to the maximum below[/td][/tr]
-[tr][td]Maximum Encumbrance Reduction[/td][td]95[/td][td]50–100[/td][td]Upgraded and converted bags never go above it[/td][/tr]
+[tr][td]Highest upgrade tier[/td][td]3[/td][td]0–3[/td][td]How many upgrades it takes to fully upgrade a bag; the highest tier is full. 0 turns upgrading off. Converted old bags and the crafted reinforced Sheet Sling Bag start at this tier[/td][/tr]
+[tr][td]Capacity at full upgrade (percent of gap to cap)[/td][td]100[/td][td]0–100[/td][td]At the highest tier, a bag fills this percentage of the gap between its original capacity and the cap (49). Hydration Pack water capacity follows the same percentage, up to 5 L[/td][/tr]
+[tr][td]Encumbrance Reduction at full upgrade[/td][td]100[/td][td]0–100[/td][td]Encumbrance Reduction at the highest tier; bags that already have more keep their own value[/td][/tr]
 [tr][td]Loot and zombie drop multiplier[/td][td]1.0[/td][td]0–10[/td][td]Scales container loot and zombie drops together; 0 turns both off[/td][/tr]
 [/table]
 [list]
+[*] [b]Tiers in between[/b]: an even share of the full values. With a highest tier of 1, one upgrade fills the bag; with 2, tier 1 is halfway.
+[*] [b]After changing them[/b]: only bags upgraded or converted afterwards are affected. Bags already upgraded keep their values.
 [*] [b]Unlocking old bags[/b]: they keep BUP's capacity and Encumbrance Reduction (49/100 for the main version) and accept items again.
-[*] [b]The four upgrade options[/b]: only affect bags upgraded or converted afterwards. Bags already upgraded keep their values.
-[*] [b]Encumbrance Reduction cap below a bag's own value[/b]: with a cap of 80, a bag that starts at 85 drops to 80 when upgraded.
 [*] [b]Loot multiplier[/b]: read when the world loads. Restart the server or reload the save after changing it. Containers that already generated loot are not affected.
+[*] [b]Worlds started on version 0.1.0[/b]: the 0.1.0 options "Capacity gain per tier (percent)", "Encumbrance Reduction gain per tier" and "Maximum Encumbrance Reduction" are gone, and the world uses the defaults of the two new options above. Servers that had changed the old options need to set the new ones. Old single-player saves print one unknown SandboxOption line in the console when loaded; the save loads normally and the line is gone after the next save.
 [/list]
 === ⚠️ Known Limitations
 [list]
 [*] [b]Living zombies never show the new bags[/b]: zombie bags come from their outfits, and a mod can only replace a whole outfit. So the bag is put into the corpse when the zombie dies instead.
-[*] [b]Old bags show capacity 49 or 48[/b]: the engine caps a bag's capacity at 50 minus its own weight. BUP bags weighed 0.1, so the save stored 49. After the switch they use the vanilla weight, so an ALICE pack (2.0) shows 48. Items packed up to 49 are all still there and can be taken out.
 [*] [b]No tier display[/b]: to see a bag's tier, check which "Reinforce Bag" recipe accepts it. Only the next tier's recipe does.
-[*] [b]Very small bags gain no capacity[/b]: a vanilla Fanny Pack has capacity 1, and +15% rounds back to 1. Only Encumbrance Reduction goes up.
+[*] [b]Old bags show capacity 49 or 48[/b]: the engine caps a bag's capacity at 50 minus its own weight. BUP bags weighed 0.1, so the save stored 49. After the switch they use the vanilla weight, so an ALICE pack (2.0) shows 48. Items packed up to 49 are all still there and can be taken out, and converting the bag brings it back to 49.
+[*] [b]Lower sandbox values cut old Hydration Pack water[/b]: with a highest tier of 0, or a full capacity below 100, the 5 L of water in an old BUP Hydration Pack is cut down to the water capacity at that time when converted (2 L with a highest tier of 0). The defaults and highest tiers 1 and 2 keep all 5 L.
+[*] [b]One reinforced satchel at a time[/b]: two reinforced satchels both need the second satchel slot.
+[*] [b]Satchel straps cross over[/b]: with two satchels on, the straps clip into each other a little where they cross on the chest and back when seen up close.
+[*] [b]Attachment slots on four families only[/b]: only the reinforced Military Backpacks, Duffel Bags, Hiking and Big Hiking Backpacks have them; the originals and other bags do not.
 [*] [b]Adding mid-save[/b]: containers that already generated loot do not get new bags.
 [*] [b]Server ran without the original mod[/b]: old bags loaded during that time are already deleted and this mod cannot restore them. See step 4 of "Server Switch".
 [*] [b]EFT compatibility version not supported[/b]: saves from Bag Upgrade Plus EFT compatibility (3781184534) are not taken over.
-[*] [b]Old bags cannot be upgraded[/b]: convert them into a new bag instead.
+[*] [b]Old bags cannot be upgraded[/b]: use "Convert Old Plus Bag to Reinforced" to go straight to the highest tier.
 [/list]
 === ❓ FAQ
 [h3]Can I run this together with Bag Upgrade Plus?[/h3]
@@ -230,8 +324,26 @@ On the "Tactical Bags" page of the sandbox settings.
 [/list]
 [h3]What happens if I remove this mod?[/h3]
 [list]
-[*] This mod's new bags and the old bags it took over disappear, along with everything inside them.
-[*] Upgraded vanilla bags keep their upgraded capacity and Encumbrance Reduction, because the values are stored on the bag itself.
+[*] This mod's bags, every reinforced bag (that is, every upgraded bag) and the old bags it took over disappear, along with everything inside them.
+[*] To keep upgraded vanilla bags, use "Revert Reinforced Bag to Original" before removing the mod. The upgraded capacity and Encumbrance Reduction are stored on the bag and stay after removal (capped by the original bag's weight, for example 48 for a Military Backpack).
+[/list]
+[h3]Why does my bag say "(Reinforced)" after upgrading?[/h3]
+[list]
+[*] The first upgrade turns the bag into its reinforced version: it weighs 0.1 and does not slow you down. Its contents and your custom name stay.
+[*] To go back to the original, use "Revert Reinforced Bag to Original"; the tier stays.
+[/list]
+[h3]What about bags I upgraded in version 0.1.0?[/h3]
+[list]
+[*] Use "Convert Upgraded Bag to Reinforced": no materials used, the tier stays, and capacity and Encumbrance Reduction are recalculated with the new rules (tier 3 becomes 49/100).
+[*] Tier 1 and 2 bags can also just use the next upgrade recipe, which turns them reinforced as well.
+[/list]
+[h3]Can I wear two satchels at once?[/h3]
+[list]
+[*] Yes: one normal satchel plus one reinforced satchel, which sits on the other side. Two reinforced satchels do not work together.
+[/list]
+[h3]A full bag on the floor won't let me pick it up. What now?[/h3]
+[list]
+[*] Right-click it and choose "Wear (with contents)". You put it on directly without emptying it first.
 [/list]
 [h3]Does it work in single player?[/h3]
 [list]
@@ -240,7 +352,7 @@ On the "Tactical Bags" page of the sandbox settings.
 [/list]
 [h3]Can I add it to an existing save?[/h3]
 [list]
-[*] Yes. New bags only appear in containers that have not generated loot yet; zombie drops work right away.
+[*] Yes. New bags only appear in containers that have not generated loot yet; zombie drops work right away. Vanilla bags you already have can be upgraded at any time.
 [/list]
 [h3]Why can't I find any new bags?[/h3]
 [list]
@@ -253,7 +365,7 @@ On the "Tactical Bags" page of the sandbox settings.
 [/list]
 [h3]Why can't I put anything into my old bag?[/h3]
 [list]
-[*] The sandbox option "Lock old Bag Upgrade Plus bags" is on by default. Empty the bag and convert it into a new one, or ask the server owner to turn the option off.
+[*] The sandbox option "Lock old Bag Upgrade Plus bags" is on by default. Convert it into a reinforced bag (items can stay inside), or ask the server owner to turn the option off.
 [/list]
 [h3]Is there any difference between S.T.A.R.S. and Umbrella?[/h3]
 [list]

@@ -3,34 +3,35 @@
 
 [hr][/hr]
 
-S.T.A.R.S. and Umbrella themed tactical bags you can upgrade with Tailoring. Bags left over from Bag Upgrade Plus keep working in your save.
+S.T.A.R.S. and Umbrella themed tactical bags that upgrade into reinforced versions. Bags left over from Bag Upgrade Plus keep working in your save.
 
 [h2]📦 Requirements[/h2]
 [list]
 [*] Works in single player and multiplayer; in multiplayer the server must enable this mod
-[*] [b]Add/remove mid-save:[/b] safe either way; removing it deletes the new bags, the old bags it took over, and everything inside them
+[*] [b]Add/remove mid-save:[/b] safe either way; removing it deletes this mod's bags, the reinforced bags, the old bags it took over, and everything inside them
 [*] [b]Languages:[/b] 繁體中文, 简体中文, English, 日本語, 한국어, Русский, Español, Português, Türkçe, Français, Polski, Deutsch (please report any translation issues)
 [/list]
 
 [h2]🚀 Quick Start[/h2]
 [olist]
 [*] Find S.T.A.R.S. bags at police stations and Umbrella bags at military and medical sites
-[*] Take a bag off and upgrade it from the Tailoring category of the crafting menu, up to three times
-[*] Empty an old Bag Upgrade Plus bag and convert it into a new one from the crafting menu
+[*] Take a bag off and upgrade it from the Tailoring category of the crafting menu; the first upgrade makes it reinforced
+[*] Convert an old Bag Upgrade Plus bag into the reinforced version of the same bag from the crafting menu
 [*] Server owners coming from Bag Upgrade Plus: follow the switch steps in the full guide
 [/olist]
 
 [h2]✨ Features[/h2]
 [list]
-[*] [b]Custom looks[/b]: all seven bags come in S.T.A.R.S. navy and Umbrella khaki
-[*] [b]From hip pouch to expedition pack[/b]: hip pouches, ammo bandolier, satchel, backpacks and chest rig
-[*] [b]Dedicated storage[/b]: the medic pouch holds medical supplies, the bandolier holds rounds and reloads faster
-[*] [b]Bag upgrades[/b]: vanilla bags and this mod's bags both upgrade to more capacity and less weight
+[*] [b]Seven custom bags[/b]: from hip pouch to expedition pack, in S.T.A.R.S. and Umbrella colors
+[*] [b]Reinforced upgrades[/b]: vanilla bags and this mod's bags get bigger, lighter and stop slowing you down
+[*] [b]Second satchel[/b]: reinforced satchels sit on the other side, so you can wear one more
+[*] [b]Attachment slots[/b]: reinforced military backpacks, duffel bags and hiking backpacks hold bottles, plushies and tools
+[*] [b]Wear full bags[/b]: put on a full bag straight off the floor with everything still inside
 [*] [b]Loot and drops[/b]: found at police, military and medical sites, and dropped by matching zombies
 [*] [b]Bag Upgrade Plus takeover[/b]: old bags stay in your save; switch steps are in the full guide
-[*] [b]Server settings[/b]: upgrade size, limits and spawn rate are all sandbox options
+[*] [b]Server settings[/b]: upgrade size, highest tier and spawn rate are all sandbox options
 [/list]
-📖 [b]Stats, loot locations, upgrades and switch steps:[/b] [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3827498713]Minidoracat Bags Mod Guide[/url]
+📖 [b]Stats, reinforced bags, upgrades and switch steps:[/b] [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3827498713]Minidoracat Bags Mod Guide[/url]
 
 [h2]🔗 Minidoracat Collection[/h2]
 All my other mods are in the [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3809297109]Minidoracat collection[/url]; subscribe to the ones you need.
