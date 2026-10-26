@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 醫療腰包：自製模型（scripts/blender/bags/build.py 產生），兩種外觀共用模型，只換貼圖 -->
+<clothingItem>
+	<m_MaleModel>media\models_X\Skinned\BackPacks\MDB_MedicHipPouch_M.X</m_MaleModel>
+	<m_FemaleModel>media\models_X\Skinned\BackPacks\MDB_MedicHipPouch_F.X</m_FemaleModel>
+	<m_GUID>dffc27f4-d645-5bd0-b8b9-a30527173151</m_GUID>
+	<m_Static>false</m_Static>
+	<m_AllowRandomTint>false</m_AllowRandomTint>
+	<m_AttachBone></m_AttachBone>
+	<textureChoices>Clothes\Bag\MDB_MedicHipPouch_Navy</textureChoices>
+</clothingItem>

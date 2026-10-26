@@ -253,8 +253,16 @@
 		<guid>e008dfc5-24de-4714-bb4e-ba8a118c7d14</guid>
 	</files>
 	<files>
-		<path>media/clothing/clothingItems/MDB_Bag_SurvivorBag_Reinforced.xml</path>
-		<guid>b68bb21f-3971-5125-b0af-2b70a943c132</guid>
+		<path>media/clothing/clothingItems/MDB_Bag_ALICE_BeltSus_Reinforced.xml</path>
+		<guid>628df383-c22f-5a9d-a307-afdc9401e50f</guid>
+	</files>
+	<files>
+		<path>media/clothing/clothingItems/MDB_Bag_ALICE_BeltSus_Camo_Reinforced.xml</path>
+		<guid>15434ccd-8b18-5721-8237-cca11a1f749f</guid>
+	</files>
+	<files>
+		<path>media/clothing/clothingItems/MDB_Bag_ALICE_BeltSus_Green_Reinforced.xml</path>
+		<guid>bb71bc4a-34c4-5905-9bcf-00d8cb449ba0</guid>
 	</files>
 	<files>
 		<path>media/clothing/clothingItems/MDB_Bag_ALICEpack_Reinforced.xml</path>
@@ -269,28 +277,16 @@
 		<guid>60e19e89-735a-5492-bbd2-33ba4d25f13c</guid>
 	</files>
 	<files>
-		<path>media/clothing/clothingItems/MDB_Bag_DuffelBag_Reinforced.xml</path>
-		<guid>370f0653-de7a-5284-8474-9faa0cb9c616</guid>
+		<path>media/clothing/clothingItems/MDB_Bag_BaseballBag_Reinforced.xml</path>
+		<guid>02b43092-e9e2-5265-b900-34182c222ff6</guid>
 	</files>
 	<files>
-		<path>media/clothing/clothingItems/MDB_Bag_MedicalBag_Reinforced.xml</path>
-		<guid>af33dd02-c279-5416-b029-e42a019ee6c7</guid>
+		<path>media/clothing/clothingItems/MDB_Bag_BigHikingBag_Reinforced.xml</path>
+		<guid>25a6b92f-4765-5cd8-8f0a-a6d8c5b5e183</guid>
 	</files>
 	<files>
-		<path>media/clothing/clothingItems/MDB_Bag_Military_Reinforced.xml</path>
-		<guid>d49c80b6-56fc-59c6-9674-d451529b498a</guid>
-	</files>
-	<files>
-		<path>media/clothing/clothingItems/MDB_Bag_Police_Reinforced.xml</path>
-		<guid>12d9dd61-532d-5312-9aa7-45cf04948081</guid>
-	</files>
-	<files>
-		<path>media/clothing/clothingItems/MDB_Bag_Sheriff_Reinforced.xml</path>
-		<guid>3daca6da-010a-55bf-adf8-fdf747d2960d</guid>
-	</files>
-	<files>
-		<path>media/clothing/clothingItems/MDB_Bag_SWAT_Reinforced.xml</path>
-		<guid>473b5058-b248-5dc9-8121-8f1d66157ca1</guid>
+		<path>media/clothing/clothingItems/MDB_Bag_BigHikingBag_Travel_Reinforced.xml</path>
+		<guid>2f4b2ecf-6493-5357-84bd-89cac807f96f</guid>
 	</files>
 	<files>
 		<path>media/clothing/clothingItems/MDB_Bag_BreakdownBag_Reinforced.xml</path>
@@ -301,44 +297,92 @@
 		<guid>f9ae97ad-466c-5d8e-a8d5-cf6afdfa8154</guid>
 	</files>
 	<files>
-		<path>media/clothing/clothingItems/MDB_Bag_BaseballBag_Reinforced.xml</path>
-		<guid>02b43092-e9e2-5265-b900-34182c222ff6</guid>
+		<path>media/clothing/clothingItems/MDB_Bag_ChestRig_Reinforced.xml</path>
+		<guid>c1a59942-389c-5a25-956c-e968d2e32e52</guid>
 	</files>
 	<files>
-		<path>media/clothing/clothingItems/MDB_Bag_TennisBag_Reinforced.xml</path>
-		<guid>31c0e6de-4bff-56e4-9da0-1a62b420faac</guid>
+		<path>media/clothing/clothingItems/MDB_Bag_ChestRig_Tarp_Reinforced.xml</path>
+		<guid>b070357f-931a-58d4-8cb0-0badff9f0210</guid>
 	</files>
 	<files>
-		<path>media/clothing/clothingItems/MDB_Bag_WeaponBag_Reinforced.xml</path>
-		<guid>d0f40aa0-da4e-5ef1-a15c-47905114311a</guid>
+		<path>media/clothing/clothingItems/MDB_Bag_ClothSatchel_Burlap_Reinforced.xml</path>
+		<guid>8316552f-1565-551a-8f4e-bc594b5f8573</guid>
 	</files>
 	<files>
-		<path>media/clothing/clothingItems/MDB_Bag_InmateEscapedBag_Reinforced.xml</path>
-		<guid>ff7b5630-f39a-50c6-b099-9e09e7a27731</guid>
+		<path>media/clothing/clothingItems/MDB_Bag_ClothSatchel_Cotton_Reinforced.xml</path>
+		<guid>cd346719-06af-5605-a541-a43b263b322d</guid>
 	</files>
 	<files>
-		<path>media/clothing/clothingItems/MDB_Bag_MoneyBag_Reinforced.xml</path>
-		<guid>061268f6-1046-5ce5-af9b-eb34136cc6b6</guid>
+		<path>media/clothing/clothingItems/MDB_Bag_ClothSatchel_Denim_Reinforced.xml</path>
+		<guid>c87ad4c2-109f-5c74-aa80-0b6738221787</guid>
 	</files>
 	<files>
-		<path>media/clothing/clothingItems/MDB_Bag_WorkerBag_Reinforced.xml</path>
-		<guid>c5f25b43-f398-58e5-853b-c26735e55cae</guid>
+		<path>media/clothing/clothingItems/MDB_Bag_ClothSatchel_DenimBlack_Reinforced.xml</path>
+		<guid>fd88c787-1857-56cc-b9bb-70a682a1e083</guid>
 	</files>
 	<files>
-		<path>media/clothing/clothingItems/MDB_Bag_ShotgunBag_Reinforced.xml</path>
-		<guid>11d455a9-0a49-5db9-a7d5-532062bc8124</guid>
+		<path>media/clothing/clothingItems/MDB_Bag_ClothSatchel_DenimLight_Reinforced.xml</path>
+		<guid>3c38dea6-83f5-56f7-af99-1de169801fd5</guid>
 	</files>
 	<files>
-		<path>media/clothing/clothingItems/MDB_Bag_ShotgunSawnoffBag_Reinforced.xml</path>
-		<guid>9a99b7ba-4f09-5d29-aa81-ff1b1239e18d</guid>
+		<path>media/clothing/clothingItems/MDB_Bag_CraftedFramepack_Large_Reinforced.xml</path>
+		<guid>480908d5-67f1-5c5e-99c7-b0af63f4bb78</guid>
 	</files>
 	<files>
-		<path>media/clothing/clothingItems/MDB_Bag_ShotgunDblBag_Reinforced.xml</path>
-		<guid>4e1b4e0a-41dd-5ec6-a1af-4bc82de0796b</guid>
+		<path>media/clothing/clothingItems/MDB_Bag_CraftedFramepack_Large2_Reinforced.xml</path>
+		<guid>7a294710-f479-5ffd-a808-d0e577c06e44</guid>
 	</files>
 	<files>
-		<path>media/clothing/clothingItems/MDB_Bag_ShotgunDblSawnoffBag_Reinforced.xml</path>
-		<guid>ae84a2e1-181b-51e2-a2a7-0b7458ca27e9</guid>
+		<path>media/clothing/clothingItems/MDB_Bag_CraftedFramepack_Large3_Reinforced.xml</path>
+		<guid>fe908817-b738-5985-802e-fe05dfaf1e81</guid>
+	</files>
+	<files>
+		<path>media/clothing/clothingItems/MDB_Bag_CraftedFramepack_Small_Reinforced.xml</path>
+		<guid>1a7c0a4e-e835-5a0d-8e2f-bcc505d34fcf</guid>
+	</files>
+	<files>
+		<path>media/clothing/clothingItems/MDB_Bag_CrudeLeatherBag_Reinforced.xml</path>
+		<guid>ba1cae89-107a-501a-9689-1fa03edc36ab</guid>
+	</files>
+	<files>
+		<path>media/clothing/clothingItems/MDB_Bag_CrudeTarpBag_Reinforced.xml</path>
+		<guid>f1b39861-1c0c-5dcd-a64d-be385a02aa70</guid>
+	</files>
+	<files>
+		<path>media/clothing/clothingItems/MDB_Bag_DuffelBag_Reinforced.xml</path>
+		<guid>370f0653-de7a-5284-8474-9faa0cb9c616</guid>
+	</files>
+	<files>
+		<path>media/clothing/clothingItems/MDB_Bag_DuffelBagTINT_Reinforced.xml</path>
+		<guid>a6ba7036-78df-5270-a61f-84e499416bd9</guid>
+	</files>
+	<files>
+		<path>media/clothing/clothingItems/MDB_Bag_FannyPackBack_Reinforced.xml</path>
+		<guid>8e0dfdb0-dca4-5c18-a044-fe1b298f2013</guid>
+	</files>
+	<files>
+		<path>media/clothing/clothingItems/MDB_Bag_FannyPackBack_Hide_Reinforced.xml</path>
+		<guid>3ff8c236-61cc-5f48-a819-43def3ccf8fe</guid>
+	</files>
+	<files>
+		<path>media/clothing/clothingItems/MDB_Bag_FannyPackBack_Tarp_Reinforced.xml</path>
+		<guid>67872997-4774-580a-9342-76ed60f12a3c</guid>
+	</files>
+	<files>
+		<path>media/clothing/clothingItems/MDB_Bag_FannyPackFront_Reinforced.xml</path>
+		<guid>22c3f781-9e6e-5f7d-a06c-756d18b226eb</guid>
+	</files>
+	<files>
+		<path>media/clothing/clothingItems/MDB_Bag_FannyPackFront_Hide_Reinforced.xml</path>
+		<guid>71c0908c-0155-5bb5-be56-1447fa0c52fe</guid>
+	</files>
+	<files>
+		<path>media/clothing/clothingItems/MDB_Bag_FannyPackFront_Tarp_Reinforced.xml</path>
+		<guid>5d12272d-0c20-5cdb-a2b7-c44d7254f4e0</guid>
+	</files>
+	<files>
+		<path>media/clothing/clothingItems/MDB_Bag_FishingBasket_Reinforced.xml</path>
+		<guid>a2699865-6af4-56cc-85ce-225aa5788c24</guid>
 	</files>
 	<files>
 		<path>media/clothing/clothingItems/MDB_Bag_FoodCanned_Reinforced.xml</path>
@@ -349,16 +393,24 @@
 		<guid>1704b2e9-4b12-582d-bde2-8efa363af354</guid>
 	</files>
 	<files>
-		<path>media/clothing/clothingItems/MDB_Bag_ToolBag_Reinforced.xml</path>
-		<guid>a8728acb-4475-5eef-a83b-f9739281b335</guid>
+		<path>media/clothing/clothingItems/MDB_Bag_GolfBag_Reinforced.xml</path>
+		<guid>34d9d757-148e-5237-bbe7-4c2c63928e58</guid>
 	</files>
 	<files>
-		<path>media/clothing/clothingItems/MDB_Bag_FannyPackBack_Reinforced.xml</path>
-		<guid>8e0dfdb0-dca4-5c18-a044-fe1b298f2013</guid>
+		<path>media/clothing/clothingItems/MDB_Bag_GolfBag_Melee_Reinforced.xml</path>
+		<guid>d9b58254-8071-53bd-ac6e-689f529f6bf6</guid>
 	</files>
 	<files>
-		<path>media/clothing/clothingItems/MDB_Bag_FannyPackFront_Reinforced.xml</path>
-		<guid>22c3f781-9e6e-5f7d-a06c-756d18b226eb</guid>
+		<path>media/clothing/clothingItems/MDB_Bag_HideSatchel_Reinforced.xml</path>
+		<guid>5c9a461c-8fff-51c6-97c3-5822cf66e225</guid>
+	</files>
+	<files>
+		<path>media/clothing/clothingItems/MDB_Bag_HideSlingBag_Reinforced.xml</path>
+		<guid>3fe56583-0e9b-5c98-8c04-0ace2730da9f</guid>
+	</files>
+	<files>
+		<path>media/clothing/clothingItems/MDB_Bag_HikingBag_Travel_Reinforced.xml</path>
+		<guid>0aaafd80-c488-57de-aee8-b02b137d2de1</guid>
 	</files>
 	<files>
 		<path>media/clothing/clothingItems/MDB_Bag_HydrationBackpack_Reinforced.xml</path>
@@ -369,28 +421,64 @@
 		<guid>51634c2b-ee47-50e2-9685-7e2f60ca3a10</guid>
 	</files>
 	<files>
+		<path>media/clothing/clothingItems/MDB_Bag_InmateEscapedBag_Reinforced.xml</path>
+		<guid>ff7b5630-f39a-50c6-b099-9e09e7a27731</guid>
+	</files>
+	<files>
+		<path>media/clothing/clothingItems/MDB_Bag_MedicalBag_Reinforced.xml</path>
+		<guid>af33dd02-c279-5416-b029-e42a019ee6c7</guid>
+	</files>
+	<files>
+		<path>media/clothing/clothingItems/MDB_Bag_Military_Reinforced.xml</path>
+		<guid>d49c80b6-56fc-59c6-9674-d451529b498a</guid>
+	</files>
+	<files>
+		<path>media/clothing/clothingItems/MDB_Bag_MoneyBag_Reinforced.xml</path>
+		<guid>061268f6-1046-5ce5-af9b-eb34136cc6b6</guid>
+	</files>
+	<files>
 		<path>media/clothing/clothingItems/MDB_Bag_NormalHikingBag_Reinforced.xml</path>
 		<guid>979cd1ad-41e8-5399-8bad-428a2ce79424</guid>
 	</files>
 	<files>
-		<path>media/clothing/clothingItems/MDB_Bag_BigHikingBag_Reinforced.xml</path>
-		<guid>25a6b92f-4765-5cd8-8f0a-a6d8c5b5e183</guid>
+		<path>media/clothing/clothingItems/MDB_Bag_Police_Reinforced.xml</path>
+		<guid>12d9dd61-532d-5312-9aa7-45cf04948081</guid>
 	</files>
 	<files>
-		<path>media/clothing/clothingItems/MDB_Bag_HikingBag_Travel_Reinforced.xml</path>
-		<guid>0aaafd80-c488-57de-aee8-b02b137d2de1</guid>
+		<path>media/clothing/clothingItems/MDB_Bag_RifleCaseCloth_Reinforced.xml</path>
+		<guid>e325e505-1d8f-5413-97f5-d9a87e11dc84</guid>
 	</files>
 	<files>
-		<path>media/clothing/clothingItems/MDB_Bag_Schoolbag_Reinforced.xml</path>
-		<guid>3f6d30fc-0de2-5f8a-9642-4310eff83788</guid>
+		<path>media/clothing/clothingItems/MDB_Bag_RifleCaseCloth2_Reinforced.xml</path>
+		<guid>02793510-00b3-5a71-9931-8045735dc422</guid>
+	</files>
+	<files>
+		<path>media/clothing/clothingItems/MDB_Bag_RifleCaseClothCamo_Reinforced.xml</path>
+		<guid>314e52cb-620e-5772-9a46-4cb5b2cc77d3</guid>
+	</files>
+	<files>
+		<path>media/clothing/clothingItems/MDB_Bag_SWAT_Reinforced.xml</path>
+		<guid>473b5058-b248-5dc9-8121-8f1d66157ca1</guid>
 	</files>
 	<files>
 		<path>media/clothing/clothingItems/MDB_Bag_Satchel_Reinforced.xml</path>
 		<guid>885593f7-e7c0-512e-a5cd-fac83aa1fcb2</guid>
 	</files>
 	<files>
+		<path>media/clothing/clothingItems/MDB_Bag_SatchelPhoto_Reinforced.xml</path>
+		<guid>ab565360-14d1-57ac-a39f-18ed09c3fb96</guid>
+	</files>
+	<files>
 		<path>media/clothing/clothingItems/MDB_Bag_Satchel_Fishing_Reinforced.xml</path>
 		<guid>0f201a00-b294-5c8c-b68c-568a57a141eb</guid>
+	</files>
+	<files>
+		<path>media/clothing/clothingItems/MDB_Bag_Satchel_Leather_Reinforced.xml</path>
+		<guid>acb5d1fb-8f9e-5f5a-9fd6-059f8f67e07f</guid>
+	</files>
+	<files>
+		<path>media/clothing/clothingItems/MDB_Bag_Satchel_Mail_Reinforced.xml</path>
+		<guid>10b8fff2-49d2-5621-96b8-20032f718ea0</guid>
 	</files>
 	<files>
 		<path>media/clothing/clothingItems/MDB_Bag_Satchel_Medical_Reinforced.xml</path>
@@ -401,7 +489,143 @@
 		<guid>bbe10dbb-bb05-5d3a-9a74-5ff13df4d6f5</guid>
 	</files>
 	<files>
+		<path>media/clothing/clothingItems/MDB_Bag_Schoolbag_Reinforced.xml</path>
+		<guid>3f6d30fc-0de2-5f8a-9642-4310eff83788</guid>
+	</files>
+	<files>
+		<path>media/clothing/clothingItems/MDB_Bag_Schoolbag_Kids_Reinforced.xml</path>
+		<guid>be2cbfc5-bb99-55d5-9e50-345e81bec2cd</guid>
+	</files>
+	<files>
+		<path>media/clothing/clothingItems/MDB_Bag_Schoolbag_Medical_Reinforced.xml</path>
+		<guid>f0622390-bd37-544a-ac8c-aa885aa8253c</guid>
+	</files>
+	<files>
+		<path>media/clothing/clothingItems/MDB_Bag_Schoolbag_Patches_Reinforced.xml</path>
+		<guid>590a361c-aed3-586c-89bc-074618e971df</guid>
+	</files>
+	<files>
+		<path>media/clothing/clothingItems/MDB_Bag_Schoolbag_Travel_Reinforced.xml</path>
+		<guid>ad427a2a-2040-535e-bab9-3a02c429199b</guid>
+	</files>
+	<files>
 		<path>media/clothing/clothingItems/MDB_Bag_SheetSlingBag_Reinforced.xml</path>
 		<guid>e2f6cb72-a33e-558b-b8a0-beea93ade352</guid>
+	</files>
+	<files>
+		<path>media/clothing/clothingItems/MDB_Bag_Sheriff_Reinforced.xml</path>
+		<guid>3daca6da-010a-55bf-adf8-fdf747d2960d</guid>
+	</files>
+	<files>
+		<path>media/clothing/clothingItems/MDB_Bag_ShotgunBag_Reinforced.xml</path>
+		<guid>11d455a9-0a49-5db9-a7d5-532062bc8124</guid>
+	</files>
+	<files>
+		<path>media/clothing/clothingItems/MDB_Bag_ShotgunCaseCloth_Reinforced.xml</path>
+		<guid>c4f2928c-f970-5755-b2fa-2065c674da6d</guid>
+	</files>
+	<files>
+		<path>media/clothing/clothingItems/MDB_Bag_ShotgunCaseCloth2_Reinforced.xml</path>
+		<guid>63dd4918-7b96-5f4c-bb6e-b39897935760</guid>
+	</files>
+	<files>
+		<path>media/clothing/clothingItems/MDB_Bag_ShotgunDblBag_Reinforced.xml</path>
+		<guid>4e1b4e0a-41dd-5ec6-a1af-4bc82de0796b</guid>
+	</files>
+	<files>
+		<path>media/clothing/clothingItems/MDB_Bag_ShotgunDblSawnoffBag_Reinforced.xml</path>
+		<guid>ae84a2e1-181b-51e2-a2a7-0b7458ca27e9</guid>
+	</files>
+	<files>
+		<path>media/clothing/clothingItems/MDB_Bag_ShotgunSawnoffBag_Reinforced.xml</path>
+		<guid>9a99b7ba-4f09-5d29-aa81-ff1b1239e18d</guid>
+	</files>
+	<files>
+		<path>media/clothing/clothingItems/MDB_Bag_SurvivorBag_Reinforced.xml</path>
+		<guid>b68bb21f-3971-5125-b0af-2b70a943c132</guid>
+	</files>
+	<files>
+		<path>media/clothing/clothingItems/MDB_Bag_TarpFramepack_Large_Reinforced.xml</path>
+		<guid>d7caf989-fb12-5bf6-b5ce-d23e85a45399</guid>
+	</files>
+	<files>
+		<path>media/clothing/clothingItems/MDB_Bag_TarpFramepack_Small_Reinforced.xml</path>
+		<guid>1b105fda-16ce-5783-98c2-1a5129bb99f1</guid>
+	</files>
+	<files>
+		<path>media/clothing/clothingItems/MDB_Bag_TarpSlingBag_Reinforced.xml</path>
+		<guid>4896994a-96df-5a3a-8c7b-a4c1e947a0be</guid>
+	</files>
+	<files>
+		<path>media/clothing/clothingItems/MDB_Bag_TennisBag_Reinforced.xml</path>
+		<guid>31c0e6de-4bff-56e4-9da0-1a62b420faac</guid>
+	</files>
+	<files>
+		<path>media/clothing/clothingItems/MDB_Bag_ToolBag_Reinforced.xml</path>
+		<guid>a8728acb-4475-5eef-a83b-f9739281b335</guid>
+	</files>
+	<files>
+		<path>media/clothing/clothingItems/MDB_Bag_WeaponBag_Reinforced.xml</path>
+		<guid>d0f40aa0-da4e-5ef1-a15c-47905114311a</guid>
+	</files>
+	<files>
+		<path>media/clothing/clothingItems/MDB_Bag_WorkerBag_Reinforced.xml</path>
+		<guid>c5f25b43-f398-58e5-853b-c26735e55cae</guid>
+	</files>
+	<files>
+		<path>media/clothing/clothingItems/MDB_ToolBeltPouch_Navy_Reinforced.xml</path>
+		<guid>2e4c6afb-01bc-52d9-9ffc-0bd0ff2bcbdc</guid>
+	</files>
+	<files>
+		<path>media/clothing/clothingItems/MDB_ToolBeltPouch_Olive_Reinforced.xml</path>
+		<guid>24c08b64-4500-5cd4-804f-239d1e5cde94</guid>
+	</files>
+	<files>
+		<path>media/clothing/clothingItems/MDB_MedicHipPouch_Navy_Reinforced.xml</path>
+		<guid>dffc27f4-d645-5bd0-b8b9-a30527173151</guid>
+	</files>
+	<files>
+		<path>media/clothing/clothingItems/MDB_MedicHipPouch_Olive_Reinforced.xml</path>
+		<guid>4dae46c3-7983-57c5-9af5-6c41f655fba9</guid>
+	</files>
+	<files>
+		<path>media/clothing/clothingItems/MDB_AmmoBandolier_Navy_Reinforced.xml</path>
+		<guid>2dafb326-5f85-592a-b7a3-2e858f67fdf4</guid>
+	</files>
+	<files>
+		<path>media/clothing/clothingItems/MDB_AmmoBandolier_Olive_Reinforced.xml</path>
+		<guid>769bc4a8-9299-5c37-9d93-0f0776417d6f</guid>
+	</files>
+	<files>
+		<path>media/clothing/clothingItems/MDB_CourierSatchel_Navy_Reinforced.xml</path>
+		<guid>feeef514-25f7-5e10-87ea-30822ad7c61a</guid>
+	</files>
+	<files>
+		<path>media/clothing/clothingItems/MDB_CourierSatchel_Olive_Reinforced.xml</path>
+		<guid>90fc1ed7-5273-56c4-9eb9-9a2a1c35718d</guid>
+	</files>
+	<files>
+		<path>media/clothing/clothingItems/MDB_DayPack_Navy_Reinforced.xml</path>
+		<guid>4884b0d4-0366-53db-b16b-afb13400a511</guid>
+	</files>
+	<files>
+		<path>media/clothing/clothingItems/MDB_DayPack_Olive_Reinforced.xml</path>
+		<guid>a9843d2b-d1f5-5d13-ab3c-1b06312a836d</guid>
+	</files>
+	<files>
+		<path>media/clothing/clothingItems/MDB_ExpeditionPack_Navy_Reinforced.xml</path>
+		<guid>1bf922af-38f8-58da-bdf7-a8b50a8ac669</guid>
+	</files>
+	<files>
+		<path>media/clothing/clothingItems/MDB_ExpeditionPack_Olive_Reinforced.xml</path>
+		<guid>60a2efcb-59c9-58f0-989b-861d90d24bc7</guid>
+	</files>
+	<files>
+		<path>media/clothing/clothingItems/MDB_ScoutChestRig_Navy_Reinforced.xml</path>
+		<guid>8f7d3333-3c1e-533a-ae29-d4aa2f96af1d</guid>
+	</files>
+	<files>
+		<path>media/clothing/clothingItems/MDB_ScoutChestRig_Olive_Reinforced.xml</path>
+		<guid>0b2d774f-79e5-5b19-b359-d85fd3f815d5</guid>
 	</files>
 </fileGuidTable>

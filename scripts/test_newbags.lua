@@ -32,6 +32,9 @@ local F = {
     I18N_FLUIDS = TRANSLATE .. "EN/Fluids.json",
     REIN = MEDIA .. "scripts/MDB_Reinforced.txt",
     REIN_XML = MEDIA .. "clothing/clothingItems/MDB_Bag_Satchel_Reinforced.xml",
+    REG = MEDIA .. "registries.lua",
+    BODYLOC = MEDIA .. "lua/shared/MDB_BodyLocations.lua",
+    GEN = "scripts/gen_reinforced.py",
 }
 -- conventions.md「介面語系」：12 種語言＋ES 的 AR／ES_CL／ES_MX、PTBR 的 PT
 local LANGS = { "AR", "CH", "CN", "DE", "EN", "ES", "ES_CL", "ES_MX", "FR", "JP", "KO", "PL", "PT", "PTBR", "RU", "TR" }
@@ -140,16 +143,25 @@ local MODELS = {
     ScoutChestRig = { eq = "base:webbing", cap = { 6, 49 }, wr = { 85, 100 }, w = 0.5, run = 0.98, maxSize = "1.3" },
 }
 local SKINS = { "Navy", "Olive" }
--- 有強化版的 38 種原版背包（全是 Base.）
-local REIN_SPEC = {
-    "Bag_SurvivorBag", "Bag_ALICEpack", "Bag_ALICEpack_Army", "Bag_ALICEpack_DesertCamo", "Bag_DuffelBag", "Bag_MedicalBag",
-    "Bag_Military", "Bag_Police", "Bag_Sheriff", "Bag_SWAT", "Bag_BreakdownBag", "Bag_BurglarBag", "Bag_BaseballBag",
-    "Bag_TennisBag", "Bag_WeaponBag", "Bag_InmateEscapedBag", "Bag_MoneyBag", "Bag_WorkerBag", "Bag_ShotgunBag",
-    "Bag_ShotgunSawnoffBag", "Bag_ShotgunDblBag", "Bag_ShotgunDblSawnoffBag", "Bag_FoodCanned", "Bag_FoodSnacks", "Bag_ToolBag",
-    "Bag_FannyPackBack", "Bag_FannyPackFront", "Bag_HydrationBackpack", "Bag_HydrationBackpack_Camo", "Bag_NormalHikingBag",
-    "Bag_BigHikingBag", "Bag_HikingBag_Travel", "Bag_Schoolbag", "Bag_Satchel", "Bag_Satchel_Fishing", "Bag_Satchel_Medical",
-    "Bag_Satchel_Military", "Bag_SheetSlingBag",
-}
+-- 強化版的來源＝升級配方清單裡的全部背包（原版可穿戴、沒有 AcceptItemFunction 的容器＋本 MOD 14 件）；suite 開頭算出
+local REIN_SPEC = {}
+local SATCHEL2 = "minidoracatbags:satchel2"   -- 第二個側背包位置（registries.lua）
+local function reinOf(full) return "MinidoracatBags." .. full:match("[^.]+$") .. "_Reinforced" end
+local function ciOf(full) return "MDB_" .. full:match("[^.]+$") .. "_Reinforced" end
+local function isVanillaBag(b)
+    return b.fields.ItemType == "base:container" and b.fields.CanBeEquipped ~= nil and b.fields.AcceptItemFunction == nil
+end
+-- 側背包鏡像對照檔（scripts/satchel_mirror_map.json，SatchelMirror 交付；沒有就照原模型路徑）。模型路徑裡沒有引號
+local MIRROR_MAP = "scripts/satchel_mirror_map.json"
+local function readMirrorMap(path)
+    local fh = io.open(path, "rb")
+    if not fh then return {} end
+    local text = fh:read("*a"); fh:close()
+    local map = {}
+    local un = function(s) return (s:gsub("\\/", "/"):gsub("\\\\", "\\")) end
+    for k, v in text:gmatch('"([^"]*)"%s*:%s*"([^"]*)"') do map[un(k)] = un(v) end
+    return map
+end
 local LOOT_SPEC = {
     { "PoliceStorageArmor", "_Navy", { DayPack = 1, CourierSatchel = 1, ScoutChestRig = 1, ToolBeltPouch = 1.5, AmmoBandolier = 1, MedicHipPouch = 0.5, ExpeditionPack = 0.3 } },
     { "PoliceStorageGuns", "_Navy", { AmmoBandolier = 3, ScoutChestRig = 1.5, ToolBeltPouch = 1.5, DayPack = 1, CourierSatchel = 1, ExpeditionPack = 0.2 } },
@@ -292,7 +304,8 @@ local SCRIPT_BLOCKS = {}
 function instanceItem(full)
     local s = SCRIPT_BLOCKS[full] or VAN.items[full]
     assert(s, "instanceItem: unknown item " .. tostring(full))
-    local b = newBag(tonumber(s.fields.Capacity), tonumber(s.fields.WeightReduction), tonumber(s.fields.Weight), full)
+    -- 腳本沒寫 Weight 時引擎預設 1.0（Item.java:83）
+    local b = newBag(tonumber(s.fields.Capacity), tonumber(s.fields.WeightReduction), tonumber(s.fields.Weight) or 1.0, full)
     b.container = nil
     for _, l in ipairs(s.lines) do
         local c = l.text:match("^Capacity = ([%d.]+)$")   -- 第一層以下只有 FluidContainer 元件寫 Capacity
@@ -329,6 +342,13 @@ local function suite()
     local function exists(full)
         return items[full] ~= nil or rein[full] ~= nil or VAN.items[full] ~= nil
     end
+    local function srcBlock(full) return VAN.items[full] or items[full] end
+    REIN_SPEC = {}
+    for full, b in pairs(VAN.items) do if isVanillaBag(b) then REIN_SPEC[#REIN_SPEC + 1] = full end end
+    for k in pairs(MODELS) do for _, s in ipairs(SKINS) do REIN_SPEC[#REIN_SPEC + 1] = "MinidoracatBags." .. k .. "_" .. s end end
+    table.sort(REIN_SPEC)
+    local isSource = {}
+    for _, s in ipairs(REIN_SPEC) do isSource[s] = true end
 
     -- 1. 物品欄位
     local count = 0
@@ -366,38 +386,63 @@ local function suite()
     check("clothing: unique non-vanilla names, XML present, GUID registered", clothingOk)
     check("clothing: GUIDs unique and not vanilla", dupOk)
 
-    -- 2a. 強化版（scripts/gen_reinforced.py 產生）：剛好 38 款；欄位逐一照原版，只差自重 0.1、跑速 1.0、自己的 ClothingItem、
-    --     腰包 ClothingItemExtra 指向對方的強化版；FluidContainer 照原版；XML 照原版只換 GUID（全新、登記、不重複）
+    -- 2a. 強化版（scripts/gen_reinforced.py 產生）：來源＝升級清單裡全部背包，每個一款；欄位逐一照來源，只差自重 0.1（沒寫也補）、
+    --     跑速 1.0、自己的 ClothingItem、換穿法指向目標的強化版、側背包改穿第二個側背包位置；FluidContainer 照來源只換 ContainerName；
+    --     XML 照來源換 GUID（全新、登記、不重複），側背包另照鏡像對照檔換男女模型
     local reinCount, reinFieldsOk, reinXmlOk = 0, true, true
     for _ in pairs(rein) do reinCount = reinCount + 1 end
-    check("reinforced: exactly 38 items", reinCount == #REIN_SPEC)
+    check("reinforced: one per source (" .. #REIN_SPEC .. " = 80 vanilla + 14 own), nothing else",
+        reinCount == #REIN_SPEC and #REIN_SPEC == 94)
+    local mirror = readMirrorMap(MIRROR_MAP)
     local function plainXml(x) return (x:gsub("^\239\187\191", ""):gsub("\r\n", "\n"):gsub("<m_GUID>[^<]*</m_GUID>", "")) end
-    for _, s in ipairs(REIN_SPEC) do
-        local full = "MinidoracatBags." .. s .. "_Reinforced"
-        local r, v = rein[full], VAN.items["Base." .. s]
+    local function mirrored(x)
+        for _, tag in ipairs({ "m_MaleModel", "m_FemaleModel" }) do
+            x = x:gsub("<" .. tag .. ">([^<]*)</" .. tag .. ">", function(path)
+                if mirror[path] then return "<" .. tag .. ">" .. mirror[path] .. "</" .. tag .. ">" end
+            end)
+        end
+        return x
+    end
+    local satchelSources, satchel2Count, pairCount = 0, 0, 0
+    for _, src in ipairs(REIN_SPEC) do
+        local full, ci = reinOf(src), ciOf(src)
+        local r, v = rein[full], srcBlock(src)
         local ok = r ~= nil and v ~= nil
+        local satchel = v ~= nil and v.fields.CanBeEquipped == "base:satchel"
+        if satchel then satchelSources = satchelSources + 1 end
         if ok then
             local want = {}
             for k, val in pairs(v.fields) do want[k] = val end
-            want.Weight, want.RunSpeedModifier, want.ClothingItem = "0.1", "1.0", "MDB_" .. s .. "_Reinforced"
+            want.Weight, want.RunSpeedModifier, want.ClothingItem = "0.1", "1.0", ci
             if want.ClothingItemExtra then
-                want.ClothingItemExtra = want.ClothingItemExtra:gsub("^Base%.(.+)$", "MinidoracatBags.%1_Reinforced")
+                local target = want.ClothingItemExtra:find(".", 1, true) and want.ClothingItemExtra or (v.module .. "." .. want.ClothingItemExtra)
+                want.ClothingItemExtra = isSource[target] and reinOf(target) or "(target is not a source: " .. target .. ")"
             end
+            if want.CanBeEquipped == "base:satchel" then want.CanBeEquipped = SATCHEL2 end
+            if want.BodyLocation == "base:satchel" then want.BodyLocation = SATCHEL2 end
             for k, val in pairs(want) do
-                if r.fields[k] ~= val then ok = false; diag("    reinforced " .. s .. " " .. k .. "=" .. tostring(r.fields[k]) .. " want " .. val) end
+                if r.fields[k] ~= val then ok = false; diag("    reinforced " .. src .. " " .. k .. "=" .. tostring(r.fields[k]) .. " want " .. val) end
             end
-            for k in pairs(r.fields) do if want[k] == nil then ok = false; diag("    reinforced " .. s .. " extra field " .. k) end end
+            for k in pairs(r.fields) do if want[k] == nil then ok = false; diag("    reinforced " .. src .. " extra field " .. k) end end
             ok = ok and #r.lines == #v.lines
-            -- 液體元件照原版，只有 ContainerName 改成自己的（顯示名稱取 Fluid_Container_<ContainerName>，FluidContainer.java:398-404）
+            -- 液體元件照來源，只有 ContainerName 改成自己的（顯示名稱取 Fluid_Container_<ContainerName>，FluidContainer.java:398-404）
             for i, l in ipairs(v.lines) do
-                local want = l.text:gsub("^ContainerName = .*$", "ContainerName = MDB_" .. s .. "_Reinforced")
-                ok = ok and r.lines[i] ~= nil and r.lines[i].text == want
+                local wantLine = l.text:gsub("^ContainerName = .*$", "ContainerName = " .. ci)
+                ok = ok and r.lines[i] ~= nil and r.lines[i].text == wantLine
+            end
+            if r.fields.CanBeEquipped == SATCHEL2 then satchel2Count = satchel2Count + 1 end
+            -- 換穿法成對：目標的強化版也指回這一款
+            local x = r.fields.ClothingItemExtra
+            if x then
+                pairCount = pairCount + 1
+                if not (rein[x] and rein[x].fields.ClothingItemExtra == full) then ok = false; diag("    extra not paired: " .. full) end
             end
         end
         if not ok then reinFieldsOk = false end
-        local ci = "MDB_" .. s .. "_Reinforced"
         local xml = readFile(MEDIA .. "clothing/clothingItems/" .. ci .. ".xml", true)
-        local vxml = v and readFile(PZ .. "clothing/clothingItems/" .. v.fields.ClothingItem .. ".xml", true)
+        local srcDir = src:find("^MinidoracatBags%.") and (MEDIA .. "clothing/clothingItems/") or (PZ .. "clothing/clothingItems/")
+        local vxml = v and readFile(srcDir .. v.fields.ClothingItem .. ".xml", true)
+        if vxml and satchel then vxml = mirrored(vxml) end
         local g = xml and xml:match("<m_GUID>%s*(.-)%s*</m_GUID>")
         if not (xml and vxml and plainXml(xml) == plainXml(vxml) and not VAN.clothing[ci] and g
             and guidOf["media/clothing/clothingItems/" .. ci .. ".xml"] == g:lower() and not VAN.guids[g:lower()]
@@ -406,9 +451,13 @@ local function suite()
         end
         if g then seenGuid[g:lower()] = true end
     end
-    check("reinforced: fields copy vanilla except Weight 0.1, RunSpeedModifier 1.0, own ClothingItem, fanny extra -> reinforced",
+    check("reinforced: fields copy the source except Weight 0.1, RunSpeedModifier 1.0, own ClothingItem, extra -> paired reinforced, satchel -> " .. SATCHEL2,
         reinFieldsOk)
-    check("reinforced: ClothingItem XML = vanilla XML with a new registered unique GUID, name not vanilla", reinXmlOk)
+    check("reinforced: every satchel source (" .. satchelSources .. ") wears in " .. SATCHEL2 .. ", no reinforced bag uses base:satchel",
+        satchelSources >= 15 and satchel2Count == satchelSources and not readFile(F.REIN):find("base:satchel", 1, true))
+    check("reinforced: 3 vanilla fanny pack pairs swap between their reinforced versions (6 items)", pairCount == 6)
+    check("reinforced: ClothingItem XML = source XML (satchels via mirror map if present) with a new registered unique GUID",
+        reinXmlOk)
     check("reinforced: never in loot or zombie drops", not readFile(F.LOOT):find("Reinforced", 1, true)
         and not readFile(F.ZD):find("Reinforced", 1, true))
     -- 還原與「已升級原版背包改成強化版」：背包 keep＋不能穿著、沒有產出，換型在 OnCreate
@@ -431,11 +480,11 @@ local function suite()
     local rset, rn = bagSet(reinRecipes.MDB_RestoreReinforced)
     local mset, mn = bagSet(reinRecipes.MDB_ReinforceUpgradedBag)
     local covered = rn == #REIN_SPEC and mn == #REIN_SPEC
-    for _, s in ipairs(REIN_SPEC) do covered = covered and rset["MinidoracatBags." .. s .. "_Reinforced"] and mset["Base." .. s] end
+    for _, s in ipairs(REIN_SPEC) do covered = covered and rset[reinOf(s)] and mset[s] end
     local rr, mr = reinRecipes.MDB_RestoreReinforced, reinRecipes.MDB_ReinforceUpgradedBag
     local recipeCount = 0
     for _ in pairs(reinRecipes) do recipeCount = recipeCount + 1 end
-    check("restore / reinforce-upgraded recipes: exactly these 2, bag lists cover all 38 (reinforced / vanilla)",
+    check("restore / reinforce-upgraded recipes: exactly these 2, bag lists cover all " .. #REIN_SPEC .. " (reinforced / source)",
         recipeCount == 2 and covered == true)
     check("MDB_RestoreReinforced: scissors kept, no other input, no outputs, MDB.onSwapKeepTier, no OnTest",
         rr ~= nil and #rr.lines == 2 and hasLine(rr, "item 1 tags[base:scissors] mode:keep flags[IsNotDull;MayDegradeLight]")
@@ -549,13 +598,9 @@ local function suite()
         end
         check("MDB_Make" .. k .. ": Navy and Olive use different fabric", fabric.Navy and fabric.Olive and fabric.Navy ~= fabric.Olive)
     end
-    -- 升級配方：背包清單＝原版可穿戴、無 AcceptItemFunction 的容器＋14 件新背包＋38 件強化版
+    -- 升級配方：背包清單＝原版可穿戴、無 AcceptItemFunction 的容器＋14 件新背包（也就是全部強化版來源）＋它們的強化版
     local expectBags = {}
-    for full, b in pairs(VAN.items) do
-        if b.fields.ItemType == "base:container" and b.fields.CanBeEquipped and not b.fields.AcceptItemFunction then expectBags[full] = true end
-    end
-    for k in pairs(MODELS) do for _, s in ipairs(SKINS) do expectBags["MinidoracatBags." .. k .. "_" .. s] = true end end
-    for _, s in ipairs(REIN_SPEC) do expectBags["MinidoracatBags." .. s .. "_Reinforced"] = true end
+    for _, s in ipairs(REIN_SPEC) do expectBags[s] = true; expectBags[reinOf(s)] = true end
     for t = 1, 3 do
         local r = recipes["MDB_UpgradeBagTier" .. t]
         local bagLine, outputs = nil, 0
@@ -567,7 +612,7 @@ local function suite()
         for full in (bagLine and bagLine:match("%[(.-)%]") or ""):gmatch("[^;]+") do got[full] = true end
         for full in pairs(expectBags) do if not got[full] then setOk = false; diag("    upgrade missing: " .. full) end end
         for full in pairs(got) do if not expectBags[full] then setOk = false; diag("    upgrade extra: " .. full) end end
-        check("MDB_UpgradeBagTier" .. t .. ": bag list = wearable vanilla containers + 14 new + 38 reinforced", setOk)
+        check("MDB_UpgradeBagTier" .. t .. ": bag list = wearable vanilla containers + 14 new + all their reinforced versions", setOk)
         check("MDB_UpgradeBagTier" .. t .. ": bag is keep + IsNotWorn, outputs empty", bagLine ~= nil
             and bagLine:find("mode:keep", 1, true) and bagLine:find("flags[IsNotWorn]", 1, true) and outputs == 0)
         check("MDB_UpgradeBagTier" .. t .. ": Tailoring " .. (t + 1) .. ", hooks wired", r ~= nil
@@ -787,17 +832,17 @@ local function suite()
     -- 8c. 強化版：對照表、各階數值、升級換型、還原、腰包換穿、0.1.0 升過級的原版背包
     local specOk = #(MDB.REINFORCED_SOURCES or {}) == #REIN_SPEC
     for _, s in ipairs(REIN_SPEC) do
-        local r = MDB.REINFORCED["Base." .. s]
-        specOk = specOk and r == "MinidoracatBags." .. s .. "_Reinforced" and MDB.ORIGINAL[r] == "Base." .. s
+        local r = MDB.REINFORCED[s]
+        specOk = specOk and r == reinOf(s) and MDB.ORIGINAL[r] == s
     end
-    check("REINFORCED_SOURCES = the 38 vanilla bags, REINFORCED / ORIGINAL map both ways", specOk)
+    check("REINFORCED_SOURCES = every bag in the upgrade list (" .. #REIN_SPEC .. "), REINFORCED / ORIGINAL map both ways", specOk)
     local tiersOk = true
     for _, s in ipairs(REIN_SPEC) do
-        local b = instanceItem("MinidoracatBags." .. s .. "_Reinforced")
+        local b = instanceItem(reinOf(s))
         for t = 1, 3 do MDB.applyTier(b, t) end
         if not (b.weight == 0.1 and b.cap == 49 and b.wr == 100) then tiersOk = false; diag("    reinforced tier 3: " .. s) end
     end
-    check("reinforced: all 38 weigh 0.1 and reach 49/100 at tier 3", tiersOk)
+    check("reinforced: all " .. #REIN_SPEC .. " weigh 0.1 and reach 49/100 at tier 3", tiersOk)
     check("reinforced ALICE (weight 0.1): 28/85 -> 35/90 -> 42/95 -> 49/100",
         walk(28, 85, 0.1, { { 28, 85 }, { 35, 90 }, { 42, 95 }, { 49, 100 } }))
 
@@ -879,6 +924,32 @@ local function suite()
     for t = 1, 3 do MDB.applyTier(front, t) end
     local back = ISClothingExtraAction:createItemNew(front, instanceItem("MinidoracatBags.Bag_FannyPackBack_Reinforced"))
     check("reinforced fanny pack front -> back keeps tier 3 = 49/100", back.md.MDB_tier == 3 and back.cap == 49 and back.wr == 100)
+    local hide = instanceItem("MinidoracatBags.Bag_FannyPackFront_Hide_Reinforced")
+    MDB.applyTier(hide, 2)
+    local hideX = rein["MinidoracatBags.Bag_FannyPackFront_Hide_Reinforced"].fields.ClothingItemExtra
+    local hideBack = SCRIPT_BLOCKS[hideX] and ISClothingExtraAction:createItemNew(hide, instanceItem(hideX))
+    check("reinforced hide fanny pack front -> its reinforced back keeps tier 2 (1/65 -> 33/88 at weight 0.1)",
+        hideBack and hideBack.fullType == "MinidoracatBags.Bag_FannyPackBack_Hide_Reinforced" and hideBack.md.MDB_tier == 2
+        and hideBack.cap == 33 and hideBack.wr == 88)
+
+    -- 本 MOD 的背包也是來源：第一次升級換成自己的強化版（日行背包 20／75，自重 0.1 → 第 1 階 30／83）
+    local D, RD = "MinidoracatBags.DayPack_Navy", "MinidoracatBags.DayPack_Navy_Reinforced"
+    env.server, env.sent = true, {}
+    old = stocked(D)
+    MDB.onUpgrade(keepData(old), PLAYER)
+    okSwap, new = swapped(old, RD)
+    check("upgrade (server): own DayPack tier 0 -> DayPack_Navy_Reinforced tier 1 = 30/83, one replace",
+        okSwap and new.md.MDB_tier == 1 and new.cap == 30 and new.wr == 83 and #env.sent == 1 and env.sent[1][3] == new)
+    env.sent = {}
+    MDB.onSwapKeepTier(keepData(new), PLAYER)
+    local restored = CONTAINER.items[1]
+    check("restore: own reinforced DayPack -> DayPack_Navy keeps tier 1 (weight 0.8: 20/75 -> 30/83)",
+        restored.fullType == D and restored.md.MDB_tier == 1 and restored.cap == 30 and restored.wr == 83 and #env.sent == 1)
+    env.server = false
+    -- 強化版醫療腰包照樣只收醫療用品（AcceptItemFunction 照抄）
+    check("own reinforced MedicHipPouch keeps AcceptItemFunction = MDB.acceptFirstAid",
+        rein["MinidoracatBags.MedicHipPouch_Olive_Reinforced"] ~= nil
+        and rein["MinidoracatBags.MedicHipPouch_Olive_Reinforced"].fields.AcceptItemFunction == "MDB.acceptFirstAid")
 
     -- 0.1.0 升過級的原版背包：改成強化版、階級照舊；第 0 階不放行
     local v0, v3 = instanceItem(A), instanceItem(A)
@@ -905,6 +976,81 @@ local function suite()
     check("swap error: later applyTier on the server still resends", #env.sent == 1)
     env.server = false
     CONTAINER.items = {}
+
+    -- 8d. 第二個側背包位置：registries.lua 註冊（非 base、先查再註冊），MDB_BodyLocations.lua 加進 Human 群組、排在 base:satchel
+    --     後面、不設互斥／隱藏、可以邊走邊穿脫；沒註冊到時不把 nil 傳給 getOrCreateLocation
+    local function bodyLocEnv(groupIds)
+        local reg, e = {}, { registered = 0, rules = 0, nilCalls = 0 }
+        ResourceLocation = { of = function(id)
+            local ns, p = id:match("^([^:]+):(.+)$")
+            if not ns then ns, p = "base", id end
+            return { ns = ns:lower(), id = (ns .. ":" .. p):lower() }
+        end }
+        ItemBodyLocation = {}
+        function ItemBodyLocation.get(rl) return reg[rl.id] end
+        function ItemBodyLocation.register(id)   -- RegistryReset.java:15-21、Registry.java:30-39
+            local rl = ResourceLocation.of(id)
+            if rl.ns == "base" then error("Default namespace 'base' is not allowed!") end
+            if reg[rl.id] then error("Tried to register duplicate object: " .. rl.id) end
+            e.registered = e.registered + 1
+            reg[rl.id] = { id = rl.id }
+            return reg[rl.id]
+        end
+        for _, id in ipairs({ "base:fannypackback", "base:ammostrap", "base:satchel", "base:shoulderholster", "base:back" }) do
+            reg[id] = { id = id }
+        end
+        ItemBodyLocation.SATCHEL = reg["base:satchel"]
+        local group = { list = {} }
+        for _, id in ipairs(groupIds) do group.list[#group.list + 1] = reg[id] end
+        function group:getOrCreateLocation(loc)
+            if loc == nil then e.nilCalls = e.nilCalls + 1 end
+            for _, l in ipairs(self.list) do if l == loc then return l end end
+            self.list[#self.list + 1] = loc
+        end
+        function group:indexOf(loc)
+            for i, l in ipairs(self.list) do if l == loc then return i - 1 end end
+            return -1
+        end
+        function group:moveLocationToIndex(loc, index)   -- BodyLocationGroup.java:53-62
+            if index < 0 or index >= #self.list then return end
+            local i = self:indexOf(loc)
+            if i >= 0 then table.insert(self.list, index + 1, table.remove(self.list, i + 1)) end
+        end
+        function group:setExclusive() e.rules = e.rules + 1 end
+        function group:setHideModel() e.rules = e.rules + 1 end
+        BodyLocations = { getGroup = function(name) assert(name == "Human"); return group end }
+        ISWearClothing = { WalkBodyLocations = { reg["base:satchel"] } }
+        package.loaded["NPCs/BodyLocations"] = true
+        package.loaded["TimedActions/ISWearClothing"] = true
+        e.group, e.reg = group, reg
+        return e
+    end
+    local function ids(list) local t = {} for i, l in ipairs(list) do t[i] = l.id end return table.concat(t, ",") end
+    local groupIds = { "base:fannypackback", "base:ammostrap", "base:satchel", "base:shoulderholster", "base:back" }
+    local be = bodyLocEnv(groupIds)
+    local regOk = pcall(function() loadLua("REG"); loadLua("REG") end)
+    check("registries.lua: registers " .. SATCHEL2 .. " once (non-base namespace; second run skips instead of throwing)",
+        regOk and be.registered == 1 and be.reg[SATCHEL2] ~= nil)
+    loadLua("BODYLOC")
+    check("MDB_BodyLocations: " .. SATCHEL2 .. " right after base:satchel in the Human group, no exclusive/hide rules",
+        ids(be.group.list) == "base:fannypackback,base:ammostrap,base:satchel," .. SATCHEL2 .. ",base:shoulderholster,base:back"
+        and be.rules == 0)
+    check("MDB_BodyLocations: can be put on while walking like base:satchel (ISWearClothing.WalkBodyLocations)",
+        ISWearClothing.WalkBodyLocations[2] == be.reg[SATCHEL2])
+    be = bodyLocEnv({ "base:fannypackback", "base:back" })
+    loadLua("REG"); loadLua("BODYLOC")
+    check("MDB_BodyLocations: without base:satchel in the group it is appended last",
+        ids(be.group.list) == "base:fannypackback,base:back," .. SATCHEL2)
+    be = bodyLocEnv(groupIds)
+    env.printed = {}
+    loadLua("BODYLOC")   -- registries.lua 沒跑
+    check("MDB_BodyLocations: unregistered location -> no getOrCreateLocation(nil), group unchanged, one error line",
+        be.nilCalls == 0 and ids(be.group.list) == table.concat(groupIds, ",") and #env.printed == 1
+        and env.printed[1]:find("[MinidoracatBagsFor42] ERROR", 1, true) == 1)
+    check("satchel2 ID is the same in registries.lua, MDB_BodyLocations.lua, gen_reinforced.py and the reinforced scripts",
+        MDB.SATCHEL2_ID == SATCHEL2 and readFile(F.REG):find('"' .. SATCHEL2 .. '"', 1, true) ~= nil
+        and readFile(F.GEN):find('SATCHEL2 = "' .. SATCHEL2 .. '"', 1, true) ~= nil
+        and readFile(F.REIN):find("CanBeEquipped = " .. SATCHEL2 .. ",", 1, true) ~= nil)
 
     -- 9. 放入限制（原版物品的真實 tag 與分類）
     check("acceptFirstAid: bandage, disinfectant, pills accepted", MDB.acceptFirstAid(nil, vanillaItem("Base.Bandage"))
@@ -1074,6 +1220,75 @@ local function genCheck()
 end
 check("gen_reinforced.py --check: committed files match the generator", genCheck())
 
+-- 側背包鏡像對照檔（SatchelMirror 交付）：存在時改寫強化版側背包 XML 的男女模型，不存在時照原路徑，--check 都比對。
+-- 用暫存的對照檔跑產生器：真正的對照檔（有的話）加上一個測試鍵，只有用到那個模型的強化版側背包 XML 會變
+local function gen(args)
+    local p = io.popen("uv run --quiet scripts/gen_reinforced.py " .. args .. " 2>&1")
+    local out = p:read("a")
+    return p:close() == true, out
+end
+do
+    local tmpDir = os.getenv("TEMP") or os.getenv("TMPDIR") or "."
+    local mapPath = tmpDir .. "/mdb_mirror_test.json"
+    local function writeMap(map)
+        local parts = {}
+        for k, v in pairs(map) do parts[#parts + 1] = '"' .. k:gsub("\\", "\\\\") .. '": "' .. v:gsub("\\", "\\\\") .. '"' end
+        local fh = assert(io.open(mapPath, "wb")); fh:write("{" .. table.concat(parts, ", ") .. "}"); fh:close()
+    end
+    local real = readMirrorMap(MIRROR_MAP)
+    local okAbsent = gen('--check --mirror-map "' .. tmpDir .. '/mdb_no_such_mirror_map.json"')
+    check("mirror map absent: generator keeps the source model paths", okAbsent == (next(real) == nil))
+    -- 測試鍵：某個強化版側背包目前用的男模型（真對照檔沒改到的）；值：原版大背包的男模型
+    local reinText = readFile(F.REIN)
+    local satchelXml, testKey = {}, nil
+    for name, body in reinText:gmatch("item%s+([%w_]+)%s*(%b{})") do
+        if body:find("CanBeEquipped = " .. SATCHEL2 .. ",", 1, true) then
+            local ci = body:match("ClothingItem = ([%w_]+),")
+            local xml = readFile(MEDIA .. "clothing/clothingItems/" .. ci .. ".xml", true) or ""
+            satchelXml[ci .. ".xml"] = xml
+            local male = xml:match("<m_MaleModel>([^<]*)</m_MaleModel>")
+            if male and male ~= "" and not real[male] and not testKey then testKey = male end
+        end
+    end
+    local testValue = "media\\models_X\\Skinned\\BackPacks\\M_ALICE_Pack.X"
+    local expected = {}
+    for file, xml in pairs(satchelXml) do
+        if xml:find(">" .. testKey .. "<", 1, true) then expected[file] = true end
+    end
+    local map = {}
+    for k, v in pairs(real) do map[k] = v end
+    map[testKey] = testValue
+    writeMap(map)
+    local okMap, out = gen('--check --mirror-map "' .. mapPath .. '"')
+    local listed, onlyExpected = {}, true
+    for file in out:gmatch("(MDB_[%w_]+_Reinforced%.xml)") do
+        listed[file] = true
+        if not expected[file] then onlyExpected = false end
+    end
+    local allListed = next(expected) ~= nil
+    for file in pairs(expected) do allListed = allListed and listed[file] == true end
+    check("mirror map present: --check reports exactly the reinforced satchel XMLs using the mapped model",
+        not okMap and onlyExpected and allListed and not out:find("MDB_Reinforced.txt", 1, true))
+    local anyFile = next(expected)
+    local okPrint, printed = gen('--mirror-map "' .. mapPath .. '" --print ' .. (anyFile or "none"))
+    check("mirror map present: generated satchel XML uses the mirror model and keeps everything else",
+        okPrint and printed:find("<m_MaleModel>" .. testValue .. "</m_MaleModel>", 1, true) ~= nil
+        and not printed:find(">" .. testKey .. "<", 1, true)
+        and printed:gsub("<m_MaleModel>[^<]*</m_MaleModel>", "") == satchelXml[anyFile]:gsub("<m_MaleModel>[^<]*</m_MaleModel>", ""))
+    map[testKey] = nil
+    map["media\\models_X\\Skinned\\BackPacks\\M_ALICE_Pack.X"] = testValue
+    writeMap(map)
+    local okStale, staleOut = gen('--check --mirror-map "' .. mapPath .. '"')
+    check("mirror map with a key no satchel uses: generator stops", not okStale and staleOut:find("M_ALICE_Pack", 1, true) ~= nil)
+    map = {}
+    for k, v in pairs(real) do map[k] = v end
+    map[testKey] = "media\\models_X\\Skinned\\BackPacks\\MDB_NoSuchMirror.X"
+    writeMap(map)
+    local okMissing, missingOut = gen('--check --mirror-map "' .. mapPath .. '"')
+    check("mirror map pointing at a missing model: generator stops", not okMissing and missingOut:find("MDB_NoSuchMirror", 1, true) ~= nil)
+    os.remove(mapPath)
+end
+
 if arg and arg[1] == "--mutants" then
     local mutants = {
         { name = "容量不四捨五入", file = "UPG", from = " + 50) / 100)", to = ") / 100)" },
@@ -1108,7 +1323,22 @@ if arg and arg[1] == "--mutants" then
         { name = "沒改名也沿用舊名", file = "UPG", from = "            new:setName(new:getScriptItem():getDisplayName())\n", to = "" },
         { name = "還原掉級", file = "UPG", from = "MDB.ORIGINAL[ft] or MDB.REINFORCED[ft], tierOf(bag)", to = "MDB.ORIGINAL[ft] or MDB.REINFORCED[ft], 0" },
         { name = "第 0 階也能改強化版", file = "UPG", from = "tierOf(item) >= 1", to = "tierOf(item) >= 0" },
-        { name = "對照表少一款", file = "UPG", from = '"Base.Bag_SWAT", ', to = "" },
+        { name = "對照表少一款", file = "UPG", from = '"Base.Bag_SWAT",', to = "" },
+        { name = "對照表少本 MOD 一款", file = "UPG", from = '"MinidoracatBags.DayPack_Navy", ', to = "" },
+        { name = "本 MOD 背包升級不換型", file = "UPG", from = "local target = MDB.REINFORCED[bag:getFullType()]", to = 'local target = bag:getFullType():find("^Base%.") and MDB.REINFORCED[bag:getFullType()]' },
+        { name = "胸掛沒補自重", file = "REIN", from = "    item Bag_ChestRig_Reinforced\n    {\n        DisplayCategory = Bag,\n        ItemType = base:container,\n        Weight = 0.1,\n", to = "    item Bag_ChestRig_Reinforced\n    {\n        DisplayCategory = Bag,\n        ItemType = base:container,\n" },
+        { name = "強化側背包穿回原版位置", file = "REIN", from = "CanBeEquipped = minidoracatbags:satchel2,", to = "CanBeEquipped = base:satchel," },
+        { name = "獸皮腰包換穿指回原版", file = "REIN", from = "ClothingItemExtra = MinidoracatBags.Bag_FannyPackBack_Hide_Reinforced,", to = "ClothingItemExtra = Base.Bag_FannyPackBack_Hide," },
+        { name = "腰包換穿沒成對", file = "REIN", from = "ClothingItemExtra = MinidoracatBags.Bag_FannyPackBack_Tarp_Reinforced,", to = "ClothingItemExtra = MinidoracatBags.Bag_FannyPackBack_Reinforced," },
+        { name = "本 MOD 強化版丟了放入限制", file = "REIN", from = "AcceptItemFunction = MDB.acceptFirstAid,", to = "" },
+        { name = "註冊用 base 命名空間", file = "REG", from = 'ItemBodyLocation.register("minidoracatbags:satchel2")', to = 'ItemBodyLocation.register("satchel2")' },
+        { name = "註冊沒先查", file = "REG", from = 'if not ItemBodyLocation.get(ResourceLocation.of("minidoracatbags:satchel2")) then', to = "if true then" },
+        { name = "位置沒移到側背包後面", file = "BODYLOC", from = "        group:moveLocationToIndex(loc, satchel + 1)", to = "" },
+        { name = "位置排在側背包前面", file = "BODYLOC", from = "satchel + 1)", to = "satchel)" },
+        { name = "位置 ID 和註冊不同", file = "BODYLOC", from = 'MDB.SATCHEL2_ID = "minidoracatbags:satchel2"', to = 'MDB.SATCHEL2_ID = "minidoracatbags:satchel3"' },
+        { name = "沒註冊也傳 nil", file = "BODYLOC", from = "    if not loc then", to = "    if false then" },
+        { name = "位置不能邊走邊穿", file = "BODYLOC", from = "    table.insert(ISWearClothing.WalkBodyLocations, loc)\n", to = "" },
+        { name = "位置設了互斥", file = "BODYLOC", from = "    table.insert(ISWearClothing.WalkBodyLocations, loc)\n", to = "    table.insert(ISWearClothing.WalkBodyLocations, loc)\n    group:setExclusive(loc, ItemBodyLocation.SATCHEL)\n" },
         { name = "強化版自重錯", file = "REIN", from = "Weight = 0.1,", to = "Weight = 0.2," },
         { name = "強化版跑速沒改", file = "REIN", from = "RunSpeedModifier = 1.0,", to = "RunSpeedModifier = 0.94," },
         { name = "強化版沿用原版 ClothingItem", file = "REIN", from = "ClothingItem = MDB_Bag_Satchel_Reinforced,", to = "ClothingItem = Bag_Satchel," },
@@ -1169,7 +1399,8 @@ if arg and arg[1] == "--mutants" then
         MUTATION, quiet = m, true
         pass, fail = 0, 0
         local ok, err = pcall(suite)
-        local killed = (not ok) or fail > 0
+        -- 突變片段不在原始碼裡時 readFile 會丟錯，那不算抓到
+        local killed = (not ok and not tostring(err):find("突變片段不在原始碼中", 1, true)) or (ok and fail > 0)
         rawPrint(string.format("  %s  %s（%s）", killed and "KILLED " or "SURVIVED", m.name,
             ok and (fail .. " 項 FAIL") or ("錯誤：" .. tostring(err))))
         if not killed then survived = survived + 1 end

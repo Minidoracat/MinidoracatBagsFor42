@@ -37,6 +37,19 @@ ISClothingExtraAction = { createItemNew = function(_, _, newItem) return newItem
 package.loaded["TimedActions/ISClothingExtraAction"] = true
 ISBaseTimedAction = { derive = function(self, type) return setmetatable({ Type = type }, { __index = self }) end }
 package.loaded["TimedActions/ISBaseTimedAction"] = true
+-- MDB_BodyLocations 在載入時把第二個側背包位置加進 Human 群組（行為由 test_newbags.lua 測），這裡只讓它載得起來
+local SATCHEL2 = { id = "minidoracatbags:satchel2" }
+ResourceLocation = { of = function(id) return id end }
+ItemBodyLocation = { SATCHEL = { id = "base:satchel" }, get = function(id) return id == SATCHEL2.id and SATCHEL2 or nil end }
+local humanGroup = {}
+BodyLocations = { getGroup = function() return {
+    getOrCreateLocation = function(_, loc) humanGroup[#humanGroup + 1] = loc end,
+    indexOf = function() return -1 end,
+    moveLocationToIndex = function() end,
+} end }
+ISWearClothing = { WalkBodyLocations = {} }
+package.loaded["NPCs/BodyLocations"] = true
+package.loaded["TimedActions/ISWearClothing"] = true
 
 -- ===== 測試工具 =====
 local failures = 0
@@ -84,10 +97,12 @@ for _, name in ipairs(ALLOWED) do check(seen[name] == 1, name .. " 剛好掛一�
 for _, fn in ipairs({ "acceptLegacy", "acceptFirstAid", "acceptAmmo", "applyTier", "swapBag", "keepBag", "onConvertLegacy",
                       "onMakeReinforcedSling", "onSwapKeepTier", "onTestUpgraded", "onUpgrade", "onTestTier1", "onTestTier2", "onTestTier3",
                       "addLoot", "reapplyLoot", "onZombieDead", "warnDuplicates", "opt",
-                      "canWearFromFloor", "needsFloorWear", "onFillFloorWearMenu" }) do
+                      "canWearFromFloor", "needsFloorWear", "onFillFloorWearMenu", "addSatchel2Location" }) do
     check(type(MDB[fn]) == "function", "MDB." .. fn .. " 存在")
 end
 check(type(MDB_WearFromFloor) == "table" and MDB_WearFromFloor.Type == "MDB_WearFromFloor", "計時動作 MDB_WearFromFloor 是同名全域")
+check(humanGroup[1] == SATCHEL2 and ISWearClothing.WalkBodyLocations[1] == SATCHEL2,
+    "載入時第二個側背包位置加進 Human 群組、可以邊走邊穿脫")
 
 -- ===== 情境二：各部分的離線測試，含植入違規 =====
 print("情境二：離線測試")

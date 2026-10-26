@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 腰掛工具包：自製模型（scripts/blender/bags/build.py 產生），兩種外觀共用模型，只換貼圖 -->
+<clothingItem>
+	<m_MaleModel>media\models_X\Skinned\BackPacks\MDB_ToolBeltPouch_M.X</m_MaleModel>
+	<m_FemaleModel>media\models_X\Skinned\BackPacks\MDB_ToolBeltPouch_F.X</m_FemaleModel>
+	<m_GUID>24c08b64-4500-5cd4-804f-239d1e5cde94</m_GUID>
+	<m_Static>false</m_Static>
+	<m_AllowRandomTint>false</m_AllowRandomTint>
+	<m_AttachBone></m_AttachBone>
+	<textureChoices>Clothes\Bag\MDB_ToolBeltPouch_Olive</textureChoices>
+</clothingItem>

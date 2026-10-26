@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 偵察胸掛：自製模型（scripts/blender/bags/build.py 產生），兩種外觀共用模型，只換貼圖。
+     Alt 模型照原版 Bag_ChestRig：穿外套、毛衣、胸甲時改用（BodyLocations.lua:1010-1014，PopTemplateManager.java:73-76） -->
+<clothingItem>
+	<m_GUID>0b2d774f-79e5-5b19-b359-d85fd3f815d5</m_GUID>
+	<m_MaleModel>media\models_X\Skinned\BackPacks\MDB_ScoutChestRig_M.X</m_MaleModel>
+	<m_FemaleModel>media\models_X\Skinned\BackPacks\MDB_ScoutChestRig_F.X</m_FemaleModel>
+	<m_AltMaleModel>media\models_X\Skinned\BackPacks\MDB_ScoutChestRig_ALT_M.X</m_AltMaleModel>
+	<m_AltFemaleModel>media\models_X\Skinned\BackPacks\MDB_ScoutChestRig_ALT_F.X</m_AltFemaleModel>
+	<m_Static>false</m_Static>
+	<m_AllowRandomHue>false</m_AllowRandomHue>
+	<m_AllowRandomTint>false</m_AllowRandomTint>
+	<m_AttachBone></m_AttachBone>
+	<m_MasksFolder>none</m_MasksFolder>
+	<textureChoices>Clothes\Bag\MDB_ScoutChestRig_Olive</textureChoices>
+</clothingItem>

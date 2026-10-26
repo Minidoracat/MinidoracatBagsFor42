@@ -1,21 +1,44 @@
 -- 背包升級：容量與負重減輕存在每個背包自己身上（InventoryContainer 存檔會帶 capacity／weightReduction，
--- InventoryContainer.java:70-73）。下表的原版背包升級時先換成強化版再套階級；公式見 AGENTS.md「設計定案」。
+-- InventoryContainer.java:70-73）。下表的背包第一次升級時先換成強化版再套階級；公式見 AGENTS.md「設計定案」。
 MDB = MDB or {}
 
--- 有強化版的背包。強化版 MinidoracatBags.<物品名>_Reinforced：自重 0.1、不減速，其餘欄位照原版。
+-- 有強化版的背包＝升級配方清單裡的全部背包（使用者 2026-10-26 第二批決定）。
+-- 強化版 MinidoracatBags.<物品名>_Reinforced：自重 0.1、不減速、側背包改穿第二個側背包位置，其餘欄位照來源。
 -- scripts/gen_reinforced.py 讀這張表產生物品腳本、外觀、16 語名稱與配方清單；要加款式只加這裡再跑產生器。
+-- 來源的 ClothingItemExtra（換穿法）目標也要在表裡，強化版才能互換。
 MDB.REINFORCED_SOURCES = {
-    "Base.Bag_SurvivorBag", "Base.Bag_ALICEpack", "Base.Bag_ALICEpack_Army", "Base.Bag_ALICEpack_DesertCamo",
-    "Base.Bag_DuffelBag", "Base.Bag_MedicalBag", "Base.Bag_Military", "Base.Bag_Police", "Base.Bag_Sheriff",
-    "Base.Bag_SWAT", "Base.Bag_BreakdownBag", "Base.Bag_BurglarBag", "Base.Bag_BaseballBag", "Base.Bag_TennisBag",
-    "Base.Bag_WeaponBag", "Base.Bag_InmateEscapedBag", "Base.Bag_MoneyBag", "Base.Bag_WorkerBag", "Base.Bag_ShotgunBag",
-    "Base.Bag_ShotgunSawnoffBag", "Base.Bag_ShotgunDblBag", "Base.Bag_ShotgunDblSawnoffBag", "Base.Bag_FoodCanned",
-    "Base.Bag_FoodSnacks", "Base.Bag_ToolBag", "Base.Bag_FannyPackBack", "Base.Bag_FannyPackFront",
-    "Base.Bag_HydrationBackpack", "Base.Bag_HydrationBackpack_Camo", "Base.Bag_NormalHikingBag", "Base.Bag_BigHikingBag",
-    "Base.Bag_HikingBag_Travel", "Base.Bag_Schoolbag", "Base.Bag_Satchel", "Base.Bag_Satchel_Fishing",
-    "Base.Bag_Satchel_Medical", "Base.Bag_Satchel_Military", "Base.Bag_SheetSlingBag",
+    -- 原版：升級配方清單裡全部的原版容器（可穿戴、沒有 AcceptItemFunction）
+    "Base.Bag_ALICE_BeltSus", "Base.Bag_ALICE_BeltSus_Camo", "Base.Bag_ALICE_BeltSus_Green", "Base.Bag_ALICEpack",
+    "Base.Bag_ALICEpack_Army", "Base.Bag_ALICEpack_DesertCamo", "Base.Bag_BaseballBag", "Base.Bag_BigHikingBag",
+    "Base.Bag_BigHikingBag_Travel", "Base.Bag_BreakdownBag", "Base.Bag_BurglarBag", "Base.Bag_ChestRig",
+    "Base.Bag_ChestRig_Tarp", "Base.Bag_ClothSatchel_Burlap", "Base.Bag_ClothSatchel_Cotton",
+    "Base.Bag_ClothSatchel_Denim", "Base.Bag_ClothSatchel_DenimBlack", "Base.Bag_ClothSatchel_DenimLight",
+    "Base.Bag_CraftedFramepack_Large", "Base.Bag_CraftedFramepack_Large2", "Base.Bag_CraftedFramepack_Large3",
+    "Base.Bag_CraftedFramepack_Small", "Base.Bag_CrudeLeatherBag", "Base.Bag_CrudeTarpBag", "Base.Bag_DuffelBag",
+    "Base.Bag_DuffelBagTINT", "Base.Bag_FannyPackBack", "Base.Bag_FannyPackBack_Hide", "Base.Bag_FannyPackBack_Tarp",
+    "Base.Bag_FannyPackFront", "Base.Bag_FannyPackFront_Hide", "Base.Bag_FannyPackFront_Tarp",
+    "Base.Bag_FishingBasket", "Base.Bag_FoodCanned", "Base.Bag_FoodSnacks", "Base.Bag_GolfBag",
+    "Base.Bag_GolfBag_Melee", "Base.Bag_HideSatchel", "Base.Bag_HideSlingBag", "Base.Bag_HikingBag_Travel",
+    "Base.Bag_HydrationBackpack", "Base.Bag_HydrationBackpack_Camo", "Base.Bag_InmateEscapedBag",
+    "Base.Bag_MedicalBag", "Base.Bag_Military", "Base.Bag_MoneyBag", "Base.Bag_NormalHikingBag", "Base.Bag_Police",
+    "Base.Bag_RifleCaseCloth", "Base.Bag_RifleCaseCloth2", "Base.Bag_RifleCaseClothCamo", "Base.Bag_SWAT",
+    "Base.Bag_Satchel", "Base.Bag_SatchelPhoto", "Base.Bag_Satchel_Fishing", "Base.Bag_Satchel_Leather",
+    "Base.Bag_Satchel_Mail", "Base.Bag_Satchel_Medical", "Base.Bag_Satchel_Military", "Base.Bag_Schoolbag",
+    "Base.Bag_Schoolbag_Kids", "Base.Bag_Schoolbag_Medical", "Base.Bag_Schoolbag_Patches",
+    "Base.Bag_Schoolbag_Travel", "Base.Bag_SheetSlingBag", "Base.Bag_Sheriff", "Base.Bag_ShotgunBag",
+    "Base.Bag_ShotgunCaseCloth", "Base.Bag_ShotgunCaseCloth2", "Base.Bag_ShotgunDblBag",
+    "Base.Bag_ShotgunDblSawnoffBag", "Base.Bag_ShotgunSawnoffBag", "Base.Bag_SurvivorBag",
+    "Base.Bag_TarpFramepack_Large", "Base.Bag_TarpFramepack_Small", "Base.Bag_TarpSlingBag", "Base.Bag_TennisBag",
+    "Base.Bag_ToolBag", "Base.Bag_WeaponBag", "Base.Bag_WorkerBag",
+    -- 本 MOD
+    "MinidoracatBags.ToolBeltPouch_Navy", "MinidoracatBags.ToolBeltPouch_Olive", "MinidoracatBags.MedicHipPouch_Navy",
+    "MinidoracatBags.MedicHipPouch_Olive", "MinidoracatBags.AmmoBandolier_Navy",
+    "MinidoracatBags.AmmoBandolier_Olive", "MinidoracatBags.CourierSatchel_Navy",
+    "MinidoracatBags.CourierSatchel_Olive", "MinidoracatBags.DayPack_Navy", "MinidoracatBags.DayPack_Olive",
+    "MinidoracatBags.ExpeditionPack_Navy", "MinidoracatBags.ExpeditionPack_Olive",
+    "MinidoracatBags.ScoutChestRig_Navy", "MinidoracatBags.ScoutChestRig_Olive",
 }
-MDB.REINFORCED, MDB.ORIGINAL = {}, {}   -- 原版全名 → 強化版全名；反查
+MDB.REINFORCED, MDB.ORIGINAL = {}, {}   -- 來源全名 → 強化版全名；反查
 for _, ft in ipairs(MDB.REINFORCED_SOURCES) do
     local r = "MinidoracatBags." .. ft:match("[^.]+$") .. "_Reinforced"
     MDB.REINFORCED[ft] = r
