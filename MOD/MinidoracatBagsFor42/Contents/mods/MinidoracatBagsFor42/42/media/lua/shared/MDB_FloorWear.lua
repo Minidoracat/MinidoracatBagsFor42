@@ -95,12 +95,13 @@ function MDB_WearFromFloor:complete()
     sendAddItemToContainer(inv, bag)
     -- 位置上原有的背包：引擎先穿上新的、再用 hasRoomFor 判舊背包，舊背包的未穿重量被算兩次（IsoGameCharacter.java:3435-3444、
     -- ItemContainer.java:268），接近負重上限時放得下也會掉到腳下；原版從物品欄穿上也一樣（ISWearClothing.lua:118）。
-    -- 這裡照引擎的算法（IsoGameCharacter.getInventoryWeight）先算穿上後的總重，超過才讓引擎丟到腳下（穿戴與掉落都會廣播，:3444-3478）
+    -- 這裡照引擎的算法（IsoGameCharacter.getInventoryWeight）先算穿上後的總重，超過才讓引擎丟到腳下（穿戴與掉落都會廣播，:3444-3478）；
+    -- 捨入照 hasRoomFor 用 floatingPointCorrection（ItemContainer.java:153-156、:268），剛好放滿時浮點誤差不會讓總重超過上限
     local loc = bag:canBeEquipped()
     local old = chr:getWornItem(loc)
     local after = inv:getCapacityWeight() - bag:getUnequippedWeight() + bag:getEquippedWeight()
     if old then after = after - old:getEquippedWeight() + old:getUnequippedWeight() end
-    chr:setWornItem(loc, bag, after > inv:getEffectiveCapacity(chr))
+    chr:setWornItem(loc, bag, ItemContainer.floatingPointCorrection(after) > inv:getEffectiveCapacity(chr))
     return true
 end
 

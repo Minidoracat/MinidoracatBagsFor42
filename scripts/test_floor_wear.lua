@@ -93,7 +93,11 @@ function sendAddItemToContainer(c, item) log("sendAdd", c, item) end
 function triggerEvent(name, ...) log("event", name, ...) end
 CharacterTrait = { DEXTROUS = "dextrous", ALL_THUMBS = "allthumbs" }
 WearClothingAnimations = {}
-ItemContainer = { new = function(type, sq, parent)
+-- 照 ItemContainer.java:153-156（正數的 (int) 就是 floor）
+ItemContainer = { floatingPointCorrection = function(v)
+    local t = v * 100
+    return math.floor(t - math.floor(t) >= 0.5 and t + 1 or t) / 100
+end, new = function(type, sq, parent)
     local c = { type = type, sq = sq, parent = parent }
     function c:getType() return self.type end
     log("newContainer", c)
@@ -322,6 +326,8 @@ local function suite()
         check("原有的背包：穿上後總重 18.1 不超過上限 20 就留在物品欄", forceDrop(31, 20, true) == false)
         check("原有的背包：穿上後總重 18.1 超過上限 18 才讓引擎丟到腳下", forceDrop(31, 18, true) == true)
         check("沒有原有的背包：總重只扣新背包的差（31 − 20 ＋ 0.1 ＝ 11.1 ≤ 12）", forceDrop(31, 12, false) == false)
+        check("原有的背包：穿上後總重剛好等於上限 18.1 留在物品欄", forceDrop(31, 18.1, true) == false)
+        check("原有的背包：總重 18.104 照引擎捨入是 18.1，不超過上限 18.1", forceDrop(31.004, 18.1, true) == false)
     end
 
     -- 地面容器：伺服器重建的地面容器沒設物品的 container
@@ -480,8 +486,10 @@ if arg and arg[1] == "--mutants" then
         { name = "complete 不驗", file = "ACT", from = "if not MDB.canWearFromFloor(chr, bag) then return false end", to = "" },
         { name = "沒用地面容器", file = "ACT", from = 'if not src or src:getType() ~= "floor" then', to = "if not src then" },
         { name = "不送物品欄", file = "ACT", from = "    sendAddItemToContainer(inv, bag)\n", to = "" },
-        { name = "不穿上", file = "ACT", from = "    chr:setWornItem(loc, bag, after > inv:getEffectiveCapacity(chr))\n", to = "" },
-        { name = "原有背包交給引擎判", file = "ACT", from = "chr:setWornItem(loc, bag, after > inv:getEffectiveCapacity(chr))", to = "chr:setWornItem(loc, bag)" },
+        { name = "不穿上", file = "ACT", from = "    chr:setWornItem(loc, bag, ItemContainer.floatingPointCorrection(after) > inv:getEffectiveCapacity(chr))\n", to = "" },
+        { name = "原有背包交給引擎判", file = "ACT", from = "chr:setWornItem(loc, bag, ItemContainer.floatingPointCorrection(after) > inv:getEffectiveCapacity(chr))", to = "chr:setWornItem(loc, bag)" },
+        { name = "總重沒做浮點修正", file = "ACT", from = "ItemContainer.floatingPointCorrection(after) > inv", to = "after > inv" },
+        { name = "剛好放滿也丟", file = "ACT", from = "ItemContainer.floatingPointCorrection(after) > inv", to = "ItemContainer.floatingPointCorrection(after) >= inv" },
         { name = "總重沒扣舊背包穿著重", file = "ACT", from = "after - old:getEquippedWeight() + old:getUnequippedWeight()", to = "after + old:getUnequippedWeight()" },
         { name = "總重沒算新背包穿著重", file = "ACT", from = " - bag:getUnequippedWeight() + bag:getEquippedWeight()", to = "" },
         { name = "時間不加內容物", file = "ACT", from = "t = t + pickupTime(items:get(i))", to = "" },
