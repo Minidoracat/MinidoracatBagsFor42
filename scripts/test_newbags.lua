@@ -723,7 +723,11 @@ local function suite()
         end
     end
     check("i18n: items, recipes, tooltips, sandbox keys in all 16 Translate folders", i18nOk)
-    -- 強化版水袋：Fluids.json（引擎依檔名分表，Translator.java:159）有 Fluid_Container_<ContainerName>，16 語都和 ItemName 的強化版名稱相同
+    -- 強化版水袋：Fluids.json（引擎依檔名分表，Translator.java:159）有 Fluid_Container_<ContainerName>。裝水時顯示「液體(容器名稱)」，
+    -- 所以 16 語的容器名稱都不帶括號（不會變兩層），而且含該語的強化詞（使用者 2026-10-27 選定）
+    local FLUID_WORD = { AR = "reforzada", CH = "強化", CN = "强化", DE = "Verstärkt", EN = "Reinforced", ES = "reforzada",
+        ES_CL = "Reforzada", ES_MX = "reforzada", FR = "renforcé", JP = "強化", KO = "강화", PL = "Wzmocnion", PT = "Reforçad",
+        PTBR = "Reforçad", RU = "Укреплённ", TR = "Güçlendirilmiş" }
     local fluidNames, fluidOk = {}, true
     for full, b in pairs(rein) do
         for _, l in ipairs(b.lines) do
@@ -738,12 +742,15 @@ local function suite()
     for full, cn in pairs(fluidNames) do
         fluidCount = fluidCount + 1
         for _, lang in ipairs(LANGS) do
-            local item = jsonValue(readFile(TRANSLATE .. lang .. "/ItemName.json", true), full)
             local fluid = jsonValue(readFile(TRANSLATE .. lang .. "/Fluids.json", true), "Fluid_Container_" .. cn)
-            if not item or fluid ~= item then fluidOk = false; diag("    fluid container name: " .. lang .. " " .. cn) end
+            local word = FLUID_WORD[lang]
+            if not fluid or fluid:find("[()]") or fluid:find("（", 1, true) or fluid:find("）", 1, true)
+                or not word or not fluid:find(word, 1, true) then
+                fluidOk = false; diag("    fluid container name: " .. lang .. " " .. cn .. " = " .. tostring(fluid))
+            end
         end
     end
-    check("reinforced water bags: Fluid_Container_<ContainerName> in 16 Fluids.json = reinforced ItemName",
+    check("reinforced water bags: Fluid_Container_<ContainerName> in 16 Fluids.json has the reinforced word and no brackets",
         fluidOk and fluidCount == 2)
     -- 換穿變體在 16 語和原款同名
     local variantNameOk = true
@@ -1461,7 +1468,8 @@ if arg and arg[1] == "--mutants" then
         { name = "強化版水袋容量改了", file = "REIN", from = "Capacity = 2.0,", to = "Capacity = 5.0," },
         { name = "強化版水袋沿用原版容器名", file = "REIN", from = "ContainerName = MDB_Bag_HydrationBackpack_Reinforced,", to = "ContainerName = HydrationBackpack," },
         { name = "液體容器名稱缺鍵", file = "I18N_FLUIDS", from = '"Fluid_Container_MDB_Bag_HydrationBackpack_Camo_Reinforced"', to = '"Fluid_Container_MDB_X"' },
-        { name = "液體容器名稱和物品名不同", file = "I18N_FLUIDS", from = "(Reinforced)", to = "(Plus)" },
+        { name = "液體容器名稱帶括號", file = "I18N_FLUIDS", from = '"Reinforced Hydration Pack"', to = '"Hydration Pack (Reinforced)"' },
+        { name = "液體容器名稱沒有強化詞", file = "I18N_FLUIDS", from = '"Reinforced Hydration Pack"', to = '"Hydration Pack"' },
         { name = "還原配方漏一款", file = "REIN", from = "MinidoracatBags.Bag_SWAT_Reinforced;", to = "" },
         { name = "還原配方可用穿著中的背包", file = "REIN", from = "_Reinforced] mode:keep flags[IsNotWorn],", to = "_Reinforced] mode:keep," },
         { name = "改強化版配方沒 OnTest", file = "REIN", from = "OnTest = MDB.onTestUpgraded,", to = "" },

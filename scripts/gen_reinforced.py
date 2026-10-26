@@ -18,7 +18,8 @@
   - CanBeEquipped／BodyLocation 是 base:satchel 的改成第二個側背包位置（SATCHEL2，registries.lua 註冊）。
   - 液體元件的 ContainerName 改成 MDB_<名稱>_Reinforced：有液體容器的物品，物品欄、提示框與液體面板顯示的是
     Fluid_Container_<ContainerName>，不是 ItemName（InventoryItem.java:2436-2437、FluidContainer.java:398-404、
-    ISFluidContainerPanel.lua:146-149），所以 Fluids.json 另給它和 ItemName 相同的強化版名稱。
+    ISFluidContainerPanel.lua:146-149），裝水時顯示「液體(容器名稱)」，所以 Fluids.json 的容器名稱不帶括號標記，
+    把強化寫進名詞片語（FLUID_MARK）。
 - ClothingItem MDB_<名稱>_Reinforced：XML 照來源的 XML，換 GUID（uuid5，重跑結果不變）；名稱是全域對照，
   不能沿用來源名稱（ScriptManager.java:1883-1891）。側背包另照鏡像對照檔改寫男女模型路徑（檔案不存在就照原路徑）：
   格式 { "<來源 XML 的 m_MaleModel／m_FemaleModel 原字串>": "<鏡像模型路徑，同樣寫法>" }，每個鍵都要用得到、值要找得到檔案。
@@ -51,6 +52,16 @@ MARK = {
     "ES": " (versión reforzada)", "ES_CL": " (versión reforzada)", "ES_MX": " (versión reforzada)",
     "FR": " (version renforcée)", "JP": "（強化）", "KO": " (강화)", "PL": " (wersja wzmocniona)",
     "PT": " (Versão Reforçada)", "PTBR": " (Versão Reforçada)", "RU": " (укреплённая версия)", "TR": " (Güçlendirilmiş)",
+}
+# 液體容器名稱的強化寫法：裝水時顯示「水(容器名稱)」，名稱再帶括號標記會變成兩層括號，所以把強化寫進名詞片語
+# （使用者 2026-10-27 選定）。{n}＝來源名稱，{l}＝來源名稱首字改小寫。形容詞照「水袋背包」在各語的性別寫
+# （德、波、俄、法、葡（PT）陽性；西、葡（PTBR）陰性），所以只適用 FLUID_SOURCES；出現新的液體容器來源就停下來補。
+FLUID_SOURCES = ("Base.Bag_HydrationBackpack", "Base.Bag_HydrationBackpack_Camo")
+FLUID_MARK = {
+    "AR": "{n} reforzada", "CH": "強化{n}", "CN": "强化{n}", "DE": "Verstärkter {n}", "EN": "Reinforced {n}",
+    "ES": "{n} reforzada", "ES_CL": "{n} Reforzada", "ES_MX": "{n} reforzada",
+    "FR": "{n} renforcé", "JP": "強化{n}", "KO": "강화 {n}", "PL": "Wzmocniony {l}",
+    "PT": "{n} Reforçado", "PTBR": "{n} Reforçada", "RU": "Укреплённый {l}", "TR": "Güçlendirilmiş {n}",
 }
 LANGS = sorted(MARK)
 CN_FONTS = ("zomboidSmallChinese.fnt", "zomboidMediumChinese.fnt", "zomboidLargeChinese.fnt")   # fonts/CN/fonts.txt 的六種 UI 字型
@@ -270,6 +281,8 @@ def build(mirror_path):
         name, guid, xml = clothing_xml(s, blocks[s], mirror, used)
         out[os.path.join(MOD_CLOTHING, name + ".xml")] = xml
         guids.append((name, guid))
+    if tuple(sorted(fluid_sources)) != FLUID_SOURCES:
+        sys.exit(f"有液體容器的來源 {sorted(fluid_sources)} 和 FLUID_SOURCES 不同：先查新來源在各語的名詞性別，再改 FLUID_MARK")
     if set(mirror) - used:
         sys.exit(f"{mirror_path}: 這些鍵不是任何側背包來源 XML 的男女模型路徑：{sorted(set(mirror) - used)}")
     vanilla_guids = set(g.lower() for g in re.findall(r"<guid>\s*([\w-]+)\s*</guid>", read(os.path.join(PZ, "fileGuidTable.xml"))))
@@ -312,8 +325,8 @@ def build(mirror_path):
     # 簡中：來源名稱照遊戲本來的樣子沿用（原版簡中名稱本身就有字型缺的字，例如「军」，遊戲顯示原版物品時一樣缺）；
     # 我們加上的強化標記一定要畫得出來，整個名稱也不能有已知缺字 CN_AVOID
     glyphs, cn_bad = cn_glyphs(), []
-    if any(ord(c) not in glyphs for c in MARK["CN"]):
-        sys.exit(f"簡中強化標記 {MARK['CN']} 有原版字型畫不出來的字")
+    if any(ord(c) not in glyphs for c in MARK["CN"] + FLUID_MARK["CN"].replace("{n}", "")):
+        sys.exit(f"簡中強化標記 {MARK['CN']}／{FLUID_MARK['CN']} 有原版字型畫不出來的字")
     for lang in LANGS:
         p = os.path.join(TRANSLATE, lang, "ItemName.json")
         d = {k: v for k, v in json.loads(read(p)).items() if not (k.startswith(MODULE + ".") and k.endswith(SUFFIX))}
@@ -327,7 +340,10 @@ def build(mirror_path):
         fd = json.loads(read(fp)) if os.path.isfile(fp) else {}
         fd = {k: v for k, v in fd.items() if not (k.startswith("Fluid_Container_MDB_") and k.endswith(SUFFIX))}
         for s in fluid_sources:
-            fd[f"Fluid_Container_{own_name(s)}"] = d[mapping[s]]
+            n = names_for(s, lang)
+            fd[f"Fluid_Container_{own_name(s)}"] = FLUID_MARK[lang].format(n=n, l=n[:1].lower() + n[1:])
+            if lang == "CN" and any(c in fd[f"Fluid_Container_{own_name(s)}"] for c in CN_AVOID):
+                cn_bad.append(f"{s} 容器名稱：{fd[f'Fluid_Container_{own_name(s)}']}")
         out[fp] = json.dumps(fd, ensure_ascii=False, indent=4) + "\n"
     if cn_bad:
         sys.exit(f"簡中名稱有已知缺字 {CN_AVOID}：\n  " + "\n  ".join(cn_bad))
