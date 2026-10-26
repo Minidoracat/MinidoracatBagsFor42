@@ -414,6 +414,8 @@ local function suite()
             local want = {}
             for k, val in pairs(v.fields) do want[k] = val end
             want.Weight, want.RunSpeedModifier, want.ClothingItem = "0.1", "1.0", ci
+            -- 戰鬥也不減速：來源有寫且不是 1 才改成 1.0；沒寫就不加（引擎預設 1.0，Item.java:374）
+            if want.CombatSpeedModifier and tonumber(want.CombatSpeedModifier) ~= 1 then want.CombatSpeedModifier = "1.0" end
             if want.ClothingItemExtra then
                 local target = want.ClothingItemExtra:find(".", 1, true) and want.ClothingItemExtra or (v.module .. "." .. want.ClothingItemExtra)
                 want.ClothingItemExtra = isSource[target] and reinOf(target) or "(target is not a source: " .. target .. ")"
@@ -451,8 +453,14 @@ local function suite()
         end
         if g then seenGuid[g:lower()] = true end
     end
-    check("reinforced: fields copy the source except Weight 0.1, RunSpeedModifier 1.0, own ClothingItem, extra -> paired reinforced, satchel -> " .. SATCHEL2,
+    check("reinforced: fields copy the source except Weight 0.1, RunSpeedModifier 1.0, CombatSpeedModifier 1.0, own ClothingItem, extra -> paired reinforced, satchel -> " .. SATCHEL2,
         reinFieldsOk)
+    local slowCombat = {}
+    for full, r in pairs(rein) do
+        local c = tonumber(r.fields.CombatSpeedModifier or "1")
+        if not c or c < 1 then slowCombat[#slowCombat + 1] = full end
+    end
+    check("reinforced: no CombatSpeedModifier below 1 (" .. table.concat(slowCombat, ",") .. ")", #slowCombat == 0)
     check("reinforced: every satchel source (" .. satchelSources .. ") wears in " .. SATCHEL2 .. ", no reinforced bag uses base:satchel",
         satchelSources >= 15 and satchel2Count == satchelSources and not readFile(F.REIN):find("base:satchel", 1, true))
     check("reinforced: 3 vanilla fanny pack pairs swap between their reinforced versions (6 items)", pairCount == 6)
@@ -1341,6 +1349,8 @@ if arg and arg[1] == "--mutants" then
         { name = "位置設了互斥", file = "BODYLOC", from = "    table.insert(ISWearClothing.WalkBodyLocations, loc)\n", to = "    table.insert(ISWearClothing.WalkBodyLocations, loc)\n    group:setExclusive(loc, ItemBodyLocation.SATCHEL)\n" },
         { name = "強化版自重錯", file = "REIN", from = "Weight = 0.1,", to = "Weight = 0.2," },
         { name = "強化版跑速沒改", file = "REIN", from = "RunSpeedModifier = 1.0,", to = "RunSpeedModifier = 0.94," },
+        { name = "產生器不改戰鬥速度（胸掛）", file = "REIN", from = "        CombatSpeedModifier = 1.0,\n        Researchablerecipes = MakeTarpChestRig,", to = "        CombatSpeedModifier = 0.99,\n        Researchablerecipes = MakeTarpChestRig," },
+        { name = "產生器不改戰鬥速度（背帶）", file = "REIN", from = "CombatSpeedModifier = 1.0,", to = "CombatSpeedModifier = 0.98," },
         { name = "強化版沿用原版 ClothingItem", file = "REIN", from = "ClothingItem = MDB_Bag_Satchel_Reinforced,", to = "ClothingItem = Bag_Satchel," },
         { name = "強化腰包換穿指回原版", file = "REIN", from = "ClothingItemExtra = MinidoracatBags.Bag_FannyPackBack_Reinforced,", to = "ClothingItemExtra = Base.Bag_FannyPackBack," },
         { name = "強化版多一個欄位", file = "REIN", from = "ClothingItem = MDB_Bag_Satchel_Reinforced,", to = "ClothingItem = MDB_Bag_Satchel_Reinforced,\n        AcceptItemFunction = MDB.acceptAmmo," },

@@ -11,6 +11,8 @@
 每個來源 <模組>.<名稱>（原版或本 MOD 的背包）產生 MinidoracatBags.<名稱>_Reinforced：
 - 欄位照來源的腳本逐行抄，只改這些：
   - Weight 0.1（來源沒寫就補在 ItemType 後面；引擎預設是 1.0，Item.java:83）、RunSpeedModifier 1.0（同樣沒寫就補）。
+  - CombatSpeedModifier 不是 1 的改成 1.0（使用者 2026-10-26：戰鬥也不減速）；沒寫就不加，引擎預設 1.0（Item.java:374）。
+    穿著的背包照腳本值算進人物的戰鬥速度（IsoGameCharacter.java:9868-9869）。
   - ClothingItem 改用自己的名稱 MDB_<名稱>_Reinforced。
   - ClothingItemExtra（換穿法）：目標也是來源時指向目標的強化版；目標不是來源就停下來，要先把它加進來源表。
   - CanBeEquipped／BodyLocation 是 base:satchel 的改成第二個側背包位置（SATCHEL2，registries.lua 註冊）。
@@ -139,6 +141,8 @@ def item_text(full, block, mapping):
             if key == "Weight":
                 val = "0.1"
             elif key == "RunSpeedModifier":
+                val = "1.0"
+            elif key == "CombatSpeedModifier" and float(val) != 1.0:
                 val = "1.0"
             elif key == "ClothingItem":
                 val = own_name(full)
