@@ -148,10 +148,12 @@ local function resetEnv()
 end
 function getText(key) return key end
 
--- 強化版物品：MDB_Reinforced.txt 裡的每一件；外加原版物品（Base.Doll 假裝已有 StaticModel，驗「有就不蓋」）
+-- 強化版物品：MDB_Reinforced.txt 裡的每一件；外加原版物品。Base.Doll 假裝已有 StaticModel（驗「有就不蓋」）；
+-- Base.BorisBadger 假裝寫了不存在的模型、解析成「???.」（Bag Upgrade Plus 並存時的樣子），驗「畫不出來就改借」
+local SEED_STATIC = { ["Base.Doll"] = "SomeoneElsesDoll", ["Base.BorisBadger"] = "???.PlushieBadger_Static" }
 local function seedItems(reinforced, attachItems)
     for name in pairs(reinforced) do env.items["MinidoracatBags." .. name] = newScriptItem("MinidoracatBags." .. name) end
-    for ft in pairs(attachItems) do env.items[ft] = newScriptItem(ft, ft == "Base.Doll" and "SomeoneElsesDoll" or nil) end
+    for ft in pairs(attachItems) do env.items[ft] = newScriptItem(ft, SEED_STATIC[ft]) end
 end
 
 local load = loadstring or load
@@ -259,7 +261,7 @@ local function suite()
         if not MDB.ATTACH_ITEMS[ft] or not m:match("^Base%.") then staticOk = false end
     end
     check("每個加 AttachmentType 的原版物品都有掛點收", atOk)
-    check("沒有 StaticModel 的才借模型（全名），已有的不蓋", staticOk)
+    check("沒有 StaticModel 或模型不存在（???.）的才借模型（全名），已有的不蓋", staticOk)
     local onlyTwo = true
     for _, it in pairs(env.items) do
         for k in pairs(it.params) do
@@ -473,10 +475,11 @@ if arg and arg[1] == "--mutants" then
         { name = "ALICE 床捲名稱錯", file = "SHARED", from = 'base = "BedrollBottomALICE"', to = 'base = "BedrollBottom"' },
         { name = "少一個家族掛點", file = "SHARED", from = '"Plushie", "UmbrellaR", "Flashlight" } },\n    { name = "Duffel"', to = '"Plushie", "UmbrellaR" } },\n    { name = "Duffel"' },
         { name = "旅行登山包歸大登山包", file = "SHARED", from = 'bags = { "Bag_NormalHikingBag", "Bag_HikingBag_Travel" }', to = 'bags = { "Bag_NormalHikingBag" }' },
-        { name = "漏一款行李袋", file = "SHARED", from = '"Bag_FoodSnacks", "Bag_ToolBag" }', to = '"Bag_FoodSnacks" }' },
+        { name = "漏一款行李袋", file = "SHARED", from = '"Bag_FoodSnacks", "Bag_ToolBag", "Bag_DuffelBagTINT" }', to = '"Bag_FoodSnacks", "Bag_DuffelBagTINT" }' },
         { name = "強化版前綴錯", file = "SHARED", from = '"MinidoracatBags." .. bag .. "_Reinforced"', to = '"Base." .. bag' },
         { name = "沒加 AttachmentType", file = "SHARED", from = 's:DoParam("AttachmentType = " .. kind)', to = "" },
-        { name = "已有 StaticModel 也蓋", file = "SHARED", from = "if model and not s:getStaticModel() then", to = "if model then" },
+        { name = "已有 StaticModel 也蓋", file = "SHARED", from = 'if model and (not cur or cur:sub(1, 4) == "???.") then', to = "if model then" },
+        { name = "不存在的模型當成已有", file = "SHARED", from = '(not cur or cur:sub(1, 4) == "???.")', to = "not cur" },
         { name = "借模型沒寫全名", file = "SHARED", from = '["Base.Spiffo"] = "Base.SpiffoPlushie"', to = '["Base.Spiffo"] = "SpiffoPlushie"' },
         { name = "飲料類型沒有掛點收", file = "SHARED", from = 'local BOTTLES = { WaterBottle = "Bottle",', to = 'local BOTTLES = { WaterBottleX = "Bottle",' },
         { name = "加了已有 AttachmentType 的原版物品", file = "SHARED", from = '["Base.Flask"] = "WaterBottle",', to = '["Base.Flask"] = "WaterBottle", ["Base.Hammer"] = "Hammer",' },
@@ -509,7 +512,8 @@ if arg and arg[1] == "--mutants" then
         MUTATION, quiet = m, true
         pass, fail = 0, 0
         local ok, err = pcall(suite)
-        local killed = (not ok) or fail > 0
+        -- 突變片段不在原始碼裡時 readFile 會丟錯，那不算抓到
+        local killed = (not ok and not tostring(err):find("突變片段不在原始碼中", 1, true)) or (ok and fail > 0)
         io.write(string.format("  %s  %s（%s）\n", killed and "KILLED " or "SURVIVED", m.name,
             ok and (fail .. " 項 FAIL") or ("錯誤：" .. tostring(err))))
         if not killed then survived = survived + 1 end

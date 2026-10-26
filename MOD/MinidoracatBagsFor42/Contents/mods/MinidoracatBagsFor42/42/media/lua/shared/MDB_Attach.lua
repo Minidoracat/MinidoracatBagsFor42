@@ -90,7 +90,8 @@ MDB.ATTACH_ITEMS = {
     -- 繩子
     ["Base.Rope"] = "Rope", ["Base.SheetRope"] = "SheetRope",
 }
--- 沒有 StaticModel 的物品借它自己的地面模型（腳本已解析完，要寫全名：Item.java:3177-3180、ScriptManager.java:1926-1941）
+-- 沒有 StaticModel 的物品借它自己的地面模型（腳本已解析完，要寫全名：Item.java:3177-3180、ScriptManager.java:1926-1941）。
+-- 寫了不存在的模型也算沒有：解析結果是「???.名稱」（ScriptManager.java:1946），一樣畫不出來；Bag Upgrade Plus 覆寫的獾、兔、狐就是這樣
 MDB.ATTACH_STATIC = {
     ["Base.Spiffo"] = "Base.SpiffoPlushie", ["Base.BorisBadger"] = "Base.PlushieBadger_Ground",
     ["Base.EyeOfCthulhu"] = "Base.PlushieEyeOfChulhu_Ground", ["Base.FluffyfootBunny"] = "Base.PlushieRabbit_Ground",
@@ -140,7 +141,8 @@ function MDB.installAttach()
         if s then
             s:DoParam("AttachmentType = " .. kind)
             local model = MDB.ATTACH_STATIC[fullType]
-            if model and not s:getStaticModel() then s:DoParam("StaticModel = " .. model) end
+            local cur = s:getStaticModel()
+            if model and (not cur or cur:sub(1, 4) == "???.") then s:DoParam("StaticModel = " .. model) end
         end
     end
 end

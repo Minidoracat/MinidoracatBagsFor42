@@ -479,7 +479,8 @@ if arg and arg[1] == "--mutants" then
         MUTATION, quiet = m, true
         pass, fail = 0, 0
         local ok, err = pcall(suite)
-        local killed = (not ok) or fail > 0
+        -- 突變片段不在原始碼裡時 readFile 會丟錯，那不算抓到
+        local killed = (not ok and not tostring(err):find("突變片段不在原始碼中", 1, true)) or (ok and fail > 0)
         io.write(string.format("  %s  %s（%s）\n", killed and "KILLED " or "SURVIVED", m.name,
             ok and (fail .. " 項 FAIL") or ("錯誤：" .. tostring(err))))
         if not killed then survived = survived + 1 end
