@@ -186,7 +186,7 @@ Every upgraded bag is a "Reinforced" bag: this mod's own item with the same look
 [list]
 [*] [b]Two satchels at once[/b]: a reinforced satchel is worn in a second slot on the other side, so you can wear it together with one normal satchel. The inventory panel shows both containers.
 [*] [b]Which bags count as satchels[/b]: the 13 vanilla satchels (Satchel, Mail Satchel, Crafted Hide Satchel, crafted cloth satchels and others) and this mod's Courier Satchel. Their reinforced versions all go in this slot.
-[*] [b]Look[/b]: it hangs on the other hip, slightly to the back, and the two straps cross in an X on the chest and back. Text on the bag (ARMY, MAIL, FIRST AID, the S.T.A.R.S. badge) is not mirrored.
+[*] [b]Look[/b]: it hangs behind the other hip, a little smaller than the original so it stays clear of the hanging arm, and the two straps cross on the chest and back. Text on the bag (ARMY, MAIL, FIRST AID, the S.T.A.R.S. badge) is not mirrored.
 [*] [b]One reinforced satchel at a time[/b]: two reinforced satchels both need the second slot, so they cannot be worn together.
 [*] [b]Bag Upgrade Plus satchels[/b]: become reinforced satchels when converted and use the second slot too.
 [/list]
@@ -309,7 +309,7 @@ On the "Tactical Bags" page of the sandbox settings.
 [*] [b]Old bags show capacity 49 or 48[/b]: the engine caps a bag's capacity at 50 minus its own weight. BUP bags weighed 0.1, so the save stored 49. After the switch they use the vanilla weight, so an ALICE pack (2.0) shows 48. Items packed up to 49 are all still there and can be taken out, and converting the bag brings it back to 49.
 [*] [b]Lower sandbox values cut old Hydration Pack water[/b]: with a highest tier of 0, or a full capacity below 100, the 5 L of water in an old BUP Hydration Pack is cut down to the water capacity at that time when converted (2 L with a highest tier of 0). The defaults and highest tiers 1 and 2 keep all 5 L.
 [*] [b]One reinforced satchel at a time[/b]: two reinforced satchels both need the second satchel slot.
-[*] [b]Satchel straps cross over[/b]: with two satchels on, the straps clip into each other a little where they cross on the chest and back when seen up close.
+[*] [b]Satchel straps cross over[/b]: on female characters, a reinforced cloth satchel worn with a vanilla satchel has straps that clip into each other a little where they cross on the chest and back when seen up close.
 [*] [b]Attachment slots on four families only[/b]: only the reinforced Military Backpacks, Duffel Bags, Hiking and Big Hiking Backpacks have them; the originals and other bags do not.
 [*] [b]Adding mid-save[/b]: containers that already generated loot do not get new bags.
 [*] [b]Server ran without the original mod[/b]: old bags loaded during that time are already deleted and this mod cannot restore them. See step 4 of "Server Switch".
