@@ -326,6 +326,7 @@ On the "Tactical Bags" page of the sandbox settings.
 [list]
 [*] This mod's bags, every reinforced bag (that is, every upgraded bag) and the old bags it took over disappear, along with everything inside them.
 [*] To keep upgraded vanilla bags, use "Revert Reinforced Bag to Original" before removing the mod. The upgraded capacity and Encumbrance Reduction are stored on the bag and stay after removal (capped by the original bag's weight, for example 48 for a Military Backpack).
+[*] Items hung on a reinforced bag's attachment slots are not lost: they were in your inventory all along, and after removal they stay there, just no longer attached.
 [/list]
 [h3]Why does my bag say "(Reinforced)" after upgrading?[/h3]
 [list]
