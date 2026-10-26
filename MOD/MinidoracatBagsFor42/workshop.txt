@@ -1,4 +1,5 @@
 version=1
+id=3827497087
 title=[B42] Tactical Bags by Minidoracat
 description=[h1]🎒 Minidoracat Bags[/h1]
 description=[h3]By Minidoracat[/h3]
@@ -32,7 +33,7 @@ description=[*] [b]Loot and drops[/b]: found at police, military and medical sit
 description=[*] [b]Bag Upgrade Plus takeover[/b]: old bags stay in your save; switch steps are in the full guide
 description=[*] [b]Server settings[/b]: upgrade size, limits and spawn rate are all sandbox options
 description=[/list]
-description=📖 [b]Stats, loot locations, upgrades and switch steps:[/b] [url=https://steamcommunity.com/sharedfiles/filedetails/?id=XXXX]Minidoracat Bags Mod Guide[/url]
+description=📖 [b]Stats, loot locations, upgrades and switch steps:[/b] [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3827498713]Minidoracat Bags Mod Guide[/url]
 description=
 description=[h2]🔗 Minidoracat Collection[/h2]
 description=All my other mods are in the [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3809297109]Minidoracat collection[/url]; subscribe to the ones you need.
@@ -52,7 +53,7 @@ description=This mod is an unofficial fan work based on Capcom's Resident Evil. 
 description=
 description=[b]#Minidoracat[/b]
 description=
-description=Workshop ID: XXXX
+description=Workshop ID: 3827497087
 description=Mod ID: MinidoracatBagsFor42
 tags=Build 42;Clothing/Armor;Items;Models;Multiplayer
 visibility=public

@@ -30,7 +30,7 @@ S.T.A.R.S. とアンブレラをテーマにしたタクティカルバッグで
 [*] [b]Bag Upgrade Plus の引き継ぎ[/b]：古いバッグはそのまま残り、移行手順は詳しい説明にあります
 [*] [b]サーバー設定[/b]：強化幅・上限・出現率はサンドボックス設定で調整できます
 [/list]
-📖 [b]性能、入手場所、アップグレード、移行手順：[/b][url=https://steamcommunity.com/sharedfiles/filedetails/?id=XXXX]Minidoracat Bags Mod Guide[/url]（英語）
+📖 [b]性能、入手場所、アップグレード、移行手順：[/b][url=https://steamcommunity.com/sharedfiles/filedetails/?id=3827498713]Minidoracat Bags Mod Guide[/url]（英語）
 
 [h2]🔗 Minidoracat シリーズ[/h2]
 ほかの作品は[url=https://steamcommunity.com/sharedfiles/filedetails/?id=3809297109]Minidoracat コレクション[/url]にまとめています。必要なものを選んで購読してください。
@@ -50,5 +50,5 @@ MODはずっと無料です。気に入ったらコーヒーをおごってく�
 
 [b]#Minidoracat[/b]
 
-Workshop ID: XXXX
+Workshop ID: 3827497087
 Mod ID: MinidoracatBagsFor42

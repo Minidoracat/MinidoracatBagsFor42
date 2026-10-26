@@ -13,7 +13,7 @@ Project Zomboid Build 42 MOD。
 - 升級：原版背包與本 MOD 背包都能用縫紉升三階，容量變大、負重減輕；幅度、上限與最高階是沙盒選項
 - 接手 Bag Upgrade Plus（主版、Realistic 版、CloudBag 與舊分支）：舊存檔裡的背包照樣讀得到（預設只能取出），清空後可改裝成新背包（直接是最高階）
 
-完整說明（數值、取得地點、配方、沙盒選項、已知限制）：Steam 指南（首次上傳後補上連結）
+完整說明（數值、取得地點、配方、沙盒選項、已知限制）見 Steam 指南：繁中 https://steamcommunity.com/sharedfiles/filedetails/?id=3827498698 、英文 https://steamcommunity.com/sharedfiles/filedetails/?id=3827498713 （稿源 [`STEAM_GUIDE.md`](STEAM_GUIDE.md)、[`STEAM_GUIDE_EN.md`](STEAM_GUIDE_EN.md)）。
 
 ## 從 Bag Upgrade Plus 換裝
 
@@ -25,7 +25,7 @@ Bag Upgrade Plus EFT 相容版（3781184534）不支援。完整步驟見 Steam 
 
 ## 安裝
 
-- Steam Workshop：（首次上傳後補上連結）
+- Steam Workshop：https://steamcommunity.com/sharedfiles/filedetails/?id=3827497087
 - 手動安裝：把 `MOD/MinidoracatBagsFor42/Contents/mods/MinidoracatBagsFor42` 複製到 `%USERPROFILE%\Zomboid\mods\` 並將資料夾改名為 `MinidoracatBagsFor42`
 
 ## 開發

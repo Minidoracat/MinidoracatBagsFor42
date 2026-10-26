@@ -1,11 +1,12 @@
+<!-- 指南網址：https://steamcommunity.com/sharedfiles/filedetails/?id=3827498698 -->
 <!-- Steam 指南稿源（繁中）：MOD 的完整說明以本指南為準，簡介只放摘要。格式、版面與同步方式見 pz-family-docs/release.md「完整說明：Steam 指南」 -->
 <!-- 標題：📖 Minidoracat Bags MOD 完整說明：七款背包、升級與接手 Bag Upgrade Plus -->
 <!-- 摘要：Minidoracat Bags MOD 的圖文說明：七款 S.T.A.R.S. 與保護傘背包的數值、取得地點與製作配方，背包升級，接手 Bag Upgrade Plus 舊存檔與伺服器換裝步驟，以及沙盒選項。 -->
 === 🚀 快速上手
-[b]English version:[/b] [url=https://steamcommunity.com/sharedfiles/filedetails/?id=XXXX]Minidoracat Bags Mod Guide[/url]
+[b]English version:[/b] [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3827498713]Minidoracat Bags Mod Guide[/url]
 
 MOD 本體（Steam Workshop）：
-https://steamcommunity.com/sharedfiles/filedetails/?id=XXXX
+https://steamcommunity.com/sharedfiles/filedetails/?id=3827497087
 [olist]
 [*] [b]找背包[/b]：警察局出 S.T.A.R.S. 款，軍事與醫療地點出保護傘款；警察、軍人、醫護殭屍死後也可能掉一件。
 [*] [b]自己縫[/b]：有縫紉技能就能在製作選單的「縫紉」分類縫製，不用先學配方。
@@ -177,7 +178,7 @@ Bag Upgrade Plus（以下簡稱 BUP）已經從 Workshop 下架。本 MOD 接手
 
 [olist]
 [*] [b]備份[/b]：關掉伺服器，備份整個伺服器存檔（世界與玩家資料）。
-[*] [b]換掉 MOD[/b]：伺服器設定檔的 Mods= 拿掉所有 BUP（mod id BagUpgradePlusUpdated、BagUpgradePlusRealistic、BagUpgradePlus、CloudBag），加上 MinidoracatBagsFor42；WorkshopItems= 拿掉 BUP 的 Workshop ID，加上本 MOD 的 XXXX。
+[*] [b]換掉 MOD[/b]：伺服器設定檔的 Mods= 拿掉所有 BUP（mod id BagUpgradePlusUpdated、BagUpgradePlusRealistic、BagUpgradePlus、CloudBag），加上 MinidoracatBagsFor42；WorkshopItems= 拿掉 BUP 的 Workshop ID，加上本 MOD 的 3827497087。
 [*] [b]開服確認[/b]：server-console.txt 沒有「WARNING: another Bag Upgrade Plus is loaded」這一行；玩家登入後舊背包都在，而且只能取出。
 [*] [b]已經在缺少原 MOD 的情況下開過伺服器[/b]：那段期間被讀進遊戲的背包已經連同裡面的東西一起刪除，換上本 MOD 也找不回來，只能從開服前的備份還原；被刪的是那段期間登入過的玩家身上與背包欄裡的背包，以及有人走近過的地面與容器裡的背包。那段期間沒登入的玩家身上與背包欄裡的背包、沒人去過的地方的背包都還在，換上本 MOD 後照常出現。
 [/olist]

@@ -1,11 +1,12 @@
+<!-- 指南網址：https://steamcommunity.com/sharedfiles/filedetails/?id=3827498713 -->
 <!-- Steam guide source (English): the full reference for this mod; the Workshop description only summarizes. Format and sync: pz-family-docs/release.md「完整說明：Steam 指南」 -->
 <!-- 標題：📖 Minidoracat Bags Mod Guide: Seven Bags, Upgrades and Bag Upgrade Plus Takeover -->
 <!-- 摘要：Illustrated guide to the Minidoracat Bags mod: stats, loot locations and sewing recipes for the seven S.T.A.R.S. and Umbrella bags, bag upgrades, taking over Bag Upgrade Plus saves with the server switch steps, and the sandbox options. -->
 === 🚀 Quick Start
-[b]繁體中文版：[/b][url=https://steamcommunity.com/sharedfiles/filedetails/?id=XXXX]Minidoracat Bags 完整說明[/url]
+[b]繁體中文版：[/b][url=https://steamcommunity.com/sharedfiles/filedetails/?id=3827498698]Minidoracat Bags 完整說明[/url]
 
 The mod (Steam Workshop):
-https://steamcommunity.com/sharedfiles/filedetails/?id=XXXX
+https://steamcommunity.com/sharedfiles/filedetails/?id=3827497087
 [olist]
 [*] [b]Find bags[/b]: police stations have S.T.A.R.S. bags, military and medical sites have Umbrella bags. Police, soldier and medic zombies can also drop one when they die.
 [*] [b]Sew your own[/b]: with enough Tailoring you can sew them from the Tailoring category of the crafting menu. No recipe to learn first.
@@ -177,7 +178,7 @@ Bag Upgrade Plus (BUP below) has been removed from the Workshop. This mod takes 
 
 [olist]
 [*] [b]Back up[/b]: stop the server and back up the whole server save (world and player data).
-[*] [b]Swap the mods[/b]: in the server config, remove every BUP from Mods= (mod ids BagUpgradePlusUpdated, BagUpgradePlusRealistic, BagUpgradePlus, CloudBag) and add MinidoracatBagsFor42. In WorkshopItems=, remove BUP's Workshop ID and add this mod's XXXX.
+[*] [b]Swap the mods[/b]: in the server config, remove every BUP from Mods= (mod ids BagUpgradePlusUpdated, BagUpgradePlusRealistic, BagUpgradePlus, CloudBag) and add MinidoracatBagsFor42. In WorkshopItems=, remove BUP's Workshop ID and add this mod's 3827497087.
 [*] [b]Check after start[/b]: server-console.txt has no "WARNING: another Bag Upgrade Plus is loaded" line, and players who log in still have their old bags, take-out only.
 [*] [b]If the server already ran without the original mod[/b]: bags loaded into the game during that time were deleted along with everything inside them. Switching to this mod cannot bring them back; only a backup from before that start can. The deleted bags are those worn or in the inventory of players who logged in during that time, plus bags on the ground or in containers near where anyone went. Bags worn or carried by players who did not log in during that time, and bags in places nobody visited, are still there and show up normally after switching to this mod.
 [/olist]

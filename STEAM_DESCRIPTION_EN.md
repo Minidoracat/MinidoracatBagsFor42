@@ -30,7 +30,7 @@ S.T.A.R.S. and Umbrella themed tactical bags you can upgrade with Tailoring. Bag
 [*] [b]Bag Upgrade Plus takeover[/b]: old bags stay in your save; switch steps are in the full guide
 [*] [b]Server settings[/b]: upgrade size, limits and spawn rate are all sandbox options
 [/list]
-📖 [b]Stats, loot locations, upgrades and switch steps:[/b] [url=https://steamcommunity.com/sharedfiles/filedetails/?id=XXXX]Minidoracat Bags Mod Guide[/url]
+📖 [b]Stats, loot locations, upgrades and switch steps:[/b] [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3827498713]Minidoracat Bags Mod Guide[/url]
 
 [h2]🔗 Minidoracat Collection[/h2]
 All my other mods are in the [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3809297109]Minidoracat collection[/url]; subscribe to the ones you need.
@@ -50,5 +50,5 @@ This mod is an unofficial fan work based on Capcom's Resident Evil. It is not af
 
 [b]#Minidoracat[/b]
 
-Workshop ID: XXXX
+Workshop ID: 3827497087
 Mod ID: MinidoracatBagsFor42

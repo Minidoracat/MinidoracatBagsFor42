@@ -30,7 +30,7 @@ S.T.A.R.S. 與保護傘主題的戰術背包，能用縫紉升級，還能接手
 [*] [b]接手 Bag Upgrade Plus[/b]：舊背包照樣在，換裝步驟見完整說明
 [*] [b]伺服器可調[/b]：升級幅度、上限與出現機率都能在沙盒設定調整
 [/list]
-📖 [b]數值、取得地點、升級與換裝步驟：[/b][url=https://steamcommunity.com/sharedfiles/filedetails/?id=XXXX]Minidoracat Bags 完整說明[/url]
+📖 [b]數值、取得地點、升級與換裝步驟：[/b][url=https://steamcommunity.com/sharedfiles/filedetails/?id=3827498698]Minidoracat Bags 完整說明[/url]
 
 [h2]🔗 Minidoracat 全系列[/h2]
 其他作品都在[url=https://steamcommunity.com/sharedfiles/filedetails/?id=3809297109]Minidoracat 全系列收藏[/url]，依需求自選訂閱。
@@ -50,5 +50,5 @@ MOD 永遠免費。喜歡的話可以請我喝杯咖啡，贊助會用在伺服�
 
 [b]#Minidoracat[/b]
 
-Workshop ID: XXXX
+Workshop ID: 3827497087
 Mod ID: MinidoracatBagsFor42
