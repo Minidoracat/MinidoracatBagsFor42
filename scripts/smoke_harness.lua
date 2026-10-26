@@ -25,7 +25,8 @@ local MEDIA = "MOD/MinidoracatBagsFor42/Contents/mods/MinidoracatBagsFor42/42/me
 
 -- ===== 假的 PZ 全域：只記錄掛了哪些事件 =====
 -- MOD 的 Lua 在載入時只呼叫 Events.X.Add，另外 MDB_Upgrade 會 require 並包住原版的 ISClothingExtraAction.createItemNew，
--- MDB_FloorWear 會 require 原版 ISBaseTimedAction 並 derive 出計時動作；
+-- MDB_FloorWear 會 require 原版 ISBaseTimedAction 並 derive 出計時動作，
+-- MDB_Attach／MDB_AttachClient 在載入時就登記掛點（AttachedLocations、腳本 DoParam、模型掛點、快捷列定義），也包住 ISHotbar.doMenuFromInventory；
 -- 其餘引擎全域都在函式被呼叫時才用，那些行為由 scripts/test_*.lua 用各自的假全域測。
 local registered = {}
 Events = setmetatable({}, {
@@ -37,6 +38,30 @@ ISClothingExtraAction = { createItemNew = function(_, _, newItem) return newItem
 package.loaded["TimedActions/ISClothingExtraAction"] = true
 ISBaseTimedAction = { derive = function(self, type) return setmetatable({ Type = type }, { __index = self }) end }
 package.loaded["TimedActions/ISBaseTimedAction"] = true
+local locations, doParams, modelAttachments = {}, 0, 0
+AttachedLocations = { getGroup = function()
+    return { getOrCreateLocation = function(_, name)
+        return { setAttachmentName = function(_, id) locations[name] = id end }
+    end }
+end }
+local function vec() return { set = function() end } end
+ModelAttachment = { new = function(id)
+    modelAttachments = modelAttachments + 1
+    local off, rot = vec(), vec()
+    return { setBone = function() end, getOffset = function() return off end, getRotate = function() return rot end }
+end }
+function getScriptManager()
+    return {
+        getItem = function() return { DoParam = function() doParams = doParams + 1 end, getStaticModel = function() return nil end } end,
+        getModelScript = function()
+            return { getAttachmentById = function() return nil end, addAttachment = function() end }
+        end,
+    }
+end
+ISHotbarAttachDefinition = {}
+ISHotbar = { doMenuFromInventory = function() end }
+package.loaded["Hotbar/ISHotbarAttachDefinition"] = true
+package.loaded["Hotbar/ISHotbar"] = true
 
 -- ===== 測試工具 =====
 local failures = 0
@@ -84,14 +109,23 @@ for _, name in ipairs(ALLOWED) do check(seen[name] == 1, name .. " 剛好掛一�
 for _, fn in ipairs({ "acceptLegacy", "acceptFirstAid", "acceptAmmo", "applyTier", "swapBag", "keepBag", "onConvertLegacy",
                       "onMakeReinforcedSling", "onSwapKeepTier", "onTestUpgraded", "onUpgrade", "onTestTier1", "onTestTier2", "onTestTier3",
                       "addLoot", "reapplyLoot", "onZombieDead", "warnDuplicates", "opt",
-                      "canWearFromFloor", "needsFloorWear", "onFillFloorWearMenu" }) do
+                      "canWearFromFloor", "needsFloorWear", "onFillFloorWearMenu",
+                      "installAttach", "installAttachClient", "attachTransform", "eachAttachPose" }) do
     check(type(MDB[fn]) == "function", "MDB." .. fn .. " 存在")
 end
 check(type(MDB_WearFromFloor) == "table" and MDB_WearFromFloor.Type == "MDB_WearFromFloor", "計時動作 MDB_WearFromFloor 是同名全域")
+local nLoc, nFix = 0, 0
+for _ in pairs(locations) do nLoc = nLoc + 1 end
+for _, fix in pairs(MDB.ATTACH_FIX or {}) do   -- 模型自身校正：每個模型在它那種擺法的每個掛點各一個
+    MDB.eachAttachPose(function(_, _, pose) if pose == fix[1] then nFix = nFix + 1 end end)
+end
+check(nLoc > 0 and #ISHotbarAttachDefinition > 0 and nFix > 0 and modelAttachments == 2 * nLoc + nFix and doParams > 0,
+    string.format("載入時登記掛點：%d 個 AttachedLocation、%d 個快捷列定義、%d 個模型掛點（身體 %d＋自身校正 %d）、%d 次 DoParam",
+        nLoc, #ISHotbarAttachDefinition, modelAttachments, 2 * nLoc, nFix, doParams))
 
 -- ===== 情境二：各部分的離線測試，含植入違規 =====
 print("情境二：離線測試")
-for _, test in ipairs({ "test_legacy.lua", "test_newbags.lua", "test_floor_wear.lua" }) do
+for _, test in ipairs({ "test_legacy.lua", "test_newbags.lua", "test_floor_wear.lua", "test_attach.lua" }) do
     for _, mode in ipairs({ "", " --mutants" }) do
         local p = io.popen("lua scripts/" .. test .. mode .. " 2>&1")
         local last = ""
