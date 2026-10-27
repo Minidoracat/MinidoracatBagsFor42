@@ -1,0 +1,847 @@
+{
+ "version": 1,
+ "shapes": [
+  {
+   "key": "Bag_DuffelBag",
+   "mesh": "m_duffelbag",
+   "representative": "Base.Bag_DuffelBag",
+   "members": [
+    "Base.Bag_BaseballBag",
+    "Base.Bag_BreakdownBag",
+    "Base.Bag_BurglarBag",
+    "Base.Bag_DuffelBag",
+    "Base.Bag_DuffelBagTINT",
+    "Base.Bag_FoodCanned",
+    "Base.Bag_FoodSnacks",
+    "Base.Bag_InmateEscapedBag",
+    "Base.Bag_MedicalBag",
+    "Base.Bag_Military",
+    "Base.Bag_MoneyBag",
+    "Base.Bag_Police",
+    "Base.Bag_SWAT",
+    "Base.Bag_Sheriff",
+    "Base.Bag_ShotgunBag",
+    "Base.Bag_ShotgunDblBag",
+    "Base.Bag_ShotgunDblSawnoffBag",
+    "Base.Bag_ShotgunSawnoffBag",
+    "Base.Bag_TennisBag",
+    "Base.Bag_ToolBag",
+    "Base.Bag_WeaponBag",
+    "Base.Bag_WorkerBag"
+   ],
+   "base_texture": "clothes\\bag\\duffelbagblue",
+   "texture": {
+    "Navy": "Clothes/Bag/MDB_Bag_DuffelBag_Navy",
+    "Olive": "Clothes/Bag/MDB_Bag_DuffelBag_Olive"
+   },
+   "icon": {
+    "Navy": "MDB_Bag_DuffelBag_Navy",
+    "Olive": "MDB_Bag_DuffelBag_Olive"
+   },
+   "ground": {
+    "Navy": null,
+    "Olive": null
+   }
+  },
+  {
+   "key": "Bag_ClothSatchel_Cotton",
+   "mesh": "m_clothsatchel",
+   "representative": "Base.Bag_ClothSatchel_Cotton",
+   "members": [
+    "Base.Bag_ClothSatchel_Burlap",
+    "Base.Bag_ClothSatchel_Cotton",
+    "Base.Bag_ClothSatchel_Denim",
+    "Base.Bag_ClothSatchel_DenimBlack",
+    "Base.Bag_ClothSatchel_DenimLight",
+    "Base.Bag_HideSatchel"
+   ],
+   "base_texture": "clothes\\bag\\clothsatchel_cotton",
+   "texture": {
+    "Navy": "Clothes/Bag/MDB_Bag_ClothSatchel_Cotton_Navy",
+    "Olive": "Clothes/Bag/MDB_Bag_ClothSatchel_Cotton_Olive"
+   },
+   "icon": {
+    "Navy": "MDB_Bag_ClothSatchel_Cotton_Navy",
+    "Olive": "MDB_Bag_ClothSatchel_Cotton_Olive"
+   },
+   "ground": {
+    "Navy": "MinidoracatBags.MDB_Bag_ClothSatchel_Cotton_Navy_Ground",
+    "Olive": "MinidoracatBags.MDB_Bag_ClothSatchel_Cotton_Olive_Ground"
+   }
+  },
+  {
+   "key": "Bag_RifleCaseCloth",
+   "mesh": "m_riflecasecloth",
+   "representative": "Base.Bag_RifleCaseCloth",
+   "members": [
+    "Base.Bag_RifleCaseCloth",
+    "Base.Bag_RifleCaseCloth2",
+    "Base.Bag_RifleCaseClothCamo",
+    "Base.Bag_ShotgunCaseCloth",
+    "Base.Bag_ShotgunCaseCloth2"
+   ],
+   "base_texture": "clothes\\bag\\riflecasecloth_green",
+   "texture": {
+    "Navy": "Clothes/Bag/MDB_Bag_RifleCaseCloth_Navy",
+    "Olive": "Clothes/Bag/MDB_Bag_RifleCaseCloth_Olive"
+   },
+   "icon": {
+    "Navy": "MDB_Bag_RifleCaseCloth_Navy",
+    "Olive": "MDB_Bag_RifleCaseCloth_Olive"
+   },
+   "ground": {
+    "Navy": null,
+    "Olive": null
+   }
+  },
+  {
+   "key": "Bag_Satchel_Leather",
+   "mesh": "m_satchel_new",
+   "representative": "Base.Bag_Satchel_Leather",
+   "members": [
+    "Base.Bag_Satchel_Fishing",
+    "Base.Bag_Satchel_Leather",
+    "Base.Bag_Satchel_Mail",
+    "Base.Bag_Satchel_Medical",
+    "Base.Bag_Satchel_Military"
+   ],
+   "base_texture": "clothes\\bag\\Satchel_Leather",
+   "texture": {
+    "Navy": "Clothes/Bag/MDB_Bag_Satchel_Leather_Navy",
+    "Olive": "Clothes/Bag/MDB_Bag_Satchel_Leather_Olive"
+   },
+   "icon": {
+    "Navy": "MDB_Bag_Satchel_Leather_Navy",
+    "Olive": "MDB_Bag_Satchel_Leather_Olive"
+   },
+   "ground": {
+    "Navy": "MinidoracatBags.MDB_Bag_Satchel_Leather_Navy_Ground",
+    "Olive": "MinidoracatBags.MDB_Bag_Satchel_Leather_Olive_Ground"
+   }
+  },
+  {
+   "key": "Bag_Schoolbag",
+   "mesh": "m_schoolbag",
+   "representative": "Base.Bag_Schoolbag",
+   "members": [
+    "Base.Bag_Schoolbag",
+    "Base.Bag_Schoolbag_Kids",
+    "Base.Bag_Schoolbag_Medical",
+    "Base.Bag_Schoolbag_Patches",
+    "Base.Bag_Schoolbag_Travel"
+   ],
+   "base_texture": "clothes\\bag\\schoolbag_blue",
+   "texture": {
+    "Navy": "Clothes/Bag/MDB_Bag_Schoolbag_Navy",
+    "Olive": "Clothes/Bag/MDB_Bag_Schoolbag_Olive"
+   },
+   "icon": {
+    "Navy": "MDB_Bag_Schoolbag_Navy",
+    "Olive": "MDB_Bag_Schoolbag_Olive"
+   },
+   "ground": {
+    "Navy": null,
+    "Olive": null
+   }
+  },
+  {
+   "key": "Bag_ALICEpack",
+   "mesh": "m_alice_pack",
+   "representative": "Base.Bag_ALICEpack",
+   "members": [
+    "Base.Bag_ALICEpack",
+    "Base.Bag_ALICEpack_Army",
+    "Base.Bag_ALICEpack_DesertCamo",
+    "Base.Bag_SurvivorBag"
+   ],
+   "base_texture": "clothes\\bag\\alicepack_green",
+   "texture": {
+    "Navy": "Clothes/Bag/MDB_Bag_ALICEpack_Navy",
+    "Olive": "Clothes/Bag/MDB_Bag_ALICEpack_Olive"
+   },
+   "icon": {
+    "Navy": "MDB_Bag_ALICEpack_Navy",
+    "Olive": "MDB_Bag_ALICEpack_Olive"
+   },
+   "ground": {
+    "Navy": null,
+    "Olive": null
+   }
+  },
+  {
+   "key": "Bag_ALICE_BeltSus",
+   "mesh": "m_alice_beltsus",
+   "representative": "Base.Bag_ALICE_BeltSus",
+   "members": [
+    "Base.Bag_ALICE_BeltSus",
+    "Base.Bag_ALICE_BeltSus_Camo",
+    "Base.Bag_ALICE_BeltSus_Green"
+   ],
+   "base_texture": "clothes\\bag\\alice_beltsus_green",
+   "texture": {
+    "Navy": "Clothes/Bag/MDB_Bag_ALICE_BeltSus_Navy",
+    "Olive": "Clothes/Bag/MDB_Bag_ALICE_BeltSus_Olive"
+   },
+   "icon": {
+    "Navy": "MDB_Bag_ALICE_BeltSus_Navy",
+    "Olive": "MDB_Bag_ALICE_BeltSus_Olive"
+   },
+   "ground": {
+    "Navy": null,
+    "Olive": null
+   }
+  },
+  {
+   "key": "Bag_FannyPackBack",
+   "mesh": "m_fannypactback",
+   "representative": "Base.Bag_FannyPackBack",
+   "members": [
+    "Base.Bag_FannyPackBack",
+    "Base.Bag_FannyPackBack_Hide",
+    "Base.Bag_FannyPackBack_Tarp"
+   ],
+   "base_texture": "clothes\\bag\\fannypack",
+   "texture": {
+    "Navy": "Clothes/Bag/MDB_Bag_FannyPackBack_Navy",
+    "Olive": "Clothes/Bag/MDB_Bag_FannyPackBack_Olive"
+   },
+   "icon": {
+    "Navy": "MDB_Bag_FannyPackBack_Navy",
+    "Olive": "MDB_Bag_FannyPackBack_Olive"
+   },
+   "ground": {
+    "Navy": null,
+    "Olive": null
+   }
+  },
+  {
+   "key": "Bag_FannyPackFront",
+   "mesh": "m_fannypackfront",
+   "representative": "Base.Bag_FannyPackFront",
+   "members": [
+    "Base.Bag_FannyPackFront",
+    "Base.Bag_FannyPackFront_Hide",
+    "Base.Bag_FannyPackFront_Tarp"
+   ],
+   "base_texture": "clothes\\bag\\fannypack",
+   "texture": {
+    "Navy": "Clothes/Bag/MDB_Bag_FannyPackFront_Navy",
+    "Olive": "Clothes/Bag/MDB_Bag_FannyPackFront_Olive"
+   },
+   "icon": {
+    "Navy": "MDB_Bag_FannyPackFront_Navy",
+    "Olive": "MDB_Bag_FannyPackFront_Olive"
+   },
+   "ground": {
+    "Navy": null,
+    "Olive": null
+   }
+  },
+  {
+   "key": "Bag_SheetSlingBag",
+   "mesh": "m_sheetslingbag",
+   "representative": "Base.Bag_SheetSlingBag",
+   "members": [
+    "Base.Bag_HideSlingBag",
+    "Base.Bag_SheetSlingBag",
+    "Base.Bag_TarpSlingBag"
+   ],
+   "base_texture": "clothes\\bag\\sheetslingbag",
+   "texture": {
+    "Navy": "Clothes/Bag/MDB_Bag_SheetSlingBag_Navy",
+    "Olive": "Clothes/Bag/MDB_Bag_SheetSlingBag_Olive"
+   },
+   "icon": {
+    "Navy": "MDB_Bag_SheetSlingBag_Navy",
+    "Olive": "MDB_Bag_SheetSlingBag_Olive"
+   },
+   "ground": {
+    "Navy": null,
+    "Olive": null
+   }
+  },
+  {
+   "key": "Bag_BigHikingBag",
+   "mesh": "m_bighikingbag",
+   "representative": "Base.Bag_BigHikingBag",
+   "members": [
+    "Base.Bag_BigHikingBag",
+    "Base.Bag_BigHikingBag_Travel"
+   ],
+   "base_texture": "clothes\\bag\\bighikingbagblue",
+   "texture": {
+    "Navy": "Clothes/Bag/MDB_Bag_BigHikingBag_Navy",
+    "Olive": "Clothes/Bag/MDB_Bag_BigHikingBag_Olive"
+   },
+   "icon": {
+    "Navy": "MDB_Bag_BigHikingBag_Navy",
+    "Olive": "MDB_Bag_BigHikingBag_Olive"
+   },
+   "ground": {
+    "Navy": null,
+    "Olive": null
+   }
+  },
+  {
+   "key": "Bag_ChestRig",
+   "mesh": "bob_chestrig",
+   "representative": "Base.Bag_ChestRig",
+   "members": [
+    "Base.Bag_ChestRig",
+    "Base.Bag_ChestRig_Tarp"
+   ],
+   "base_texture": "clothes\\bag\\chestrig",
+   "texture": {
+    "Navy": "Clothes/Bag/MDB_Bag_ChestRig_Navy",
+    "Olive": "Clothes/Bag/MDB_Bag_ChestRig_Olive"
+   },
+   "icon": {
+    "Navy": "MDB_Bag_ChestRig_Navy",
+    "Olive": "MDB_Bag_ChestRig_Olive"
+   },
+   "ground": {
+    "Navy": "MinidoracatBags.MDB_Bag_ChestRig_Navy_Ground",
+    "Olive": "MinidoracatBags.MDB_Bag_ChestRig_Olive_Ground"
+   }
+  },
+  {
+   "key": "Bag_CraftedFramepack_Large",
+   "mesh": "m_craftedframepack_lrg",
+   "representative": "Base.Bag_CraftedFramepack_Large",
+   "members": [
+    "Base.Bag_CraftedFramepack_Large",
+    "Base.Bag_TarpFramepack_Large"
+   ],
+   "base_texture": "clothes\\bag\\craftedframepack_lrg",
+   "texture": {
+    "Navy": "Clothes/Bag/MDB_Bag_CraftedFramepack_Large_Navy",
+    "Olive": "Clothes/Bag/MDB_Bag_CraftedFramepack_Large_Olive"
+   },
+   "icon": {
+    "Navy": "MDB_Bag_CraftedFramepack_Large_Navy",
+    "Olive": "MDB_Bag_CraftedFramepack_Large_Olive"
+   },
+   "ground": {
+    "Navy": null,
+    "Olive": null
+   }
+  },
+  {
+   "key": "Bag_CraftedFramepack_Small",
+   "mesh": "m_craftedframepack_small",
+   "representative": "Base.Bag_CraftedFramepack_Small",
+   "members": [
+    "Base.Bag_CraftedFramepack_Small",
+    "Base.Bag_TarpFramepack_Small"
+   ],
+   "base_texture": "clothes\\bag\\craftedframepack_small",
+   "texture": {
+    "Navy": "Clothes/Bag/MDB_Bag_CraftedFramepack_Small_Navy",
+    "Olive": "Clothes/Bag/MDB_Bag_CraftedFramepack_Small_Olive"
+   },
+   "icon": {
+    "Navy": "MDB_Bag_CraftedFramepack_Small_Navy",
+    "Olive": "MDB_Bag_CraftedFramepack_Small_Olive"
+   },
+   "ground": {
+    "Navy": null,
+    "Olive": null
+   }
+  },
+  {
+   "key": "Bag_CrudeLeatherBag",
+   "mesh": "m_crudeleatherbag",
+   "representative": "Base.Bag_CrudeLeatherBag",
+   "members": [
+    "Base.Bag_CrudeLeatherBag",
+    "Base.Bag_CrudeTarpBag"
+   ],
+   "base_texture": "clothes\\bag\\crudeleatherbag",
+   "texture": {
+    "Navy": "Clothes/Bag/MDB_Bag_CrudeLeatherBag_Navy",
+    "Olive": "Clothes/Bag/MDB_Bag_CrudeLeatherBag_Olive"
+   },
+   "icon": {
+    "Navy": "MDB_Bag_CrudeLeatherBag_Navy",
+    "Olive": "MDB_Bag_CrudeLeatherBag_Olive"
+   },
+   "ground": {
+    "Navy": "MinidoracatBags.MDB_Bag_CrudeLeatherBag_Navy_Ground",
+    "Olive": "MinidoracatBags.MDB_Bag_CrudeLeatherBag_Olive_Ground"
+   }
+  },
+  {
+   "key": "Bag_GolfBag",
+   "mesh": "m_golfbag",
+   "representative": "Base.Bag_GolfBag",
+   "members": [
+    "Base.Bag_GolfBag",
+    "Base.Bag_GolfBag_Melee"
+   ],
+   "base_texture": "clothes\\bag\\golfbag_blue",
+   "texture": {
+    "Navy": "Clothes/Bag/MDB_Bag_GolfBag_Navy",
+    "Olive": "Clothes/Bag/MDB_Bag_GolfBag_Olive"
+   },
+   "icon": {
+    "Navy": "MDB_Bag_GolfBag_Navy",
+    "Olive": "MDB_Bag_GolfBag_Olive"
+   },
+   "ground": {
+    "Navy": null,
+    "Olive": null
+   }
+  },
+  {
+   "key": "Bag_NormalHikingBag",
+   "mesh": "m_hikingbag",
+   "representative": "Base.Bag_NormalHikingBag",
+   "members": [
+    "Base.Bag_HikingBag_Travel",
+    "Base.Bag_NormalHikingBag"
+   ],
+   "base_texture": "clothes\\bag\\hikingbagblue",
+   "texture": {
+    "Navy": "Clothes/Bag/MDB_Bag_NormalHikingBag_Navy",
+    "Olive": "Clothes/Bag/MDB_Bag_NormalHikingBag_Olive"
+   },
+   "icon": {
+    "Navy": "MDB_Bag_NormalHikingBag_Navy",
+    "Olive": "MDB_Bag_NormalHikingBag_Olive"
+   },
+   "ground": {
+    "Navy": null,
+    "Olive": null
+   }
+  },
+  {
+   "key": "Bag_HydrationBackpack",
+   "mesh": "m_hydrationbackpack",
+   "representative": "Base.Bag_HydrationBackpack",
+   "members": [
+    "Base.Bag_HydrationBackpack",
+    "Base.Bag_HydrationBackpack_Camo"
+   ],
+   "base_texture": "clothes\\bag\\hydrationbackpack_blue",
+   "texture": {
+    "Navy": "Clothes/Bag/MDB_Bag_HydrationBackpack_Navy",
+    "Olive": "Clothes/Bag/MDB_Bag_HydrationBackpack_Olive"
+   },
+   "icon": {
+    "Navy": "MDB_Bag_HydrationBackpack_Navy",
+    "Olive": "MDB_Bag_HydrationBackpack_Olive"
+   },
+   "ground": {
+    "Navy": null,
+    "Olive": null
+   }
+  },
+  {
+   "key": "Bag_Satchel",
+   "mesh": "m_satchel",
+   "representative": "Base.Bag_Satchel",
+   "members": [
+    "Base.Bag_Satchel",
+    "Base.Bag_SatchelPhoto"
+   ],
+   "base_texture": "clothes\\bag\\satchel",
+   "texture": {
+    "Navy": "Clothes/Bag/MDB_Bag_Satchel_Navy",
+    "Olive": "Clothes/Bag/MDB_Bag_Satchel_Olive"
+   },
+   "icon": {
+    "Navy": "MDB_Bag_Satchel_Navy",
+    "Olive": "MDB_Bag_Satchel_Olive"
+   },
+   "ground": {
+    "Navy": null,
+    "Olive": null
+   }
+  },
+  {
+   "key": "Bag_CraftedFramepack_Large2",
+   "mesh": "m_craftedframepack_lrg2",
+   "representative": "Base.Bag_CraftedFramepack_Large2",
+   "members": [
+    "Base.Bag_CraftedFramepack_Large2"
+   ],
+   "base_texture": "clothes\\bag\\craftedframepacl_lrg2",
+   "texture": {
+    "Navy": "Clothes/Bag/MDB_Bag_CraftedFramepack_Large2_Navy",
+    "Olive": "Clothes/Bag/MDB_Bag_CraftedFramepack_Large2_Olive"
+   },
+   "icon": {
+    "Navy": "MDB_Bag_CraftedFramepack_Large2_Navy",
+    "Olive": "MDB_Bag_CraftedFramepack_Large2_Olive"
+   },
+   "ground": {
+    "Navy": null,
+    "Olive": null
+   }
+  },
+  {
+   "key": "Bag_CraftedFramepack_Large3",
+   "mesh": "m_craftedframepack_lrg3",
+   "representative": "Base.Bag_CraftedFramepack_Large3",
+   "members": [
+    "Base.Bag_CraftedFramepack_Large3"
+   ],
+   "base_texture": "clothes\\bag\\craftedframepack_lrg3",
+   "texture": {
+    "Navy": "Clothes/Bag/MDB_Bag_CraftedFramepack_Large3_Navy",
+    "Olive": "Clothes/Bag/MDB_Bag_CraftedFramepack_Large3_Olive"
+   },
+   "icon": {
+    "Navy": "MDB_Bag_CraftedFramepack_Large3_Navy",
+    "Olive": "MDB_Bag_CraftedFramepack_Large3_Olive"
+   },
+   "ground": {
+    "Navy": null,
+    "Olive": null
+   }
+  },
+  {
+   "key": "Bag_FishingBasket",
+   "mesh": "m_fishingbasket",
+   "representative": "Base.Bag_FishingBasket",
+   "members": [
+    "Base.Bag_FishingBasket"
+   ],
+   "base_texture": "clothes\\bag\\fishingbasket",
+   "texture": {
+    "Navy": "Clothes/Bag/MDB_Bag_FishingBasket_Navy",
+    "Olive": "Clothes/Bag/MDB_Bag_FishingBasket_Olive"
+   },
+   "icon": {
+    "Navy": "MDB_Bag_FishingBasket_Navy",
+    "Olive": "MDB_Bag_FishingBasket_Olive"
+   },
+   "ground": {
+    "Navy": null,
+    "Olive": null
+   }
+  }
+ ],
+ "theme_by_source": {
+  "Base.Bag_ALICE_BeltSus": [
+   "Olive",
+   "Olive"
+  ],
+  "Base.Bag_ALICE_BeltSus_Camo": [
+   "Olive"
+  ],
+  "Base.Bag_ALICE_BeltSus_Green": [
+   "Olive"
+  ],
+  "Base.Bag_ALICEpack": [
+   "Olive"
+  ],
+  "Base.Bag_ALICEpack_Army": [
+   "Olive"
+  ],
+  "Base.Bag_ALICEpack_DesertCamo": [
+   "Olive"
+  ],
+  "Base.Bag_BaseballBag": [
+   "Navy",
+   "Navy"
+  ],
+  "Base.Bag_BigHikingBag": [
+   "Navy",
+   "Olive",
+   "Navy"
+  ],
+  "Base.Bag_BigHikingBag_Travel": [
+   "Navy",
+   "Olive",
+   "Navy"
+  ],
+  "Base.Bag_BreakdownBag": [
+   "Navy",
+   "Olive",
+   "Navy",
+   "Navy",
+   "Navy",
+   "Navy",
+   "Navy"
+  ],
+  "Base.Bag_BurglarBag": [
+   "Navy"
+  ],
+  "Base.Bag_ChestRig": [
+   "Olive"
+  ],
+  "Base.Bag_ChestRig_Tarp": [
+   "Olive"
+  ],
+  "Base.Bag_ClothSatchel_Burlap": [
+   "Olive"
+  ],
+  "Base.Bag_ClothSatchel_Cotton": [
+   "Olive"
+  ],
+  "Base.Bag_ClothSatchel_Denim": [
+   "Olive"
+  ],
+  "Base.Bag_ClothSatchel_DenimBlack": [
+   "Olive"
+  ],
+  "Base.Bag_ClothSatchel_DenimLight": [
+   "Olive"
+  ],
+  "Base.Bag_CraftedFramepack_Large": [
+   "Olive"
+  ],
+  "Base.Bag_CraftedFramepack_Large2": [
+   "Olive"
+  ],
+  "Base.Bag_CraftedFramepack_Large3": [
+   "Olive"
+  ],
+  "Base.Bag_CraftedFramepack_Small": [
+   "Olive"
+  ],
+  "Base.Bag_CrudeLeatherBag": [
+   "Olive"
+  ],
+  "Base.Bag_CrudeTarpBag": [
+   "Olive"
+  ],
+  "Base.Bag_DuffelBag": [
+   "Navy",
+   "Olive",
+   "Navy",
+   "Navy",
+   "Navy",
+   "Navy",
+   "Navy"
+  ],
+  "Base.Bag_DuffelBagTINT": [
+   "Navy"
+  ],
+  "Base.Bag_FannyPackBack": [
+   "Navy",
+   "Navy",
+   "Navy"
+  ],
+  "Base.Bag_FannyPackBack_Hide": [
+   "Olive"
+  ],
+  "Base.Bag_FannyPackBack_Tarp": [
+   "Olive"
+  ],
+  "Base.Bag_FannyPackFront": [
+   "Navy",
+   "Navy",
+   "Navy"
+  ],
+  "Base.Bag_FannyPackFront_Hide": [
+   "Olive"
+  ],
+  "Base.Bag_FannyPackFront_Tarp": [
+   "Olive"
+  ],
+  "Base.Bag_FishingBasket": [
+   "Olive"
+  ],
+  "Base.Bag_FoodCanned": [
+   "Navy"
+  ],
+  "Base.Bag_FoodSnacks": [
+   "Navy"
+  ],
+  "Base.Bag_GolfBag": [
+   "Navy",
+   "Olive",
+   "Navy",
+   "Navy"
+  ],
+  "Base.Bag_GolfBag_Melee": [
+   "Navy",
+   "Olive",
+   "Navy",
+   "Navy"
+  ],
+  "Base.Bag_HideSatchel": [
+   "Olive"
+  ],
+  "Base.Bag_HideSlingBag": [
+   "Olive"
+  ],
+  "Base.Bag_HikingBag_Travel": [
+   "Navy",
+   "Olive",
+   "Navy"
+  ],
+  "Base.Bag_HydrationBackpack": [
+   "Navy",
+   "Navy",
+   "Navy"
+  ],
+  "Base.Bag_HydrationBackpack_Camo": [
+   "Olive"
+  ],
+  "Base.Bag_InmateEscapedBag": [
+   "Navy"
+  ],
+  "Base.Bag_MedicalBag": [
+   "Olive"
+  ],
+  "Base.Bag_Military": [
+   "Olive"
+  ],
+  "Base.Bag_MoneyBag": [
+   "Navy"
+  ],
+  "Base.Bag_NormalHikingBag": [
+   "Navy",
+   "Olive",
+   "Navy",
+   "Olive"
+  ],
+  "Base.Bag_Police": [
+   "Navy"
+  ],
+  "Base.Bag_RifleCaseCloth": [
+   "Olive",
+   "Olive"
+  ],
+  "Base.Bag_RifleCaseCloth2": [
+   "Olive",
+   "Olive"
+  ],
+  "Base.Bag_RifleCaseClothCamo": [
+   "Olive"
+  ],
+  "Base.Bag_SWAT": [
+   "Navy"
+  ],
+  "Base.Bag_Satchel": [
+   "Olive",
+   "Olive",
+   "Olive"
+  ],
+  "Base.Bag_SatchelPhoto": [
+   "Olive",
+   "Olive",
+   "Olive"
+  ],
+  "Base.Bag_Satchel_Fishing": [
+   "Olive"
+  ],
+  "Base.Bag_Satchel_Leather": [
+   "Olive"
+  ],
+  "Base.Bag_Satchel_Mail": [
+   "Navy"
+  ],
+  "Base.Bag_Satchel_Medical": [
+   "Olive"
+  ],
+  "Base.Bag_Satchel_Military": [
+   "Olive"
+  ],
+  "Base.Bag_Schoolbag": [
+   "Navy",
+   "Navy",
+   "Navy",
+   "Navy"
+  ],
+  "Base.Bag_Schoolbag_Kids": [
+   "Navy",
+   "Navy",
+   "Olive",
+   "Navy",
+   "Navy",
+   "Navy"
+  ],
+  "Base.Bag_Schoolbag_Medical": [
+   "Olive",
+   "Olive"
+  ],
+  "Base.Bag_Schoolbag_Patches": [
+   "Navy",
+   "Olive"
+  ],
+  "Base.Bag_Schoolbag_Travel": [
+   "Navy"
+  ],
+  "Base.Bag_SheetSlingBag": [
+   "Olive"
+  ],
+  "Base.Bag_Sheriff": [
+   "Navy"
+  ],
+  "Base.Bag_ShotgunBag": [
+   "Navy",
+   "Olive",
+   "Navy",
+   "Navy",
+   "Navy",
+   "Navy",
+   "Navy"
+  ],
+  "Base.Bag_ShotgunCaseCloth": [
+   "Olive",
+   "Olive"
+  ],
+  "Base.Bag_ShotgunCaseCloth2": [
+   "Olive",
+   "Olive"
+  ],
+  "Base.Bag_ShotgunDblBag": [
+   "Navy",
+   "Olive",
+   "Navy",
+   "Navy",
+   "Navy",
+   "Navy",
+   "Navy"
+  ],
+  "Base.Bag_ShotgunDblSawnoffBag": [
+   "Navy",
+   "Olive",
+   "Navy",
+   "Navy",
+   "Navy",
+   "Navy",
+   "Navy"
+  ],
+  "Base.Bag_ShotgunSawnoffBag": [
+   "Navy",
+   "Olive",
+   "Navy",
+   "Navy",
+   "Navy",
+   "Navy",
+   "Navy"
+  ],
+  "Base.Bag_SurvivorBag": [
+   "Olive",
+   "Olive",
+   "Olive"
+  ],
+  "Base.Bag_TarpFramepack_Large": [
+   "Olive"
+  ],
+  "Base.Bag_TarpFramepack_Small": [
+   "Olive"
+  ],
+  "Base.Bag_TarpSlingBag": [
+   "Olive"
+  ],
+  "Base.Bag_TennisBag": [
+   "Navy",
+   "Navy"
+  ],
+  "Base.Bag_ToolBag": [
+   "Navy"
+  ],
+  "Base.Bag_WeaponBag": [
+   "Navy"
+  ],
+  "Base.Bag_WorkerBag": [
+   "Navy"
+  ]
+ }
+}

@@ -1,0 +1,61 @@
+/* 由 scripts/gen_theme.py 產生，不要手改。強化版主題款放在地上的模型：原版這 4 種網格的地面模型腳本寫死 texture
+   （寫了 texture 就不看物品的貼圖，WorldItemAtlas.java:603-609），所以各做兩個主題。網格、縮放照抄原版。
+   布側背包照原版做法：地上是 Satchel_Fishing 網格（Satchel_New 的 UV），貼 Satchel_New 形狀的主題貼圖。 */
+module MinidoracatBags
+{
+    model MDB_Bag_ClothSatchel_Cotton_Navy_Ground
+    {
+        mesh = WorldItems/Clothing/Satchel_Fishing,
+        texture = Clothes/Bag/MDB_Bag_Satchel_Leather_Navy,
+        scale = 0.08,
+    }
+
+    model MDB_Bag_ClothSatchel_Cotton_Olive_Ground
+    {
+        mesh = WorldItems/Clothing/Satchel_Fishing,
+        texture = Clothes/Bag/MDB_Bag_Satchel_Leather_Olive,
+        scale = 0.08,
+    }
+
+    model MDB_Bag_Satchel_Leather_Navy_Ground
+    {
+        mesh = WorldItems/Clothing/Satchel_New,
+        texture = Clothes/Bag/MDB_Bag_Satchel_Leather_Navy,
+        scale = 0.08,
+    }
+
+    model MDB_Bag_Satchel_Leather_Olive_Ground
+    {
+        mesh = WorldItems/Clothing/Satchel_New,
+        texture = Clothes/Bag/MDB_Bag_Satchel_Leather_Olive,
+        scale = 0.08,
+    }
+
+    model MDB_Bag_ChestRig_Navy_Ground
+    {
+        mesh = WorldItems/Clothing/ChestRig_Ground,
+        texture = Clothes/Bag/MDB_Bag_ChestRig_Navy,
+        scale = 0.15,
+    }
+
+    model MDB_Bag_ChestRig_Olive_Ground
+    {
+        mesh = WorldItems/Clothing/ChestRig_Ground,
+        texture = Clothes/Bag/MDB_Bag_ChestRig_Olive,
+        scale = 0.15,
+    }
+
+    model MDB_Bag_CrudeLeatherBag_Navy_Ground
+    {
+        mesh = WorldItems/Clothing/CrudeLeatherBag_Ground,
+        texture = Clothes/Bag/MDB_Bag_CrudeLeatherBag_Navy,
+        scale = 0.4,
+    }
+
+    model MDB_Bag_CrudeLeatherBag_Olive_Ground
+    {
+        mesh = WorldItems/Clothing/CrudeLeatherBag_Ground,
+        texture = Clothes/Bag/MDB_Bag_CrudeLeatherBag_Olive,
+        scale = 0.4,
+    }
+}
