@@ -157,6 +157,8 @@ Every upgraded bag is a "Reinforced" bag: this mod's own item with the same look
 [*] [b]Hydration Packs[/b]: water capacity reaches 5 L when fully upgraded; with water inside, the name shows as "Water (Reinforced Hydration Pack)".
 [*] [b]Satchels[/b]: worn in a second satchel slot on the other side; see "Second Satchel Slot".
 [*] [b]Military Backpacks, Duffel Bags, Hiking and Big Hiking Backpacks[/b]: get extra hotbar attachment slots; see "Reinforced Bag Attachment Slots".
+[*] [b]School bags[/b]: the reinforced "Small Backpack (Reinforced)" (all five vanilla school bags have one) can carry a bedroll underneath, like Bag Upgrade Plus's school bag; the originals cannot.
+[*] [b]Duffel bags[/b]: while you wear one, long guns, big blades and shovels on your back hang outside the bag instead of sinking into it, like Bag Upgrade Plus's duffel bags. As with vanilla backpacks, a guitar cannot go on your back then; one already there is taken off into your inventory when you put the bag on.
 [*] [b]Everything else stays[/b]: capacity and Encumbrance Reduction follow the tier; item restrictions, bedroll attachments and fanny pack swapping work like the original.
 [/list]
 
@@ -263,6 +265,7 @@ Bag Upgrade Plus (BUP below) has been removed from the Workshop. This mod takes 
 [*] [b]No new copies[/b]: old bags never appear in loot, on zombies or as any recipe result.
 [*] [b]Drinks and plushies[/b]: the drinks and plushies the original mod changed stay in your inventory or bags after the switch; they just turn back into vanilla items. They could never hang on Plus bags in the first place, so the switch does not make anything fall off or disappear.
 [*] [b]Servers that define those slots[/b]: if your server also runs a mod that defines those attachment slots, anything hanging there should be detached into your inventory after the switch. This case has not been tested.
+[*] [b]Bedrolls on old school bags[/b]: a bedroll hanging under an old Plus school bag is detached into your inventory after the switch, because the old bag now works like the vanilla school bag, which has no bedroll slot. Convert it to the reinforced version to hang the bedroll again.
 [*] [b]Water bottles[/b]: BUP's two water bottles keep working with their water. They are neither locked nor convertible. The empty soda bottle that only the older branches 3403697073 and 3640342538 have is not taken over and disappears after the switch.
 [/list]
 

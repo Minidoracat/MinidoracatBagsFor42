@@ -30,12 +30,15 @@ MDB.ATTACH_ACCEPTS = {
 
 -- 家族照穿戴網格分（座標是照網格算的）：旅行登山包用一般登山包的網格（原版 Bag_HikingBag_Travel.xml），歸 Hiking；
 -- Bag Upgrade Plus 把它歸大登山包，兩邊的掛點組合相同。名單是 Bag Upgrade Plus 有掛點的 28 款，加上同網格、BUP 沒給掛點的
--- Bag_DuffelBagTINT 與 Bag_BigHikingBag_Travel。base＝原版就有的床捲掛點，DoParam 是整串取代（Item.java:2410-2411），要接回去。
+-- Bag_DuffelBagTINT 與 Bag_BigHikingBag_Travel。base＝床捲掛點：DoParam 是整串取代（Item.java:2410-2411），原版有的要接回去；
+-- 書包原版沒有，照 Bag Upgrade Plus 的書包加上（它只多這一個、沒有額外掛點），5 款書包同網格（m_schoolbag）一起加。
+-- replacement＝穿著時背後欄位的長槍、大刀、鏟子等改用「with Bag」位置（ISHotbarAttachDefinition.lua:96-113）。原版行李袋沒有這欄，
+-- 背後的長槍會埋進包裡；Bag Upgrade Plus 的行李袋 Plus 都加了，照做。代價和原版背包一樣：穿著時吉他不能背（對到 "null"）。
 MDB.ATTACH_FAMILIES = {
     { name = "Alice", base = "BedrollBottomALICE",
       bags = { "Bag_ALICEpack", "Bag_ALICEpack_Army", "Bag_ALICEpack_DesertCamo", "Bag_SurvivorBag" },
       slots = { "Slot1", "Slot2", "Slot3", "BottleR", "BottleL", "Plushie", "UmbrellaR", "Flashlight" } },
-    { name = "Duffel",
+    { name = "Duffel", replacement = "Bag",
       bags = { "Bag_DuffelBag", "Bag_MedicalBag", "Bag_Military", "Bag_Police", "Bag_Sheriff", "Bag_SWAT", "Bag_BreakdownBag",
                "Bag_BurglarBag", "Bag_BaseballBag", "Bag_TennisBag", "Bag_WeaponBag", "Bag_InmateEscapedBag", "Bag_MoneyBag",
                "Bag_WorkerBag", "Bag_ShotgunBag", "Bag_ShotgunSawnoffBag", "Bag_ShotgunDblBag", "Bag_ShotgunDblSawnoffBag",
@@ -47,6 +50,9 @@ MDB.ATTACH_FAMILIES = {
     { name = "BigHiking", base = "BedrollBottomBig",
       bags = { "Bag_BigHikingBag", "Bag_BigHikingBag_Travel" },
       slots = { "Slot1", "Slot2", "Slot3", "BottleR", "BottleL", "Plushie", "UmbrellaL", "Flashlight" } },
+    { name = "School", base = "BedrollBottom",
+      bags = { "Bag_Schoolbag", "Bag_Schoolbag_Kids", "Bag_Schoolbag_Medical", "Bag_Schoolbag_Patches", "Bag_Schoolbag_Travel" },
+      slots = {} },
 }
 
 -- 原版物品掛得上去要有 AttachmentType（實例建立時從腳本複製，存檔不記，讀檔重新取：Item.java:1892、InventoryItem.java:1663-1873），
@@ -137,7 +143,10 @@ function MDB.installAttach()
         local provided = "AttachmentsProvided = " .. table.concat(list, ";")
         for _, bag in ipairs(f.bags) do
             local s = sm:getItem("MinidoracatBags." .. bag .. "_Reinforced")
-            if s then s:DoParam(provided) end
+            if s then
+                s:DoParam(provided)
+                if f.replacement then s:DoParam("AttachmentReplacement = " .. f.replacement) end
+            end
         end
     end
     for fullType, kind in pairs(MDB.ATTACH_ITEMS) do

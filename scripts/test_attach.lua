@@ -160,7 +160,7 @@ end
 
 local load = loadstring or load
 
--- Bag Upgrade Plus 有額外掛點的 28 款（BUPResearch 第 1.1 節；書包只有原版床捲，不動）
+-- Bag Upgrade Plus 有額外掛點的 28 款（BUPResearch 第 1.1 節）；它的書包只多一個床捲掛點 BedrollBottom（原版書包沒有），歸 School 家族
 local BUP_SETS = {
     A = { "Slot1", "Slot2", "Slot3", "BottleR", "BottleL", "Plushie", "UmbrellaR", "Flashlight" },
     D = { "Slot1", "Slot2", "Slot3", "BottleR", "Plushie", "UmbrellaR", "Flashlight" },
@@ -175,7 +175,7 @@ for _, b in ipairs({ "Bag_DuffelBag", "Bag_MedicalBag", "Bag_Military", "Bag_Pol
     "Bag_ShotgunBag", "Bag_ShotgunSawnoffBag", "Bag_ShotgunDblBag", "Bag_ShotgunDblSawnoffBag", "Bag_FoodCanned", "Bag_FoodSnacks",
     "Bag_ToolBag" }) do BUP_BAGS[b] = "D" end
 -- 家族 → 原版穿戴網格（clothingItems/<ClothingItem>.xml 的 m_MaleModel）
-local MESH = { Alice = "m_alice_pack", Duffel = "m_duffelbag", Hiking = "m_hikingbag", BigHiking = "m_bighikingbag" }
+local MESH = { Alice = "m_alice_pack", Duffel = "m_duffelbag", Hiking = "m_hikingbag", BigHiking = "m_bighikingbag", School = "m_schoolbag" }
 -- 拿在手上要校正的物品 → 照抄的原版模型（MDB_AttachModels.txt 的 MDB_SheetRope、MDB_Plushabug）
 local HELD_FIX = { ["Base.SheetRope"] = "SheetRope", ["Base.Plushabug"] = "Plushabug" }
 
@@ -227,25 +227,39 @@ local function suite()
         if not f or table.concat(f.slots, ",") ~= table.concat(BUP_SETS[set], ",") then setOk = false end
     end
     check("Bag Upgrade Plus 的 28 款各歸一個家族，掛點組合照 BUP（ALICE、行李袋、登山包三種）", setOk)
-    check("書包不加掛點", bagFam.Bag_Schoolbag == nil)
+    local sf = bagFam.Bag_Schoolbag
+    check("書包照 Bag Upgrade Plus 只加床捲掛點（School 家族、BedrollBottom、沒有額外掛點）",
+        sf ~= nil and sf.name == "School" and sf.base == "BedrollBottom" and #sf.slots == 0)
 
-    -- AttachmentsProvided：保留強化版原本的床捲掛點，接上本 MOD 的掛點
+    -- AttachmentsProvided：保留強化版原本的床捲掛點（書包原版沒有，照 BUP 加上），接上本 MOD 的掛點
     local apOk, missing = true, {}
     for _, f in ipairs(MDB.ATTACH_FAMILIES) do
         for _, b in ipairs(f.bags) do
             local name = b .. "_Reinforced"
             local base = field(reinforced[name], "AttachmentsProvided")
             local want = {}
-            if base then want[1] = base end
+            if f.base then want[1] = f.base end
             for _, s in ipairs(f.slots) do want[#want + 1] = MDB.attachSlotType(f.name, s) end
             local it = env.items["MinidoracatBags." .. name]
             if not reinforced[name] then missing[#missing + 1] = name end
             if not it or it.params.AttachmentsProvided ~= table.concat(want, ";") then apOk = false end
-            if (base or false) ~= (f.base or false) then apOk = false end
+            if base ~= f.base and not (f.name == "School" and base == nil) then apOk = false end
         end
     end
     check("強化版都存在（" .. table.concat(missing, ",") .. "）", #missing == 0)
-    check("AttachmentsProvided 保留原本的床捲掛點、接上家族的全部掛點", apOk)
+    check("AttachmentsProvided 保留原本的床捲掛點（書包照 BUP 加上）、接上家族的全部掛點", apOk)
+    -- AttachmentReplacement：穿著時背後欄位改用「with Bag」位置。原版行李袋沒有，Bag Upgrade Plus 的行李袋 Plus 都加了，強化版照做；
+    -- 其他家族的原版腳本本來就有
+    local repOk = true
+    for _, f in ipairs(MDB.ATTACH_FAMILIES) do
+        for _, b in ipairs(f.bags) do
+            local name = b .. "_Reinforced"
+            local it = env.items["MinidoracatBags." .. name]
+            local eff = (it and it.params.AttachmentReplacement) or field(reinforced[name], "AttachmentReplacement")
+            if eff ~= "Bag" then repOk = false end
+        end
+    end
+    check("掛點家族的強化版穿著時都是 AttachmentReplacement = Bag（行李袋照 BUP 加，其他原版就有）", repOk)
 
     -- 原版物品：AttachmentType 是某個掛點收的類型；沒有 StaticModel 才借模型
     local accepted = {}
@@ -287,10 +301,10 @@ local function suite()
     local onlyTwo = true
     for _, it in pairs(env.items) do
         for k in pairs(it.params) do
-            if k ~= "AttachmentType" and k ~= "StaticModel" and k ~= "AttachmentsProvided" then onlyTwo = false end
+            if k ~= "AttachmentType" and k ~= "StaticModel" and k ~= "AttachmentsProvided" and k ~= "AttachmentReplacement" then onlyTwo = false end
         end
     end
-    check("DoParam 只動 AttachmentType、StaticModel、AttachmentsProvided", onlyTwo)
+    check("DoParam 只動 AttachmentType、StaticModel、AttachmentsProvided、AttachmentReplacement", onlyTwo)
     check("飲料與玩偶都有：瓶、罐、玩偶、娃娃",
         MDB.ATTACH_ITEMS["Base.WaterBottle"] == "WaterBottle" and MDB.ATTACH_ITEMS["Base.Pop"] == "Sodacan"
         and MDB.ATTACH_ITEMS["Base.Spiffo"] == "SpiffoPlushie" and MDB.ATTACH_ITEMS["Base.Doll"] == "Doll")
@@ -536,6 +550,12 @@ if arg and arg[1] == "--mutants" then
         { name = "提示框沒去重", file = "CLIENT", from = 'if line == "" or not seen[key] then', to = "if true then" },
         { name = "提示框去重沒看縮排", file = "CLIENT", from = 'local key = line:gsub("^<INDENT:%d+> ", "")', to = "local key = line" },
         { name = "家族漏同網格的背包", file = "SHARED", from = '"Bag_ToolBag", "Bag_DuffelBagTINT" }', to = '"Bag_ToolBag" }' },
+        { name = "書包沒給床捲", file = "SHARED", from = '{ name = "School", base = "BedrollBottom",', to = '{ name = "School",' },
+        { name = "書包床捲名稱錯", file = "SHARED", from = '{ name = "School", base = "BedrollBottom",', to = '{ name = "School", base = "BedrollBottomBig",' },
+        { name = "漏一款書包", file = "SHARED", from = '"Bag_Schoolbag_Patches", "Bag_Schoolbag_Travel" }', to = '"Bag_Schoolbag_Patches" }' },
+        { name = "行李袋沒加 AttachmentReplacement", file = "SHARED", from = '{ name = "Duffel", replacement = "Bag",', to = '{ name = "Duffel",' },
+        { name = "AttachmentReplacement 沒 DoParam", file = "SHARED", from = 'if f.replacement then s:DoParam("AttachmentReplacement = " .. f.replacement) end', to = "" },
+        { name = "AttachmentReplacement 名稱錯", file = "SHARED", from = '{ name = "Duffel", replacement = "Bag",', to = '{ name = "Duffel", replacement = "Bags",' },
         { name = "掛得上也改提示", file = "CLIENT", from = "local tip = opt and opt.notAvailable and opt.toolTip", to = "local tip = opt and opt.toolTip" },
         { name = "自身校正沒套位移", file = "CLIENT", from = "local off = { fix[5] or 0, fix[6] or 0, fix[7] or 0 }", to = "local off = { 0, 0, 0 }" },
         { name = "自身校正加到每種擺法", file = "CLIENT", from = "if pose == fix[1] then upsert", to = "if true then upsert" },
