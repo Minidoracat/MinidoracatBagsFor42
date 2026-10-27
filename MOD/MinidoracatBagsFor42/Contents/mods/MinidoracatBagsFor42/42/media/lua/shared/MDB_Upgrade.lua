@@ -3,7 +3,7 @@
 MDB = MDB or {}
 
 -- 有強化版的背包＝升級配方清單裡的全部背包（使用者 2026-10-26 第二批決定）。強化版自重 0.1、不減速、側背包改穿第二個側背包位置。
--- scripts/gen_reinforced.py 讀下面兩張表產生物品腳本、外觀、16 語名稱與配方清單。
+-- scripts/gen_reinforced.py 讀 MDB.REINFORCED_SOURCES 與 scripts/theme_shapes.json，產生物品腳本、外觀、16 語名稱與配方清單，並寫入 MDB.THEME_SOURCES。
 -- 本 MOD 的背包一款一件 MinidoracatBags.<物品名>_Reinforced，欄位照來源；要加款式只加這張表再跑產生器。
 -- 來源的 ClothingItemExtra（換穿法）目標也要在表裡，強化版才能互換。
 MDB.REINFORCED_SOURCES = {
@@ -19,7 +19,8 @@ MDB.REINFORCED_SOURCES = {
 
 -- 原版 80 種依穿戴網格併成 22 種形狀，每種做 S.T.A.R.S.（Navy）與保護傘（Olive）兩件
 -- MinidoracatBags.<代表款>_<主題>_Reinforced（使用者 2026-10-27）。shape＝代表款去掉 Base.；themes[i]＝第 i－1 個
--- textureChoice（玩家那個包的顏色）升級後的主題，沒有 textureChoices 的只有一個。
+-- textureChoice（玩家那個包的顏色）升級後的主題，沒有 textureChoices 的只有一個；pair＝原版換穿法（ClothingItemExtra）的另一面
+-- （前後兩面顏色清單相同，產生器核對），換穿過前後的腰包還原時用。
 -- BEGIN gen_reinforced.py：由 scripts/theme_shapes.json 產生（--check 比對），不要手改
 MDB.THEME_SOURCES = {
     ["Base.Bag_ALICE_BeltSus"] = { shape = "Bag_ALICE_BeltSus", themes = { "Olive", "Olive" } },
@@ -48,12 +49,12 @@ MDB.THEME_SOURCES = {
     ["Base.Bag_CrudeTarpBag"] = { shape = "Bag_CrudeLeatherBag", themes = { "Olive" } },
     ["Base.Bag_DuffelBag"] = { shape = "Bag_DuffelBag", themes = { "Navy", "Olive", "Navy", "Navy", "Navy", "Navy", "Navy" } },
     ["Base.Bag_DuffelBagTINT"] = { shape = "Bag_DuffelBag", themes = { "Navy" } },
-    ["Base.Bag_FannyPackBack"] = { shape = "Bag_FannyPackBack", themes = { "Navy", "Navy", "Navy" } },
-    ["Base.Bag_FannyPackBack_Hide"] = { shape = "Bag_FannyPackBack", themes = { "Olive" } },
-    ["Base.Bag_FannyPackBack_Tarp"] = { shape = "Bag_FannyPackBack", themes = { "Olive" } },
-    ["Base.Bag_FannyPackFront"] = { shape = "Bag_FannyPackFront", themes = { "Navy", "Navy", "Navy" } },
-    ["Base.Bag_FannyPackFront_Hide"] = { shape = "Bag_FannyPackFront", themes = { "Olive" } },
-    ["Base.Bag_FannyPackFront_Tarp"] = { shape = "Bag_FannyPackFront", themes = { "Olive" } },
+    ["Base.Bag_FannyPackBack"] = { shape = "Bag_FannyPackBack", themes = { "Navy", "Navy", "Navy" }, pair = "Base.Bag_FannyPackFront" },
+    ["Base.Bag_FannyPackBack_Hide"] = { shape = "Bag_FannyPackBack", themes = { "Olive" }, pair = "Base.Bag_FannyPackFront_Hide" },
+    ["Base.Bag_FannyPackBack_Tarp"] = { shape = "Bag_FannyPackBack", themes = { "Olive" }, pair = "Base.Bag_FannyPackFront_Tarp" },
+    ["Base.Bag_FannyPackFront"] = { shape = "Bag_FannyPackFront", themes = { "Navy", "Navy", "Navy" }, pair = "Base.Bag_FannyPackBack" },
+    ["Base.Bag_FannyPackFront_Hide"] = { shape = "Bag_FannyPackFront", themes = { "Olive" }, pair = "Base.Bag_FannyPackBack_Hide" },
+    ["Base.Bag_FannyPackFront_Tarp"] = { shape = "Bag_FannyPackFront", themes = { "Olive" }, pair = "Base.Bag_FannyPackBack_Tarp" },
     ["Base.Bag_FishingBasket"] = { shape = "Bag_FishingBasket", themes = { "Olive" } },
     ["Base.Bag_FoodCanned"] = { shape = "Bag_DuffelBag", themes = { "Navy" } },
     ["Base.Bag_FoodSnacks"] = { shape = "Bag_DuffelBag", themes = { "Navy" } },
@@ -205,8 +206,8 @@ function MDB.swapBag(old, newType, tier, character)
         copyClothingItem(old, new)
         local md = new:getModData()
         md.MDB_cap, md.MDB_wr, md.MDB_fluid = cap, wr, fluid
-        -- 換回記下的原款（MDB.toReinforced 記的）：顏色也換回去。主題強化版只有一張貼圖，搬過來的 textureChoice 一畫就被
-        -- 重設成 -1、染色變白（ItemVisual.java:153-166、:185-196），不能靠 copyClothingItem 帶回來
+        -- 換回記下的原款（MDB.toReinforced 記的）：顏色也換回去。主題強化版只有一張貼圖、不能隨機染色，搬過來的 textureChoice
+        -- 一畫就被改成 0、染色變白（ItemVisual.java:153-166、:185-196），不能靠 copyClothingItem 帶回來
         local v = newType == md.MDB_origin and new:getVisual()
         if v then
             v:setTextureChoice(md.MDB_originTex or -1)
@@ -220,9 +221,13 @@ function MDB.swapBag(old, newType, tier, character)
             new:setName(new:getScriptItem():getDisplayName())
         end
         MDB.applyTier(new, tier)
-        -- copyClothingItem 搬液體時新背包還是腳本容量，多的被截掉（FluidContainer.java:179-194、:929-932）；容量設好後再搬一次
+        -- copyClothingItem 搬液體時新背包還是腳本容量，多的被截掉（FluidContainer.java:179-194、:929-932）；容量設好後再搬一次。
+        -- 照公式裝不下時（主題水袋從組內最高的 3 升起算，還原成 2 升的一般水袋；或沙盒調低後換型），容量留在換型前的值，水不倒掉
         local ofc = old:getFluidContainer()
-        if ofc and nfc then nfc:copyFluidsFrom(ofc) end
+        if ofc and nfc then
+            if ofc:getAmount() > nfc:getCapacity() then nfc:setCapacity(ofc:getCapacity()) end
+            nfc:copyFluidsFrom(ofc)
+        end
     end)
     swapping = false
     if not ok then error(err) end
@@ -266,7 +271,7 @@ function MDB.toReinforced(bag, sourceType, tier, character)
 end
 
 -- 還原（強化版→原版）與 0.1.0 升過級的原版背包改成強化版：只換型，階級照舊。
--- 主題強化版還原成記下的原款；沒有紀錄（或記的不是這個形狀）就是代表款
+-- 主題強化版還原成記下的原款；換穿過前後的腰包是原款在這一面的版本（pair）；沒有紀錄或形狀對不上就是代表款
 function MDB.onSwapKeepTier(data, character)
     local bag = MDB.keepBag(data)
     if not bag then return end
@@ -276,9 +281,12 @@ function MDB.onSwapKeepTier(data, character)
         MDB.toReinforced(bag, ft, tierOf(bag), character)
         return
     end
-    local t, origin = MDB.THEMED[ft], bag:getModData().MDB_origin
-    local s = origin and MDB.THEME_SOURCES[origin]
-    if t and s and s.shape == t.shape then back = origin end
+    local t, md = MDB.THEMED[ft], bag:getModData()
+    local s = md.MDB_origin and MDB.THEME_SOURCES[md.MDB_origin]
+    if t and s and s.shape ~= t.shape and s.pair and MDB.THEME_SOURCES[s.pair].shape == t.shape then
+        md.MDB_origin, s = s.pair, MDB.THEME_SOURCES[s.pair]   -- swapBag 看到 newType 是記下的原款才換回顏色
+    end
+    if t and s and s.shape == t.shape then back = md.MDB_origin end
     MDB.swapBag(bag, back, tierOf(bag), character)
 end
 

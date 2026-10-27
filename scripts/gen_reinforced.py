@@ -15,7 +15,8 @@
     手持模型改用自己的 ClothingItem MDB_<代表款>_<主題>_Reinforced_RHand／_LHand。
   - ClothingItem XML 照代表款，貼圖換成清單檔那一張（textureChoices 只留一個），手持的也是。
   - 名稱＝主題詞照本 MOD 7 款的寫法與語序（THEME_WORDS）＋代表款的原版名稱＋強化標記。
-  - MDB_Upgrade.lua 的 MDB.THEME_SOURCES（BEGIN／END 之間）照清單檔的 theme_by_source 產生：升級時照包的顏色選主題。
+  - MDB_Upgrade.lua 的 MDB.THEME_SOURCES（BEGIN／END 之間）照清單檔的 theme_by_source 產生：升級時照包的顏色選主題；
+    原版換穿法的另一面記成 pair，換穿過前後的腰包還原時用。
 - 本 MOD 的 18 件：來源表是 MDB_Upgrade.lua 的 MDB.REINFORCED_SOURCES，一款一件 MinidoracatBags.<名稱>_Reinforced，
   欄位照來源（圖示、地面模型、手持模型、放入限制都照抄）。
 兩種都改這些：
@@ -495,9 +496,22 @@ def build(mirror_path):
         sys.exit(f"MDB_Recipes.txt 升級配方背包行應有 3 條，找到 {n}")
     out[RECIPES] = text
 
-    # Lua 的主題來源表
+    # Lua 的主題來源表；pair＝原版換穿法（ClothingItemExtra）的另一面：換穿過前後的腰包還原成原款在那一面的版本，
+    # 記下的顏色照用，所以兩面的顏色清單要相同
+    def textures(src):
+        return texture_choices(source_xml(src, top_fields(blocks[src])["ClothingItem"])[1])
+    pair = {}
+    for src in by_source:
+        x = top_fields(blocks[src]).get("ClothingItemExtra")
+        if not x:
+            continue
+        p = x if "." in x else f"Base.{x}"
+        if ";" in x or p not in by_source or shape_of[p] == shape_of[src] or textures(p) != textures(src):
+            sys.exit(f"{src}: ClothingItemExtra {x} 要剛好一個、是另一種形狀的成員、顏色清單相同，還原才換得回原款")
+        pair[src] = p
     lua = read(UPGRADE_LUA)
-    rows = "".join(f'    ["{src}"] = {{ shape = "{shape_of[src]}", themes = {{ {", ".join(chr(34) + t + chr(34) for t in by_source[src])} }} }},\n'
+    rows = "".join(f'    ["{src}"] = {{ shape = "{shape_of[src]}", themes = {{ {", ".join(chr(34) + t + chr(34) for t in by_source[src])} }}'
+                   + (f', pair = "{pair[src]}"' if src in pair else "") + " },\n"
                    for src in sorted(by_source))
     lua, n = re.subn(r"(" + re.escape(LUA_BEGIN) + r"[^\n]*\n)MDB\.THEME_SOURCES = \{\n.*?\}\n(" + re.escape(LUA_END) + ")",
                      lambda mm: mm.group(1) + "MDB.THEME_SOURCES = {\n" + rows + "}\n" + mm.group(2), lua, flags=re.S)

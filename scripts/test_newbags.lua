@@ -300,8 +300,8 @@ local function newContainer()
 end
 local CONTAINER = newContainer()
 local PLAYER = { getInventory = function() return CONTAINER end }
--- ItemVisual：textureChoice 與染色。single＝ClothingItem 只有一張貼圖、不能隨機染色（主題強化版）：一畫就把 textureChoice
--- 重設成 -1、染色變白（ItemVisual.java:153-166、:185-196），這裡讀的時候就照那樣回，還原時只能靠 modData 的紀錄
+-- ItemVisual：textureChoice 與染色。single＝ClothingItem 只有一張貼圖、不能隨機染色（主題強化版）：一畫就把超出範圍的
+-- textureChoice 改成 0（只能選那一張）、染色變白（ItemVisual.java:153-166、:185-196）。這裡讀的時候就照畫過的回，還原時只能靠 modData 的紀錄
 local function newTint(r, g, b)
     local t = { r = r, g = g, b = b }
     function t:getRedFloat() return self.r end
@@ -316,7 +316,7 @@ ImmutableColor = { decode = function(s)   -- ImmutableColor.java:102-119：低 8
 end }
 local function newVisual(single)
     local v = { choice = -1, tint = WHITE, single = single }
-    function v:getTextureChoice() return self.single and -1 or self.choice end
+    function v:getTextureChoice() return self.single and 0 or self.choice end
     function v:setTextureChoice(c) self.choice = c end
     function v:getTint() return self.single and WHITE or self.tint end
     function v:setTint(t) self.tint = t end
@@ -1259,6 +1259,22 @@ local function suite()
     okSwap, new = swapped(old, "Base.Bag_HydrationBackpack")
     check("restore: tier-3 water bag keeps 5.0 L capacity and all 5.0 L of water",
         okSwap and new.md.MDB_tier == 3 and near(new.fc.capacity, 5.0) and near(new.fc.amount, 5.0))
+    -- 一般水袋（2 升）的主題款從組內最高的 3 升起算：第 1 階 3.667 升裝滿再還原，照原款公式只有 3 升。
+    -- 換型不倒水，容量留在換型前的值；空的照原款自己的值
+    old = stocked("Base.Bag_HydrationBackpack", nil, 2.0)
+    MDB.onUpgrade(keepData(old), PLAYER)
+    old = CONTAINER.items[1]
+    old.fc.amount = old.fc.capacity
+    MDB.onSwapKeepTier(keepData(old), PLAYER)
+    okSwap, new = swapped(old, "Base.Bag_HydrationBackpack")
+    check("restore: full tier-1 water bag (3.667 L) -> plain water bag (formula 3.0 L) keeps 3.667 L capacity and all the water",
+        okSwap and new.md.MDB_tier == 1 and near(new.fc.capacity, 3.667) and near(new.fc.amount, 3.667) and new.md.MDB_fluid == 2.0)
+    old = stocked("Base.Bag_HydrationBackpack")
+    MDB.onUpgrade(keepData(old), PLAYER)
+    MDB.onSwapKeepTier(keepData(CONTAINER.items[1]), PLAYER)
+    new = CONTAINER.items[1]
+    check("restore: empty tier-1 water bag -> plain water bag at its own formula 3.0 L",
+        new.fullType == "Base.Bag_HydrationBackpack" and new.md.MDB_tier == 1 and near(new.fc.capacity, 3.0))
 
     -- 每個原版來源的每種顏色：升級換成那個顏色的主題款，記下原款與顏色；還原換回原款、同一個顏色、階級照舊
     local colorUpOk, colorBackOk = true, true
@@ -1361,6 +1377,24 @@ local function suite()
         hide.fullType == "MinidoracatBags.Bag_FannyPackFront_Olive_Reinforced" and hideBack
         and hideBack.fullType == "MinidoracatBags.Bag_FannyPackBack_Olive_Reinforced" and hideBack.md.MDB_tier == 2
         and hideBack.cap == 33 and hideBack.wr == 95)
+    -- 換穿過前後再還原：記的是升級時那一面的原款，還原成它在這一面的版本（原版換穿法的另一面），顏色照記下的
+    CONTAINER.items = {}
+    CONTAINER:AddItem(hideBack)
+    MDB.onSwapKeepTier(keepData(hideBack), PLAYER)
+    new = CONTAINER.items[1]
+    check("hide fanny pack upgraded on the front, swapped to the back, restored -> hide fanny pack (back), tier 2",
+        new.fullType == "Base.Bag_FannyPackBack_Hide" and new.md.MDB_tier == 2 and new.md.MDB_origin == "Base.Bag_FannyPackBack_Hide")
+    old = stocked("Base.Bag_FannyPackFront")
+    old.visual.choice = 2
+    MDB.onUpgrade(keepData(old), PLAYER)
+    local frontUp = CONTAINER.items[1]
+    local backUp = ISClothingExtraAction:createItemNew(frontUp, instanceItem("MinidoracatBags.Bag_FannyPackBack_Navy_Reinforced"))
+    CONTAINER.items = {}
+    CONTAINER:AddItem(backUp)
+    MDB.onSwapKeepTier(keepData(backUp), PLAYER)
+    new = CONTAINER.items[1]
+    check("fanny pack in its 3rd color upgraded, swapped front -> back, restored -> vanilla back fanny pack in the 3rd color",
+        new.fullType == "Base.Bag_FannyPackBack" and new.visual:getTextureChoice() == 2 and new.md.MDB_tier == 1)
     -- 改過名的腰包換穿再升級（E2EWear H5）：換穿要帶著改名旗標與不帶前綴的名字，升級才會沿用
     old = stocked("Base.Bag_FannyPackFront")   -- 改名 My Bag、第 0 階（沒有 MDB_tier）
     function old:getName() return "Bloody, " .. self.name end
@@ -1761,7 +1795,7 @@ if arg and arg[1] == "--mutants" then
         { name = "換型最後不送", file = "UPG", from = "        sendReplaceItemInContainer(cont, old, new)\n", to = "" },
         { name = "單機不換動作佇列", file = "UPG", from = "        replaceItemInContainer(cont, old, new)", to = "" },
         { name = "舊背包沒移除", file = "UPG", from = "    cont:Remove(old)", to = "" },
-        { name = "液體沒在容量設好後重搬", file = "UPG", from = "if ofc and nfc then nfc:copyFluidsFrom(ofc) end", to = "" },
+        { name = "液體沒在容量設好後重搬", file = "UPG", from = "            nfc:copyFluidsFrom(ofc)\n", to = "" },
         { name = "出錯沒復原旗標", file = "UPG", from = "    swapping = false\n    if not ok", to = "    if not ok" },
         { name = "新背包沒先放進容器", file = "UPG", from = "    cont:AddItem(new)\n", to = "" },
         { name = "換穿沒搬改名旗標", file = "UPG", from = "        newItem:setCustomName(true)\n", to = "" },
@@ -1816,13 +1850,16 @@ if arg and arg[1] == "--mutants" then
         { name = "主題表顏色錯", file = "UPG", from = '["Base.Bag_DuffelBag"] = { shape = "Bag_DuffelBag", themes = { "Navy", "Olive"', to = '["Base.Bag_DuffelBag"] = { shape = "Bag_DuffelBag", themes = { "Navy", "Navy"' },
         { name = "主題表形狀錯", file = "UPG", from = '["Base.Bag_HideSatchel"] = { shape = "Bag_ClothSatchel_Cotton"', to = '["Base.Bag_HideSatchel"] = { shape = "Bag_Satchel_Leather"' },
         { name = "升級沒記原款", file = "UPG", from = "md.MDB_origin, md.MDB_originTex = sourceType, choice", to = "md.MDB_originTex = choice" },
-        { name = "還原不看紀錄", file = "UPG", from = "    if t and s and s.shape == t.shape then back = origin end\n", to = "" },
+        { name = "還原不看紀錄", file = "UPG", from = "    if t and s and s.shape == t.shape then back = md.MDB_origin end\n", to = "" },
         { name = "還原沒核對形狀", file = "UPG", from = "if t and s and s.shape == t.shape then", to = "if t and s then" },
         { name = "還原沒換回顏色", file = "UPG", from = "            v:setTextureChoice(md.MDB_originTex or -1)\n", to = "" },
         { name = "還原沒換回染色", file = "UPG", from = "            if md.MDB_originTint then v:setTint(ImmutableColor.decode(md.MDB_originTint)) end\n", to = "" },
         { name = "換型沿用舊基準", file = "UPG", from = "        md.MDB_cap, md.MDB_wr, md.MDB_fluid = cap, wr, fluid\n", to = "" },
         { name = "換主題沒換", file = "UPG", from = 't.theme == "Navy" and "Olive" or "Navy"', to = "t.theme" },
         { name = "換主題掉級", file = "UPG", from = '"Olive" or "Navy"), tierOf(bag), character)', to = '"Olive" or "Navy"), 0, character)' },
+        { name = "換型截掉液體", file = "UPG", from = "            if ofc:getAmount() > nfc:getCapacity() then nfc:setCapacity(ofc:getCapacity()) end\n", to = "" },
+        { name = "還原沒走換穿對應", file = "UPG", from = "s.shape ~= t.shape and s.pair and", to = "false and" },
+        { name = "主題表少換穿對應", file = "UPG", from = ', pair = "Base.Bag_FannyPackBack_Hide" },', to = " }," },
         { name = "換主題配方漏一款", file = "REIN", from = "inputs\n        {\n            item 1 [MinidoracatBags.Bag_DuffelBag_Navy_Reinforced;MinidoracatBags.Bag_DuffelBag_Olive_Reinforced;MinidoracatBags.Bag_ClothSatchel_Cotton_Navy_Reinforced;", to = "inputs\n        {\n            item 1 [MinidoracatBags.Bag_DuffelBag_Navy_Reinforced;MinidoracatBags.Bag_ClothSatchel_Cotton_Navy_Reinforced;" },
         { name = "換主題配方消耗針", file = "REIN", from = "            item 1 tags[base:sewingneedle] mode:keep,\n            item 1 tags[base:thread],", to = "            item 1 tags[base:sewingneedle],\n            item 1 tags[base:thread]," },
         { name = "換主題配方要技能", file = "REIN", from = "OnCreate = MDB.onSwapTheme,", to = "OnCreate = MDB.onSwapTheme,\n        SkillRequired = Tailoring:1," },

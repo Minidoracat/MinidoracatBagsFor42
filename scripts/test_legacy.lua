@@ -204,6 +204,7 @@ local PLAYER = { getInventory = function() return INV end }
 local function newFluid(capacity, amount)
     local fc = { capacity = capacity, amount = amount or 0 }
     function fc:getCapacity() return self.capacity end
+    function fc:getAmount() return self.amount end
     function fc:setCapacity(c)
         local old = self.capacity
         self.capacity = math.max(c, 0.05)
@@ -490,8 +491,9 @@ local function suite()
         and #env.sent == 1 and env.sent[1][1] == INV and env.sent[1][2] == shell and env.sent[1][3] == new)
     env.server = false
     new = convertWater(0)
-    check("改裝（MaxTier 0）：強化版第 0 階＝水袋組的起始值 12／85、液體 3.0 升", new.md.MDB_tier == 0 and new.cap == 12 and new.wr == 85
-        and math.abs(new.fc.capacity - 3.0) < 1e-6 and #env.replaced == 1)
+    check("改裝（MaxTier 0）：強化版第 0 階＝水袋組的起始值 12／85；照公式 3.0 升裝不下舊水袋的 5 升，容量留 5 升、水不少",
+        new.md.MDB_tier == 0 and new.cap == 12 and new.wr == 85
+        and math.abs(new.fc.capacity - 5.0) < 1e-6 and math.abs(new.fc.amount - 5.0) < 1e-6 and #env.replaced == 1)
     -- 改裝後還原：換回對應的原版（不是代表款以外的別款、也不是外殼）
     MDB.onSwapKeepTier(keepData(new), PLAYER)
     check("改裝後還原：換回對應的原版水袋、階級照舊", INV.items[1].fullType == "Base.Bag_HydrationBackpack" and INV.items[1].md.MDB_tier == 0)
@@ -621,7 +623,7 @@ if arg and arg[1] == "--mutants" then
             from = '    MDB.applyTier(bag, MDB.opt("MaxTier"))\n    local inv = character:getInventory()\n    inv:AddItem(bag)\n',
             to = '    local inv = character:getInventory()\n    inv:AddItem(bag)\n    MDB.applyTier(bag, MDB.opt("MaxTier"))\n' },
         { name = "直接製作產出別款", file = "MDB_Legacy.lua", from = 'instanceItem(MDB.reinforcedOf("Base.Bag_SheetSlingBag"))', to = 'instanceItem(MDB.reinforcedOf("Base.Bag_ALICEpack"))' },
-        { name = "換型液體沒重搬", file = "MDB_Upgrade.lua", from = "if ofc and nfc then nfc:copyFluidsFrom(ofc) end", to = "" },
+        { name = "換型液體沒重搬", file = "MDB_Upgrade.lua", from = "            nfc:copyFluidsFrom(ofc)\n", to = "" },
         { name = "換型不搬內容物", file = "MDB_Upgrade.lua", from = "        copyClothingItem(old, new)\n", to = "" },
         { name = "guard 不比 modID", file = "MDB_Guard.lua", from = "s:getModID() ~= MOD_ID", to = "false" },
         { name = "guard 不看合併欄位", file = "MDB_Guard.lua", from = "s:getBodyLocation() ~= nil or ", to = "" },
