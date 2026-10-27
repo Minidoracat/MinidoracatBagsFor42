@@ -78,7 +78,7 @@ SHAPES = [
          badge=dict(seed=(0.47, 0.33), h=0.045),
          members=["Base.Bag_ALICEpack", "Base.Bag_ALICEpack_Army", "Base.Bag_ALICEpack_DesertCamo", "Base.Bag_SurvivorBag"]),
     dict(mesh="m_alice_beltsus", icon_dir=FRONT, rep="Base.Bag_ALICE_BeltSus", base="clothes\\bag\\alice_beltsus_green", seeds=[(0.5, 0.5)],
-         badge=dict(out=(0, 0, -1), hf=0.15, h=0.022),
+         badge=dict(seed=(0.47, 0.825), h=0.038),   # 正面彈藥袋（原本貼在它的下角）袋面正中；使用者 2026-10-27：實機 25% 縮放下原本只有約 5 px
          members=["Base.Bag_ALICE_BeltSus", "Base.Bag_ALICE_BeltSus_Camo", "Base.Bag_ALICE_BeltSus_Green"]),
     dict(mesh="m_fannypactback", rep="Base.Bag_FannyPackBack", base="clothes\\bag\\fannypack", seeds=[(0.3, 0.3)],
          badge=dict(out=(0, 0, 1), hf=0.5, h=0.025),
