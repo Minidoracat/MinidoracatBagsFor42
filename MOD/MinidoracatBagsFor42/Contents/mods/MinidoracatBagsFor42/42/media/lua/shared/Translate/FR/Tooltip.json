@@ -2,5 +2,5 @@
     "Tooltip_MDB_UpgradeBagTier1": "Le sac doit être au niveau 0 et ne pas être porté. Les objets à l'intérieur peuvent y rester. Le serveur fixe le niveau maximal.",
     "Tooltip_MDB_UpgradeBagTier2": "Le sac doit être au niveau 1 et ne pas être porté. Les objets à l'intérieur peuvent y rester. Le serveur fixe le niveau maximal.",
     "Tooltip_MDB_UpgradeBagTier3": "Le sac doit être au niveau 2 et ne pas être porté. Les objets à l'intérieur peuvent y rester. Le serveur fixe le niveau maximal.",
-    "Tooltip_MDB_LegacyBag": "Ancien sac Plus : vous pouvez retirer des objets, mais pas en ajouter. Avec une aiguille et du fil, convertissez-le en version renforcée du même sac, au niveau maximal ; les objets à l'intérieur peuvent y rester."
+    "Tooltip_MDB_LegacyBag": "Ancien sac Plus : convertissez-le en version renforcée pour continuer à l'utiliser.\nD'ici là, vous pouvez retirer des objets, mais pas en ajouter.\nConversion : enlevez le sac, puis, près d'une table avec aiguille et fil, faites un clic droit sur le sac :\n« Convertir un ancien sac Plus en version renforcée ».\nVous obtenez le même sac renforcé, au niveau maximal ; les objets à l'intérieur peuvent y rester."
 }

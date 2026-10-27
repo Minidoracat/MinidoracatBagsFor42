@@ -2,5 +2,5 @@
     "Tooltip_MDB_UpgradeBagTier1": "La bolsa debe estar en el nivel 0 y no llevarse puesta. Los objetos de dentro pueden quedarse. El servidor fija el nivel máximo.",
     "Tooltip_MDB_UpgradeBagTier2": "La bolsa debe estar en el nivel 1 y no llevarse puesta. Los objetos de dentro pueden quedarse. El servidor fija el nivel máximo.",
     "Tooltip_MDB_UpgradeBagTier3": "La bolsa debe estar en el nivel 2 y no llevarse puesta. Los objetos de dentro pueden quedarse. El servidor fija el nivel máximo.",
-    "Tooltip_MDB_LegacyBag": "Bolsa Plus antigua: puedes sacar objetos, pero no meterlos. Con aguja e hilo puedes convertirla en la versión reforzada de la misma bolsa, al nivel máximo; los objetos de dentro pueden quedarse."
+    "Tooltip_MDB_LegacyBag": "Bolsa Plus antigua: conviértela en la versión reforzada para seguir usándola.\nMientras tanto, puedes sacar objetos, pero no meterlos.\nPara convertirla: quítatela, lleva aguja e hilo junto a una mesa y haz clic derecho en la bolsa:\n“Convertir bolsa Plus antigua en versión reforzada”.\nSerá la misma bolsa reforzada, al nivel máximo; los objetos de dentro pueden quedarse."
 }
