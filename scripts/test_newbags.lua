@@ -1492,6 +1492,14 @@ local function suite()
             function wi:isIgnoreRemoveSandbox() return self.ignore == true end
             function wi:setExtendedPlacement(v) self.ext = v end
             function wi:isExtendedPlacement() return self.ext == true end
+            function wi:hasComponent(t) return t == ComponentType.FluidContainer and self.fc ~= nil end
+            -- SWAP_ITEM 送的是物品自己的存檔（IsoWorldInventoryObject.java:158-166）：記下送出當下物品身上的數值與液體元件
+            function wi:sendObjectChange(change)
+                local it = self.item
+                self.changes = self.changes or {}
+                self.changes[#self.changes + 1] = { change = change, cap = it.cap, wr = it.wr, fc = it.fc,
+                    fcap = it.fc and it.fc.capacity, famount = it.fc and it.fc.amount }
+            end
             self.objs[#self.objs + 1] = wi
             item.worldItem = wi
             return item
@@ -1511,6 +1519,12 @@ local function suite()
         return b, sq, b.worldItem
     end
     DesignationZoneAnimal = { removeItemFromGround = function(wi) env.groundRemoved = wi end }
+    ComponentType = { FluidContainer = "FluidContainer" }
+    IsoObjectChange = { SWAP_ITEM = "SWAP_ITEM" }
+    GameEntityFactory = { TransferComponent = function(src, dst, t)   -- GameEntityFactory.java:68-81
+        if t ~= ComponentType.FluidContainer then error("unexpected component " .. tostring(t)) end
+        dst.fc, src.fc = src.fc, nil
+    end }
     env.server, env.sent, env.replaced = true, {}, {}
     local oldWi, sq
     old, sq, oldWi = onFloor(A)
@@ -1522,7 +1536,8 @@ local function suite()
         and nwi.item.contents[1] == "nail" and #old.contents == 0 and nwi.item.md.custom == "kept"
         and nwi.item.md.MDB_tier == 1 and nwi.item.cap == 35 and nwi.item.wr == 90
         and sq.removed[1] == oldWi and env.groundRemoved == oldWi and old.worldItem == nil)
-    check("floor (MP server): new world item sent once, no container packets", nwi.sent == 1 and #env.sent == 0 and #env.replaced == 0)
+    check("floor (MP server): new world item sent once, no container packets, no SWAP_ITEM during the swap",
+        nwi.sent == 1 and nwi.changes == nil and #env.sent == 0 and #env.replaced == 0)
     check("floor (MP server): placed rotation and the keep-from-cleanup / extended-placement flags carried over",
         nwi.item.rotX == 10 and nwi.item.rotY == 20 and nwi.item.rotZ == 135 and nwi.ignore == true and nwi.ext == true)
     old, sq, oldWi = onFloor(RA)
@@ -1564,6 +1579,37 @@ local function suite()
     check("floor swap error after moving: contents back in the old bag, the unsent new one taken off the square",
         failed and #sq.objs == 1 and sq.objs[1] == oldWi and old.worldItem == oldWi and #sq.removed == 0
         and old.contents[1] == "nail" and old.contents[2] == "apple")
+    -- 已經是強化版的背包在地上原地升階（只 applyTier、不換型）：伺服器送世界物品的 SWAP_ITEM，客戶端換上收到的那份、ID 照舊
+    -- （IsoWorldInventoryObject.java:115-153、:175-180）；送的當下液體元件要在物品上，送完搬回世界物品
+    local function tierOnFloor(full, tier, water)
+        local s, b = floorSquare(), instanceItem(full)
+        MDB.applyTier(b, tier)   -- 還沒放上地面，不送
+        b.contents, b.md.custom = { "nail", "apple" }, "kept"
+        if water then b.fc.amount = water end
+        s:AddWorldInventoryItem(b, 0.3, 0.6, 0.1)
+        return b, s, b.worldItem
+    end
+    env.sent, env.replaced = {}, {}
+    old, sq, oldWi = tierOnFloor(RA, 1)
+    local cap1 = old.cap
+    MDB.onUpgrade(keepData(old), PLAYER)
+    local ch = oldWi.changes or {}
+    check("floor (MP server): reinforced bag upgraded in place -> tier 2, one SWAP_ITEM with the new values, nothing else sent or removed",
+        #sq.objs == 1 and sq.objs[1] == oldWi and oldWi.item == old and old.md.MDB_tier == 2 and old.cap > cap1
+        and #ch == 1 and ch[1].change == "SWAP_ITEM" and ch[1].cap == old.cap and ch[1].wr == old.wr
+        and oldWi.sent == 1 and #sq.removed == 0 and #env.sent == 0 and #env.replaced == 0 and old.contents[1] == "nail" and old.md.custom == "kept")
+    old, sq, oldWi = tierOnFloor(HN, 1, 2.0)
+    local wfc = oldWi.fc
+    MDB.onUpgrade(keepData(old), PLAYER)
+    ch = oldWi.changes or {}
+    check("floor (MP server): water bag upgraded in place -> the SWAP_ITEM carries the fluid (4.333 capacity, 2.0 L), then it is back on the world item",
+        #ch == 1 and ch[1].fc == wfc and near(ch[1].fcap, 3.0 + 4.0 / 3) and near(ch[1].famount, 2.0)
+        and oldWi.fc == wfc and old.fc == nil and old.md.MDB_tier == 2)
+    old, sq, oldWi = tierOnFloor(RA, 2)
+    old.container = CONTAINER   -- 兩樣都有時以地上為準
+    MDB.onUpgrade(keepData(old), PLAYER)
+    check("floor (MP server): a world item wins over a container: SWAP_ITEM only", #(oldWi.changes or {}) == 1 and #env.sent == 0)
+    old.container = nil
     env.server, env.sent, env.replaced = false, {}, {}
     local floorC = newContainer()
     old, sq, oldWi = onFloor(A, floorC)
@@ -1571,6 +1617,9 @@ local function suite()
     check("floor (SP, inventory-pane floor container): swapped on the ground, old one out of the floor container, nothing sent",
         #sq.objs == 1 and sq.objs[1].item.fullType == RA and sq.objs[1].sent == 0 and #floorC.items == 0 and old.worldItem == nil
         and #env.sent == 0 and #env.replaced == 0)
+    old, sq, oldWi = tierOnFloor(RA, 1)
+    MDB.onUpgrade(keepData(old), PLAYER)
+    check("floor (SP): in-place upgrade on the ground sends nothing", old.md.MDB_tier == 2 and oldWi.changes == nil and #env.sent == 0)
     old = instanceItem(A)
     old.contents = { "nail" }
     local okNowhere, errNowhere = pcall(MDB.swapBag, old, RA, 1, PLAYER)
@@ -1907,14 +1956,18 @@ if arg and arg[1] == "--mutants" then
         { name = "每次重讀 base", file = "UPG", from = "if md.MDB_cap == nil then", to = "if true then" },
         { name = "不記階級", file = "UPG", from = "md.MDB_tier = tier", to = "" },
         { name = "伺服器不重送", file = "UPG", from = "sendReplaceItemInContainer(container, bag, bag)", to = "" },
-        { name = "單機也重送", file = "UPG", from = "if isServer() and container and not swapping then", to = "if container and not swapping then" },
+        { name = "單機也重送", file = "UPG", from = "if isServer() and not swapping then", to = "if not swapping then" },
+        { name = "地上升階不重送", file = "UPG", from = "            wi:sendObjectChange(IsoObjectChange.SWAP_ITEM)\n", to = "" },
+        { name = "地上升階走容器重送", file = "UPG", from = "local wi, container = bag:getWorldItem(), bag:getContainer()", to = "local wi, container = nil, bag:getContainer()" },
+        { name = "地上升階送出時液體不在物品上", file = "UPG", from = "            if fluid then GameEntityFactory.TransferComponent(wi, bag, ComponentType.FluidContainer) end\n", to = "" },
+        { name = "地上升階送完液體沒搬回地上", file = "UPG", from = "            if fluid then GameEntityFactory.TransferComponent(bag, wi, ComponentType.FluidContainer) end\n", to = "" },
         { name = "非背包輸入被擋", file = "UPG", from = 'if not instanceof(item, "InventoryContainer") then return true end', to = 'if not instanceof(item, "InventoryContainer") then return false end' },
         { name = "OnTest 不看 MaxTier", file = "UPG", from = 'return tier <= MDB.opt("MaxTier") and', to = "return" },
         { name = "OnTest 階級差一", file = "UPG", from = "tierOf(item) == tier - 1", to = "tierOf(item) <= tier - 1" },
         { name = "onUpgrade 不看 MaxTier", file = "UPG", from = 'if tier > MDB.opt("MaxTier") then return end', to = "" },
         { name = "換穿法沒包裝", file = "UPG", from = "function ISClothingExtraAction:createItemNew(item, newItem)", to = "function MDB:unusedCreateItemNew(item, newItem)" },
         { name = "升級不換型", file = "UPG", from = "    if MDB.reinforcedOf(ft) then\n", to = "    if false then\n" },
-        { name = "換型途中照送", file = "UPG", from = "if isServer() and container and not swapping then", to = "if isServer() and container then" },
+        { name = "換型途中照送", file = "UPG", from = "if isServer() and not swapping then", to = "if isServer() then" },
         { name = "換型最後不送", file = "UPG", from = "        sendReplaceItemInContainer(cont, old, new)\n", to = "" },
         { name = "單機不換動作佇列", file = "UPG", from = "        replaceItemInContainer(cont, old, new)", to = "" },
         { name = "舊背包沒移除", file = "UPG", from = "    cont:Remove(old)", to = "" },

@@ -182,10 +182,20 @@ function MDB.applyTier(bag, tier)
         fc:setCapacity(base + (full - base) * t / m)
     end
     md.MDB_tier = tier
-    -- 客戶端的容量與負重減輕要整件重送才會更新；單機無作用（LuaManager.java:12404-12412、RecipeCodeOnCreate.java:892-894）
-    local container = bag:getContainer()
-    if isServer() and container and not swapping then
-        sendReplaceItemInContainer(container, bag, bag)
+    -- 客戶端的容量與負重減輕要整件重送才會更新；單機無作用（LuaManager.java:12404-12412、RecipeCodeOnCreate.java:892-894）。
+    -- 地上（含桌面）的背包在伺服器上沒有 container（ContainerID.java:392-396），改送世界物品的 SWAP_ITEM：客戶端用收到的那份
+    -- 換掉本地物品、ID 照舊（IsoWorldInventoryObject.java:115-153、:175-180）。送的是物品自己的存檔（:158-166），放在地上時
+    -- 液體元件在世界物品上（:103-105），先搬回物品再送、送完搬回去，液體容量與水量才帶得到（客戶端換上時再搬到世界物品，:139-141）
+    if isServer() and not swapping then
+        local wi, container = bag:getWorldItem(), bag:getContainer()
+        if wi then
+            local fluid = wi:hasComponent(ComponentType.FluidContainer)
+            if fluid then GameEntityFactory.TransferComponent(wi, bag, ComponentType.FluidContainer) end
+            wi:sendObjectChange(IsoObjectChange.SWAP_ITEM)
+            if fluid then GameEntityFactory.TransferComponent(bag, wi, ComponentType.FluidContainer) end
+        elseif container then
+            sendReplaceItemInContainer(container, bag, bag)
+        end
     end
 end
 
@@ -284,7 +294,7 @@ local function tierOf(bag)
 end
 
 -- 配方的 keep 輸入裡第一個背包。原版介面開工前把輸入搬進主物品欄（ISWidgetHandCraftControl.lua:342-351），Neat Crafting 不搬，
--- 所以也可能在地上：換型由 swapBag 處理；只升階的（onUpgrade 的 applyTier）在伺服器上不重送，見 applyTier
+-- 所以也可能在地上：換型由 swapBag 處理，只升階的由 applyTier 重送世界物品
 function MDB.keepBag(data)
     local items = data:getAllKeepInputItems()
     for i = 0, items:size() - 1 do
