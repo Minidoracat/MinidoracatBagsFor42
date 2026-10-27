@@ -382,9 +382,9 @@ end
 -- （ISClothingExtraAction.lua:66-112），換完回到腳本預設、MDB_tier 卻還在，就升不回來了。這裡依 MDB_tier 重算。
 -- 同一個函式也是 copyClothingItem（:62-64，InventoryItem.java:5029-5036）與背負噴霧器換物（ISEquipWeaponAction.lua:152）的路徑。
 -- MP 的 complete() 在伺服器跑（NetTimedAction.java:132-139；客戶端不跑，LuaTimedActionNew.java:164-170）。
--- 新物品這時還沒放進容器，applyTier 不重送；接著 sendAddItemToContainer 整件送出，負重減輕與容量都在裡面
+-- 新物品這時還沒放進容器也沒放上地面，applyTier 不重送；接著 sendAddItemToContainer 整件送出，負重減輕與容量都在裡面
 -- （AddInventoryItemToContainerPacket.java:54-58、InventoryContainer.java:57-58、ItemContainer.java:2439）。
--- MDB.swapBag 呼叫 copyClothingItem 時新背包已在容器裡，由 swapping 擋下這次重送。
+-- MDB.swapBag 呼叫 copyClothingItem 時新背包已在容器裡或地上，由 swapping 擋下這次重送。
 -- 原版只搬改過的名字（:76-79），沒搬改名旗標；swapBag 看旗標決定沿不沿用舊名，換穿過的改名腰包一升級就變回預設名。
 -- 原版拿 getName() 比對、寫入，染血、磨損前綴也會寫進名字（InventoryItem.java:2435-2480），改過名的這裡換回原始名稱。
 require "TimedActions/ISClothingExtraAction"

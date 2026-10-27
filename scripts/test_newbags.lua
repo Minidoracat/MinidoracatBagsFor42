@@ -1493,11 +1493,12 @@ local function suite()
             function wi:setExtendedPlacement(v) self.ext = v end
             function wi:isExtendedPlacement() return self.ext == true end
             function wi:hasComponent(t) return t == ComponentType.FluidContainer and self.fc ~= nil end
-            -- SWAP_ITEM 送的是物品自己的存檔（IsoWorldInventoryObject.java:158-166）：記下送出當下物品身上的數值與液體元件
+            -- SWAP_ITEM 送的是物品自己的存檔（IsoWorldInventoryObject.java:158-166）：記下送出當下物品身上的數值、階級與液體元件
+            -- （客戶端的 OnTest 用收到的 MDB_tier 判斷下一階）
             function wi:sendObjectChange(change)
                 local it = self.item
                 self.changes = self.changes or {}
-                self.changes[#self.changes + 1] = { change = change, cap = it.cap, wr = it.wr, fc = it.fc,
+                self.changes[#self.changes + 1] = { change = change, cap = it.cap, wr = it.wr, tier = it.md.MDB_tier, fc = it.fc,
                     fcap = it.fc and it.fc.capacity, famount = it.fc and it.fc.amount }
             end
             self.objs[#self.objs + 1] = wi
@@ -1596,7 +1597,7 @@ local function suite()
     local ch = oldWi.changes or {}
     check("floor (MP server): reinforced bag upgraded in place -> tier 2, one SWAP_ITEM with the new values, nothing else sent or removed",
         #sq.objs == 1 and sq.objs[1] == oldWi and oldWi.item == old and old.md.MDB_tier == 2 and old.cap > cap1
-        and #ch == 1 and ch[1].change == "SWAP_ITEM" and ch[1].cap == old.cap and ch[1].wr == old.wr
+        and #ch == 1 and ch[1].change == "SWAP_ITEM" and ch[1].cap == old.cap and ch[1].wr == old.wr and ch[1].tier == 2
         and oldWi.sent == 1 and #sq.removed == 0 and #env.sent == 0 and #env.replaced == 0 and old.contents[1] == "nail" and old.md.custom == "kept")
     old, sq, oldWi = tierOnFloor(HN, 1, 2.0)
     local wfc = oldWi.fc
@@ -1958,6 +1959,8 @@ if arg and arg[1] == "--mutants" then
         { name = "伺服器不重送", file = "UPG", from = "sendReplaceItemInContainer(container, bag, bag)", to = "" },
         { name = "單機也重送", file = "UPG", from = "if isServer() and not swapping then", to = "if not swapping then" },
         { name = "地上升階不重送", file = "UPG", from = "            wi:sendObjectChange(IsoObjectChange.SWAP_ITEM)\n", to = "" },
+        { name = "地上升階送出時階級還沒更新", file = "UPG", from = "            wi:sendObjectChange(IsoObjectChange.SWAP_ITEM)\n",
+            to = "            md.MDB_tier = tier - 1\n            wi:sendObjectChange(IsoObjectChange.SWAP_ITEM)\n            md.MDB_tier = tier\n" },
         { name = "地上升階走容器重送", file = "UPG", from = "local wi, container = bag:getWorldItem(), bag:getContainer()", to = "local wi, container = nil, bag:getContainer()" },
         { name = "地上升階送出時液體不在物品上", file = "UPG", from = "            if fluid then GameEntityFactory.TransferComponent(wi, bag, ComponentType.FluidContainer) end\n", to = "" },
         { name = "地上升階送完液體沒搬回地上", file = "UPG", from = "            if fluid then GameEntityFactory.TransferComponent(bag, wi, ComponentType.FluidContainer) end\n", to = "" },
