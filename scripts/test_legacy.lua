@@ -93,6 +93,13 @@ local vanillaItems = {}
 for _, f in ipairs(listDir(PZ .. "scripts/generated/items")) do
     if f:match("%.txt$") then parseScript(source(PZ .. "scripts/generated/items/" .. f), vanillaItems, {}) end
 end
+-- 原版掉落表（ItemPicker 的容器表與車輛表）：清單只列一次，內容每輪照 source() 讀，突變才打得到
+local LOOT_FILES = {}
+for _, dir in ipairs({ "lua/server/Items/", "lua/server/Vehicles/" }) do
+    for _, f in ipairs(listDir(PZ .. dir)) do
+        if f:match("%.lua$") then LOOT_FILES[#LOOT_FILES + 1] = PZ .. dir .. f end
+    end
+end
 local vanillaGuids = {}
 for g in source(PZ .. "fileGuidTable.xml"):gmatch("<guid>%s*([%w%-]+)%s*</guid>") do vanillaGuids[g:lower()] = true end
 
@@ -292,6 +299,23 @@ local function suite()
         if name ~= "Base" and body:match("^{%s*imports%s*{") then importing[#importing + 1] = name end
     end
     check("舊模組不寫 imports（有：" .. table.concat(importing, ",") .. "）", #importing == 0)
+
+    -- 2c. 外殼名稱不在原版掉落表：掉落表照名稱找物品，找得到就生成（ItemPickerJava.java:400-402），外殼會變成戰利品。
+    --     原版還寫著 B41 的 "PopBottleEmpty"，找不到時回退成倒空的原版汽水瓶（同檔 1026-1035、1129-1131），
+    --     所以舊分支（3403697073、3640342538）的空汽水瓶 Base.PopBottleEmpty 不給外殼，換裝後照指南寫的消失
+    local lootNames = {}
+    for _, path in ipairs(LOOT_FILES) do
+        for s in (source(path) or ""):gmatch('"([%w_%.]+)"') do lootNames[s] = true end
+    end
+    check("讀到原版掉落表，裡面仍有 B41 的 PopBottleEmpty（" .. #LOOT_FILES .. " 個檔）", lootNames.PopBottleEmpty == true)
+    local inLoot = {}
+    for ft in pairs(items) do
+        -- 「<名稱>Empty」找不到時也回退成同名的液體容器（同上 1026-1035），水瓶與水袋外殼都有液體容器
+        local short = ft:match("[^.]+$")
+        if lootNames[ft] or lootNames[short] or lootNames[short .. "Empty"] then inLoot[#inLoot + 1] = ft end
+    end
+    table.sort(inLoot)
+    check("外殼名稱不在原版掉落表（有：" .. table.concat(inLoot, ",") .. "）", #inLoot == 0)
 
     -- 3. 欄位：鎖、原版同款數值、禁用欄位
     local guardSet = {}
@@ -631,6 +655,8 @@ if arg and arg[1] == "--mutants" then
         { name = "guard 清單少一個", file = "MDB_Guard.lua", from = '"Base.WaterPopBottle", ', to = "" },
         { name = "guard 沒掛事件", file = "MDB_Guard.lua", from = "Events.OnGameBoot.Add(MDB.warnDuplicates)", to = "" },
         { name = "翻譯缺外殼名稱", file = "/EN/ItemName.json", from = '"BagUpgradePlus.MoneyBagPlus"', to = '"BagUpgradePlus.MoneyBagPlusX"' },
+        { name = "原版掉落表寫到外殼名稱", file = "ProceduralDistributions.lua", from = '"PopBottleEmpty", 4,', to = '"PopBottleEmpty", 4,\n"WaterPopBottle", 1,' },
+        { name = "原版掉落表寫到外殼名稱加 Empty", file = "ProceduralDistributions.lua", from = '"PopBottleEmpty", 4,', to = '"PopBottleEmpty", 4,\n"WaterPopBottleEmpty", 1,' },
     }
     rawPrint("== 突變（每個都應至少讓一項 FAIL）")
     local survived = 0
