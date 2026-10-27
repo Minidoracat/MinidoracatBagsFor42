@@ -10,7 +10,7 @@
 1. 底圖＝代表款（同網格裡最適合當底的那張原版貼圖）放大到主題邊長（common.TEX_SIZE：深藍 512、保護傘 256）。
 2. 去字：erase 矩形內用周圍同類像素的調和補色蓋掉（Ivanov、HYDRO 之類）。
 3. 換色：seeds 那一群顏色＝主布料，照相對亮度換成主題色；其他（背帶、扣具、灰黑部件）換成黑色尼龍（同 stage2 keep_paint）。
-   keep 取色點的顏色群、和主布料裡亮過 keep_light 的（框架包的木頭）只降彩度、照原明暗；gain＝整張再乘的亮度。
+   keep 取色點的顏色群、和主布料裡亮過 keep_light 的（框架包的木頭）只降彩度、照原明暗；gain＝整張再乘的亮度（目前沒有款式用）。
 4. 徽章：decal.apply 把隊徽／保護傘章（含黃黑警示條）照 3D 表面投影到 badge.seed 那一點，方向一定是正的（decal.py 檔頭）。
 5. 圖示（使用者 2026-10-27 在設計稿頁面選 B）：主題貼圖貼回男版穿戴網格、拿掉繞過身體的背帶（icon_mesh），
    Blender 算圖（blender/bags/theme_icons.py），再照本 MOD 7 款的後製（build.icon）。icon_dir＝相機方向，icon_strap＝拿掉背帶。
@@ -63,7 +63,6 @@ SHAPES = [
          members=["Base.Bag_ClothSatchel_Burlap", "Base.Bag_ClothSatchel_Cotton", "Base.Bag_ClothSatchel_Denim",
                   "Base.Bag_ClothSatchel_DenimBlack", "Base.Bag_ClothSatchel_DenimLight", "Base.Bag_HideSatchel"]),
     dict(mesh="m_riflecasecloth", icon_strap=True, rep="Base.Bag_RifleCaseCloth", base="clothes\\bag\\riflecasecloth_green", seeds=[(0.2, 0.5)],
-         gain=0.68,   # 整件幾乎都是主布料，沒有深色部件，照原明暗換色後看起來偏淡
          badge=dict(seed=(0.13, 0.4), h=0.03),
          members=["Base.Bag_RifleCaseCloth", "Base.Bag_RifleCaseCloth2", "Base.Bag_RifleCaseClothCamo", "Base.Bag_ShotgunCaseCloth",
                   "Base.Bag_ShotgunCaseCloth2"]),
