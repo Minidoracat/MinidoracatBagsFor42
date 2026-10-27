@@ -242,7 +242,9 @@ local function newBag(fullType, cap, wr, weight, fluid)
     function b:setWeightReduction(w) self.wr = w end
     function b:getScriptItem() return script end
     function b:getContainer() return self.container end
+    function b:getWorldItem() return nil end
     function b:getFluidContainer() return self.fc end
+    function b:getFluidContainerFromSelfOrWorldItem() return self.fc end
     function b:getVisual() return self.visual end
     function b:synchWithVisual() end
     return b

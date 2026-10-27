@@ -172,8 +172,9 @@ function MDB.applyTier(bag, tier)
     local fullCap = md.MDB_cap + math.floor((math.max(top - md.MDB_cap, 0) * pct + 50) / 100)
     bag:setCapacity(step(md.MDB_cap, fullCap))
     bag:setWeightReduction(step(md.MDB_wr, math.max(md.MDB_wr, MDB.opt("FullWeightReduction"))))
-    -- 液體容量存在 FluidContainer 元件（GameEntity.java:183、FluidContainer.java:683、存檔 :1202-1205）
-    local fc = bag:getFluidContainer()
+    -- 液體容量存在 FluidContainer 元件（GameEntity.java:183、FluidContainer.java:683、存檔 :1202-1205）；
+    -- 放在地上時元件搬到世界物品上（IsoWorldInventoryObject.java:103-105，撿起時搬回 :650-653）
+    local fc = bag:getFluidContainerFromSelfOrWorldItem()
     if fc then
         if md.MDB_fluid == nil then md.MDB_fluid = fc:getCapacity() end
         local base = md.MDB_fluid
@@ -193,14 +194,30 @@ end
 -- 新背包先放進同一個容器再搬：中途出錯時內容物分在兩個背包裡，不會落在沒有容器的物品上。
 -- 伺服器最後只送一次 replace：客戶端依舊 ID 移除、加入整件新背包，並換掉動作佇列裡的舊參照
 -- （ReplaceInventoryItemInContainerPacket.java:57-82）；單機改呼叫 replaceItemInContainer 換動作佇列（LuaManager.java:12442-12449）。
+-- 地上（含桌面）的背包：Neat Crafting 的「製作」不先搬進物品欄（NC_CraftActionPanel.lua:269-296），背包直接當輸入。
+-- 伺服器重建的地面容器不設物品的 container（ContainerID.java:392-396、:566-575），單機則是背包面板的地面容器，
+-- 兩種都改成在同一格同一位置放新的世界物品（先不送），做完再照原版撿起的寫法移除舊的（ISTransferAction.lua:131-159）、送出新的
+-- （IsoGridSquare.java:6141-6143）。
 function MDB.swapBag(old, newType, tier, character)
+    local wi = old:getWorldItem()
     local cont = old:getContainer()
+    if not wi and not cont then error("MDB.swapBag: " .. old:getFullType() .. " is neither in a container nor on the ground") end
     local new = instanceItem(newType)
     -- 階級的基準取新背包自己的腳本值：同形狀合併後強化版的起始值是同組最高的，還原成原款要回到原款的值。
     -- 要在 copyClothingItem 之前記：它搬來舊的 modData，檔尾的換穿包裝會先照舊基準套一次階級
     local cap, wr, nfc = new:getCapacity(), new:getWeightReduction(), new:getFluidContainer()
     local fluid = nfc and nfc:getCapacity()
-    cont:AddItem(new)
+    if wi then
+        wi:getSquare():AddWorldInventoryItem(new, wi:getOffX(), wi:getOffY(), wi:getOffZ(), false)
+        -- 「放置」擺的方向與不被地上物品清除的旗標存在舊的那份上（ISDropWorldItemAction.lua:81-87、IsoGridSquare.java:3223-3240），照搬
+        new:setWorldXRotation(old:getWorldXRotation())
+        new:setWorldYRotation(old:getWorldYRotation())
+        new:setWorldZRotation(old:getWorldZRotation())
+        new:getWorldItem():setIgnoreRemoveSandbox(wi:isIgnoreRemoveSandbox())
+        new:getWorldItem():setExtendedPlacement(wi:isExtendedPlacement())
+    else
+        cont:AddItem(new)
+    end
     swapping = true
     local ok, err = pcall(function()
         copyClothingItem(old, new)
@@ -222,15 +239,37 @@ function MDB.swapBag(old, newType, tier, character)
         end
         MDB.applyTier(new, tier)
         -- copyClothingItem 搬液體時新背包還是腳本容量，多的被截掉（FluidContainer.java:179-194、:929-932）；容量設好後再搬一次。
+        -- 地上的背包液體在世界物品上，原版 copyClothingItem 搬不到，只靠這一次（nfc 是同一個元件，放上地面只是換了主人）。
         -- 照公式裝不下時（主題水袋從組內最高的 3 升起算，還原成 2 升的一般水袋；或沙盒調低後換型），容量留在換型前的值，水不倒掉
-        local ofc = old:getFluidContainer()
+        local ofc = old:getFluidContainerFromSelfOrWorldItem()
         if ofc and nfc then
             if ofc:getAmount() > nfc:getCapacity() then nfc:setCapacity(ofc:getCapacity()) end
             nfc:copyFluidsFrom(ofc)
         end
     end)
     swapping = false
-    if not ok then error(err) end
+    if not ok then
+        -- 地上：新背包還沒送過，內容物搬回舊背包（copyClothingItem 用 takeItemsFrom 搬，ISClothingExtraAction.lua:74-75），
+        -- 再從那一格撤掉，兩邊的物件清單照舊一致（移除封包按索引，RemoveItemFromSquarePacket.java:55-60、:83-87）
+        if wi then
+            local nwi = new:getWorldItem()
+            old:getItemContainer():takeItemsFrom(new:getItemContainer())
+            DesignationZoneAnimal.removeItemFromGround(nwi)
+            wi:getSquare():removeWorldObject(nwi)
+            new:setWorldItem(nil)
+        end
+        error(err)
+    end
+    if wi then
+        if cont then cont:DoRemoveItem(old) end   -- 單機的背包面板地面容器（伺服器上地上物品沒有 container）
+        local sq = wi:getSquare()
+        DesignationZoneAnimal.removeItemFromGround(wi)
+        sq:transmitRemoveItemFromSquare(wi)
+        sq:removeWorldObject(wi)
+        old:setWorldItem(nil)
+        if isServer() then new:getWorldItem():transmitCompleteItemToClients() end
+        return new
+    end
     cont:Remove(old)   -- 也會把它從手上拿掉（ItemContainer.java:2036-2039）
     if isServer() then
         sendReplaceItemInContainer(cont, old, new)
@@ -244,7 +283,8 @@ local function tierOf(bag)
     return bag:getModData().MDB_tier or 0
 end
 
--- 配方的 keep 輸入裡第一個背包（不是 CanBeDoneFromFloor 的配方，輸入開工前都搬進主物品欄，ISWidgetHandCraftControl.lua:342-351）
+-- 配方的 keep 輸入裡第一個背包。原版介面開工前把輸入搬進主物品欄（ISWidgetHandCraftControl.lua:342-351），Neat Crafting 不搬，
+-- 所以也可能在地上：換型由 swapBag 處理；只升階的（onUpgrade 的 applyTier）在伺服器上不重送，見 applyTier
 function MDB.keepBag(data)
     local items = data:getAllKeepInputItems()
     for i = 0, items:size() - 1 do

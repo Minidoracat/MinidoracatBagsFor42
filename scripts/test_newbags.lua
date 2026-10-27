@@ -245,6 +245,7 @@ local function resetEnv()
         end
         for _, c in ipairs(item.contents or {}) do newItem.contents[#newItem.contents + 1] = c end
         item.contents = {}
+        if env.failAfterMove then error("failed after moving the contents") end
         local shown = item.getName and item:getName() or item.name   -- 原版寫入 getName()（帶染血等前綴），不搬改名旗標
         if shown ~= item:getScriptItem():getDisplayName() then newItem.name = shown end
         if item.fc and newItem.fc then newItem.fc:copyFluidsFrom(item.fc) end
@@ -296,6 +297,7 @@ local function newContainer()
     function c:Remove(i)
         for k, v in ipairs(self.items) do if v == i then table.remove(self.items, k); i.container = nil; return end end
     end
+    function c:DoRemoveItem(i) self:Remove(i) end
     return c
 end
 local CONTAINER = newContainer()
@@ -347,7 +349,23 @@ local function newBag(cap, wr, weight, fullType)
     function b:getActualWeight() return self.instanceWeight or self.weight end
     function b:getScriptItem() return script end
     function b:getContainer() return self.container end
+    function b:getWorldItem() return self.worldItem end
+    function b:setWorldItem(w) self.worldItem = w end
     function b:getFluidContainer() return self.fc end
+    function b:getFluidContainerFromSelfOrWorldItem() return self.fc or (self.worldItem and self.worldItem.fc) end
+    -- 世界旋轉存在物品上（InventoryItem.java:4220-4242）；沒設過時 X／Y 是 0、Z 是 -1（:279-281）
+    for _, a in ipairs({ "X", "Y", "Z" }) do
+        b["setWorld" .. a .. "Rotation"] = function(self, r) self["rot" .. a] = r end
+        b["getWorld" .. a .. "Rotation"] = function(self) return self["rot" .. a] or (a == "Z" and -1 or 0) end
+    end
+    -- 內容物容器：copyClothingItem 用 takeItemsFrom 整批搬（ISClothingExtraAction.lua:74-75、ItemContainer.java:2646-2652）
+    function b:getItemContainer()
+        local owner = self
+        return { owner = owner, takeItemsFrom = function(c, other)
+            for _, it in ipairs(other.owner.contents) do c.owner.contents[#c.owner.contents + 1] = it end
+            other.owner.contents = {}
+        end }
+    end
     function b:getFullType() return self.fullType end
     function b:getVisual() return self.visual end
     function b:synchWithVisual() end
@@ -1454,6 +1472,111 @@ local function suite()
     env.server = false
     CONTAINER.items = {}
 
+    -- 8c. 地上（含桌面）的背包：Neat Crafting 的「製作」不先搬進物品欄，背包直接當輸入（正式服 0.2.0 每次都在伺服器丟例外）。
+    --     伺服器上 getContainer() 是 nil（ContainerID.java:392-396、:566-575）；單機是背包面板的地面容器。
+    --     放上地面時液體元件搬到世界物品上，移除時搬回來（IsoWorldInventoryObject.java:103-105、:650-653）
+    local function floorSquare()
+        local sq = { objs = {}, removed = {} }
+        function sq:AddWorldInventoryItem(item, x, y, z, transmit)   -- IsoGridSquare.java:6071-6146：transmit 預設 true
+            local wi = { item = item, sq = self, x = x, y = y, z = z, sent = transmit == false and 0 or 1, fc = item.fc }
+            item.fc = nil
+            -- 建構子把 X／Y 旋轉歸零、Z 沒設過時隨機給（IsoWorldInventoryObject.java:74-78）
+            item.rotX, item.rotY = 0, 0
+            if not item.rotZ or item.rotZ < 0 then item.rotZ = 42 end
+            function wi:getSquare() return self.sq end
+            function wi:getOffX() return self.x end
+            function wi:getOffY() return self.y end
+            function wi:getOffZ() return self.z end
+            function wi:transmitCompleteItemToClients() self.sent = self.sent + 1 end
+            function wi:setIgnoreRemoveSandbox(v) self.ignore = v end
+            function wi:isIgnoreRemoveSandbox() return self.ignore == true end
+            function wi:setExtendedPlacement(v) self.ext = v end
+            function wi:isExtendedPlacement() return self.ext == true end
+            self.objs[#self.objs + 1] = wi
+            item.worldItem = wi
+            return item
+        end
+        function sq:transmitRemoveItemFromSquare(wi) self.removed[#self.removed + 1] = wi end
+        function sq:removeWorldObject(wi)
+            wi.item.fc, wi.fc = wi.fc, nil
+            for k, v in ipairs(self.objs) do if v == wi then table.remove(self.objs, k); return end end
+        end
+        return sq
+    end
+    local function onFloor(full, floorC)
+        local sq, b = floorSquare(), instanceItem(full)
+        b.contents, b.md = { "nail", "apple" }, { custom = "kept" }
+        sq:AddWorldInventoryItem(b, 0.3, 0.6, 0.1)
+        if floorC then floorC:AddItem(b) end
+        return b, sq, b.worldItem
+    end
+    DesignationZoneAnimal = { removeItemFromGround = function(wi) env.groundRemoved = wi end }
+    env.server, env.sent, env.replaced = true, {}, {}
+    local oldWi, sq
+    old, sq, oldWi = onFloor(A)
+    old.rotX, old.rotY, old.rotZ, oldWi.ignore, oldWi.ext = 10, 20, 135, true, true   -- 玩家用「放置」擺過（ISDropWorldItemAction.lua:81-87）
+    MDB.onUpgrade(keepData(old), PLAYER)
+    local nwi = sq.objs[1]
+    check("floor (MP server, no container): reinforced bag on the same spot with the contents, old world item removed",
+        #sq.objs == 1 and nwi.item ~= old and nwi.item.fullType == RA and nwi.x == 0.3 and nwi.y == 0.6 and nwi.z == 0.1
+        and nwi.item.contents[1] == "nail" and #old.contents == 0 and nwi.item.md.custom == "kept"
+        and nwi.item.md.MDB_tier == 1 and nwi.item.cap == 35 and nwi.item.wr == 90
+        and sq.removed[1] == oldWi and env.groundRemoved == oldWi and old.worldItem == nil)
+    check("floor (MP server): new world item sent once, no container packets", nwi.sent == 1 and #env.sent == 0 and #env.replaced == 0)
+    check("floor (MP server): placed rotation and the keep-from-cleanup / extended-placement flags carried over",
+        nwi.item.rotX == 10 and nwi.item.rotY == 20 and nwi.item.rotZ == 135 and nwi.ignore == true and nwi.ext == true)
+    old, sq, oldWi = onFloor(RA)
+    old.md.MDB_tier, old.md.MDB_cap, old.md.MDB_wr, old.cap, old.wr = 3, 28, 85, 49, 100
+    MDB.onSwapTheme(keepData(old), PLAYER)
+    nwi = sq.objs[1]
+    check("floor (MP server): theme swap on the ground -> Navy, tier 3 49/100, contents kept",
+        #sq.objs == 1 and nwi.item.fullType == "MinidoracatBags.Bag_ALICEpack_Navy_Reinforced" and nwi.item.md.MDB_tier == 3
+        and nwi.item.cap == 49 and nwi.item.wr == 100 and nwi.item.contents[1] == "nail" and nwi.sent == 1 and old.worldItem == nil)
+    local HY, HN = "MinidoracatBags.Bag_HydrationBackpack_Olive_Reinforced", "MinidoracatBags.Bag_HydrationBackpack_Navy_Reinforced"
+    old = stocked(HY)
+    MDB.applyTier(old, 3)
+    CONTAINER.items = {}
+    old.container, old.fc.amount = nil, 4.0
+    sq = floorSquare()
+    sq:AddWorldInventoryItem(old, 0.3, 0.6, 0.1)
+    MDB.onSwapTheme(keepData(old), PLAYER)
+    nwi = sq.objs[1]
+    check("floor (MP server): water bag theme swap on the ground keeps 5.0 L capacity and the 4.0 L of water",
+        #sq.objs == 1 and nwi.item.fullType == HN and nwi.fc and near(nwi.fc.capacity, 5.0) and near(nwi.fc.amount, 4.0) and nwi.item.fc == nil)
+    old, sq = stocked("Base.Bag_HydrationBackpack", nil, 2.0), floorSquare()
+    CONTAINER.items = {}
+    old.container = nil
+    sq:AddWorldInventoryItem(old, 0.3, 0.6, 0.1)
+    MDB.onUpgrade(keepData(old), PLAYER)
+    nwi = sq.objs[1]
+    check("floor (MP server): first upgrade of a water bag on the ground -> tier 1 capacity 3.667, 2.0 L kept",
+        #sq.objs == 1 and nwi.item.fullType == HN and near(nwi.fc.capacity, 3.0 + 2.0 / 3) and near(nwi.fc.amount, 2.0))
+    old, sq, oldWi = onFloor(A)
+    env.failCopy = true
+    failed = not pcall(MDB.swapBag, old, RA, 1, PLAYER)
+    env.failCopy = false
+    check("floor swap error before moving: only the old bag on the ground with its contents, nothing sent or removed",
+        failed and #sq.objs == 1 and sq.objs[1] == oldWi and old.worldItem == oldWi and #sq.removed == 0 and old.contents[1] == "nail")
+    old, sq, oldWi = onFloor(A)
+    env.failAfterMove = true
+    failed = not pcall(MDB.swapBag, old, RA, 1, PLAYER)
+    env.failAfterMove = false
+    check("floor swap error after moving: contents back in the old bag, the unsent new one taken off the square",
+        failed and #sq.objs == 1 and sq.objs[1] == oldWi and old.worldItem == oldWi and #sq.removed == 0
+        and old.contents[1] == "nail" and old.contents[2] == "apple")
+    env.server, env.sent, env.replaced = false, {}, {}
+    local floorC = newContainer()
+    old, sq, oldWi = onFloor(A, floorC)
+    MDB.onUpgrade(keepData(old), PLAYER)
+    check("floor (SP, inventory-pane floor container): swapped on the ground, old one out of the floor container, nothing sent",
+        #sq.objs == 1 and sq.objs[1].item.fullType == RA and sq.objs[1].sent == 0 and #floorC.items == 0 and old.worldItem == nil
+        and #env.sent == 0 and #env.replaced == 0)
+    old = instanceItem(A)
+    old.contents = { "nail" }
+    local okNowhere, errNowhere = pcall(MDB.swapBag, old, RA, 1, PLAYER)
+    check("bag neither in a container nor on the ground: refused with a clear error, contents untouched",
+        not okNowhere and tostring(errNowhere):find("neither in a container nor on the ground", 1, true) ~= nil and old.contents[1] == "nail")
+
     -- 8d. 第二個側背包位置：registries.lua 註冊（非 base、先查再註冊），MDB_BodyLocations.lua 加進 Human 群組、排在 base:satchel
     --     後面、不設互斥／隱藏、可以邊走邊穿脫；沒註冊到時不把 nil 傳給 getOrCreateLocation
     local function bodyLocEnv(groupIds)
@@ -1798,6 +1921,26 @@ if arg and arg[1] == "--mutants" then
         { name = "液體沒在容量設好後重搬", file = "UPG", from = "            nfc:copyFluidsFrom(ofc)\n", to = "" },
         { name = "出錯沒復原旗標", file = "UPG", from = "    swapping = false\n    if not ok", to = "    if not ok" },
         { name = "新背包沒先放進容器", file = "UPG", from = "    cont:AddItem(new)\n", to = "" },
+        { name = "地上沒帶 X 旋轉", file = "UPG", from = "        new:setWorldXRotation(old:getWorldXRotation())\n", to = "" },
+        { name = "地上沒帶 Y 旋轉", file = "UPG", from = "        new:setWorldYRotation(old:getWorldYRotation())\n", to = "" },
+        { name = "地上沒帶 Z 旋轉", file = "UPG", from = "        new:setWorldZRotation(old:getWorldZRotation())\n", to = "" },
+        { name = "地上沒帶防清除旗標", file = "UPG", from = "        new:getWorldItem():setIgnoreRemoveSandbox(wi:isIgnoreRemoveSandbox())\n", to = "" },
+        { name = "地上沒帶延伸擺放旗標", file = "UPG", from = "        new:getWorldItem():setExtendedPlacement(wi:isExtendedPlacement())\n", to = "" },
+        { name = "地上沒先放新背包", file = "UPG", from = "        wi:getSquare():AddWorldInventoryItem(new, wi:getOffX(), wi:getOffY(), wi:getOffZ(), false)\n", to = "" },
+        { name = "地上新背包放錯位置", file = "UPG", from = "wi:getOffX(), wi:getOffY(), wi:getOffZ()", to = "0.5, 0.5, 0" },
+        { name = "地上新背包做完前就送", file = "UPG", from = "wi:getOffZ(), false)", to = "wi:getOffZ())" },
+        { name = "地上新背包沒送", file = "UPG", from = "if isServer() then new:getWorldItem():transmitCompleteItemToClients() end", to = "" },
+        { name = "地上舊背包沒移除", file = "UPG", from = "        sq:removeWorldObject(wi)\n", to = "" },
+        { name = "地上舊背包移除沒廣播", file = "UPG", from = "        sq:transmitRemoveItemFromSquare(wi)\n", to = "" },
+        { name = "地上沒清動物分區紀錄", file = "UPG", from = "        DesignationZoneAnimal.removeItemFromGround(wi)\n", to = "" },
+        { name = "舊背包留著世界物品參照", file = "UPG", from = "        old:setWorldItem(nil)\n", to = "" },
+        { name = "單機地面容器沒移除", file = "UPG", from = "if cont then cont:DoRemoveItem(old) end", to = "" },
+        { name = "沒容器也沒在地上照做", file = "UPG", from = "if not wi and not cont then error(", to = "if false then error(" },
+        { name = "地上背包走容器分支", file = "UPG", from = "    local wi = old:getWorldItem()\n", to = "    local wi = nil\n" },
+        { name = "地上液體只看物品本身", file = "UPG", from = "local ofc = old:getFluidContainerFromSelfOrWorldItem()", to = "local ofc = old:getFluidContainer()" },
+        { name = "套階級不看地上的液體", file = "UPG", from = "local fc = bag:getFluidContainerFromSelfOrWorldItem()", to = "local fc = bag:getFluidContainer()" },
+        { name = "出錯沒搬回內容物", file = "UPG", from = "            old:getItemContainer():takeItemsFrom(new:getItemContainer())\n", to = "" },
+        { name = "出錯沒撤掉新背包", file = "UPG", from = "            wi:getSquare():removeWorldObject(nwi)\n", to = "" },
         { name = "換穿沒搬改名旗標", file = "UPG", from = "        newItem:setCustomName(true)\n", to = "" },
         { name = "換穿沿用帶前綴的名字", file = "UPG", from = "        newItem:setName(item:getDisplayName())\n", to = "" },
         { name = "沒改名也沿用舊名", file = "UPG", from = "            new:setName(new:getScriptItem():getDisplayName())\n", to = "" },
