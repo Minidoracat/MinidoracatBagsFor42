@@ -23,7 +23,7 @@ S.T.A.R.S. and Umbrella themed tactical bags that upgrade into reinforced versio
 [h2]✨ Features[/h2]
 [list]
 [*] [b]Seven custom bags[/b]: from hip pouch to expedition pack, in S.T.A.R.S. and Umbrella colors
-[*] [b]Reinforced upgrades[/b]: vanilla bags and this mod's bags get bigger, lighter and stop slowing you down
+[*] [b]Reinforced upgrades[/b]: vanilla bags and this mod's bags get bigger, lighter and stop slowing you down; vanilla bags switch to S.T.A.R.S. or Umbrella colors
 [*] [b]Second satchel[/b]: reinforced satchels sit on the other side, so you can wear one more
 [*] [b]Attachment slots[/b]: reinforced military backpacks, duffel bags and hiking backpacks hold bottles, plushies and tools
 [*] [b]Wear full bags[/b]: put on a full bag straight off the floor with everything still inside
