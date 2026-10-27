@@ -19,5 +19,6 @@
     "MDB_ConvertLegacyBag": "改装旧 Plus 背包为强化版",
     "MDB_RestoreReinforced": "强化版改回原版背包",
     "MDB_ReinforceUpgradedBag": "已强化的原版背包改成强化版",
+    "MDB_SwapReinforcedTheme": "强化版换主题（S.T.A.R.S./保护伞）",
     "MDB_MakeSheetSlingBag_Reinforced": "制作窗帘布挎包（强化）"
 }

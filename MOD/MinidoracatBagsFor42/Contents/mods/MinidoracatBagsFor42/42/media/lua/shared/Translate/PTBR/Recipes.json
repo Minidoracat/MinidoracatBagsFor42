@@ -19,5 +19,6 @@
     "MDB_ConvertLegacyBag": "Converter Bolsa Plus Antiga em Versão Reforçada",
     "MDB_RestoreReinforced": "Reverter Bolsa Reforçada ao Original",
     "MDB_ReinforceUpgradedBag": "Converter Bolsa de Nível 1 ou Mais em Versão Reforçada",
+    "MDB_SwapReinforcedTheme": "Trocar Tema da Bolsa Reforçada (S.T.A.R.S./Umbrella)",
     "MDB_MakeSheetSlingBag_Reinforced": "Fazer Bolsa Transversal de Lençol (Versão Reforçada)"
 }

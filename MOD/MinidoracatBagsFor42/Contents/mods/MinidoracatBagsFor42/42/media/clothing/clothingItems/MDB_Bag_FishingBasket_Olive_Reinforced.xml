@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<clothingItem>
+	<m_MaleModel>media\models_X\Skinned\BackPacks\M_FishingBasket.x</m_MaleModel>
+	<m_FemaleModel>media\models_X\Skinned\BackPacks\F_FishingBasket.x</m_FemaleModel>
+	<m_GUID>2f2aa83d-a701-5904-b7e6-9a0b14b01cf0</m_GUID>
+	<m_Static>false</m_Static>
+	<m_AllowRandomHue>false</m_AllowRandomHue>
+	<m_AllowRandomTint>false</m_AllowRandomTint>
+	<m_AttachBone></m_AttachBone>
+	<textureChoices>Clothes\Bag\MDB_Bag_FishingBasket_Olive</textureChoices>
+</clothingItem>

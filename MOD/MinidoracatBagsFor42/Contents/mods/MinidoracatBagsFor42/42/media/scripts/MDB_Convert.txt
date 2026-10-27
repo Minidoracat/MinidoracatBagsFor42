@@ -1,5 +1,6 @@
-/* 舊 Plus 背包改裝成對應原版背包的強化版（MDB.onConvertLegacy）：直接給最高階，內容物、modData、液體都保留；不能穿著；不設技能門檻。
-   水瓶不在這裡。強化版布吊帶包另可直接製作（BUP 的 MakeSheetSlingBagPlus 同材料：床單 1、鈔票 5，不需工具與技能）：
+/* 舊 Plus 背包改裝成對應原版背包的強化版（MDB.onConvertLegacy）：主題照外殼的顏色，直接給最高階，內容物、modData、液體都保留；
+   不能穿著；不設技能門檻。水瓶不在這裡。強化版布吊帶包另可直接製作（BUP 的 MakeSheetSlingBagPlus 同材料：床單 1、鈔票 5，
+   不需工具與技能），產出保護傘款（床單是天然材質，和升級原版布吊帶包同一款）：
    RemoveResultItems 不讓配方產出（CraftRecipeData.java:1346-1347），由 MDB.onMakeReinforcedSling 自己建、給最高階、放進主物品欄。
    outputs 只留給製作介面顯示圖示。 */
 
@@ -44,7 +45,7 @@ module MinidoracatBags
         }
         outputs
         {
-            item 1 MinidoracatBags.Bag_SheetSlingBag_Reinforced,
+            item 1 MinidoracatBags.Bag_SheetSlingBag_Olive_Reinforced,
         }
     }
 }

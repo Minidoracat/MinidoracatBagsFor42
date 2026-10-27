@@ -28,30 +28,28 @@ MDB.ATTACH_ACCEPTS = {
     UmbrellaR = STRAP, UmbrellaL = STRAP, Flashlight = LIGHTS,
 }
 
--- 家族照穿戴網格分（座標是照網格算的）：旅行登山包用一般登山包的網格（原版 Bag_HikingBag_Travel.xml），歸 Hiking；
--- Bag Upgrade Plus 把它歸大登山包，兩邊的掛點組合相同。名單是 Bag Upgrade Plus 有掛點的 28 款，加上同網格、BUP 沒給掛點的
--- Bag_DuffelBagTINT 與 Bag_BigHikingBag_Travel。base＝床捲掛點：DoParam 是整串取代（Item.java:2410-2411），原版有的要接回去；
--- 書包原版沒有，照 Bag Upgrade Plus 的書包加上（它只多這一個、沒有額外掛點），5 款書包同網格（m_schoolbag）一起加。
+-- 家族照穿戴網格分（座標是照網格算的），bags＝主題強化版 MinidoracatBags.<名稱>_Reinforced 的名稱。強化版依網格合併
+-- （MDB_Upgrade.lua 的 MDB.THEME_SOURCES），一個網格就是一種形狀的兩件：Bag Upgrade Plus 有掛點的 28 款都在這 4 種形狀裡
+-- （旅行登山包用一般登山包的網格，原版 Bag_HikingBag_Travel.xml，歸 Hiking；BUP 把它歸大登山包，兩邊的掛點組合相同），
+-- 同網格、BUP 沒給掛點的 Bag_DuffelBagTINT 與 Bag_BigHikingBag_Travel 也併進來。base＝床捲掛點：DoParam 是整串取代
+-- （Item.java:2410-2411），原版有的要接回去；書包原版沒有，照 Bag Upgrade Plus 的書包加上（它只多這一個、沒有額外掛點）。
 -- replacement＝穿著時背後欄位的長槍、大刀、鏟子等改用「with Bag」位置（ISHotbarAttachDefinition.lua:96-113）。原版行李袋沒有這欄，
 -- 背後的長槍會埋進包裡；Bag Upgrade Plus 的行李袋 Plus 都加了，照做。代價和原版背包一樣：穿著時吉他不能背（對到 "null"）。
 MDB.ATTACH_FAMILIES = {
     { name = "Alice", base = "BedrollBottomALICE",
-      bags = { "Bag_ALICEpack", "Bag_ALICEpack_Army", "Bag_ALICEpack_DesertCamo", "Bag_SurvivorBag" },
+      bags = { "Bag_ALICEpack_Navy", "Bag_ALICEpack_Olive" },
       slots = { "Slot1", "Slot2", "Slot3", "BottleR", "BottleL", "Plushie", "UmbrellaR", "Flashlight" } },
     { name = "Duffel", replacement = "Bag",
-      bags = { "Bag_DuffelBag", "Bag_MedicalBag", "Bag_Military", "Bag_Police", "Bag_Sheriff", "Bag_SWAT", "Bag_BreakdownBag",
-               "Bag_BurglarBag", "Bag_BaseballBag", "Bag_TennisBag", "Bag_WeaponBag", "Bag_InmateEscapedBag", "Bag_MoneyBag",
-               "Bag_WorkerBag", "Bag_ShotgunBag", "Bag_ShotgunSawnoffBag", "Bag_ShotgunDblBag", "Bag_ShotgunDblSawnoffBag",
-               "Bag_FoodCanned", "Bag_FoodSnacks", "Bag_ToolBag", "Bag_DuffelBagTINT" },
+      bags = { "Bag_DuffelBag_Navy", "Bag_DuffelBag_Olive" },
       slots = { "Slot1", "Slot2", "Slot3", "BottleR", "Plushie", "UmbrellaR", "Flashlight" } },
     { name = "Hiking", base = "BedrollBottom",
-      bags = { "Bag_NormalHikingBag", "Bag_HikingBag_Travel" },
+      bags = { "Bag_NormalHikingBag_Navy", "Bag_NormalHikingBag_Olive" },
       slots = { "Slot1", "Slot2", "Slot3", "BottleR", "BottleL", "Plushie", "UmbrellaL", "Flashlight" } },
     { name = "BigHiking", base = "BedrollBottomBig",
-      bags = { "Bag_BigHikingBag", "Bag_BigHikingBag_Travel" },
+      bags = { "Bag_BigHikingBag_Navy", "Bag_BigHikingBag_Olive" },
       slots = { "Slot1", "Slot2", "Slot3", "BottleR", "BottleL", "Plushie", "UmbrellaL", "Flashlight" } },
     { name = "School", base = "BedrollBottom",
-      bags = { "Bag_Schoolbag", "Bag_Schoolbag_Kids", "Bag_Schoolbag_Medical", "Bag_Schoolbag_Patches", "Bag_Schoolbag_Travel" },
+      bags = { "Bag_Schoolbag_Navy", "Bag_Schoolbag_Olive" },
       slots = {} },
 }
 

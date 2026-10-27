@@ -19,5 +19,6 @@
     "MDB_ConvertLegacyBag": "Convertir bolsa Plus antigua en versión reforzada",
     "MDB_RestoreReinforced": "Devolver bolsa reforzada a la original",
     "MDB_ReinforceUpgradedBag": "Convertir bolsa de nivel 1 o superior en versión reforzada",
+    "MDB_SwapReinforcedTheme": "Cambiar tema de bolsa reforzada (S.T.A.R.S./Umbrella)",
     "MDB_MakeSheetSlingBag_Reinforced": "Crear bolsa con sábana (versión reforzada)"
 }

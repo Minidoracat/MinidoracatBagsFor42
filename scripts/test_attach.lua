@@ -14,6 +14,7 @@ local F = {
     MODELS = MEDIA .. "scripts/MDB_AttachModels.txt",
     EN = TRANSLATE .. "EN/IG_UI.json",
     CH = TRANSLATE .. "CH/IG_UI.json",
+    UPG = MEDIA .. "lua/shared/MDB_Upgrade.lua",
 }
 local LANGS = { "AR", "CH", "CN", "DE", "EN", "ES", "ES_CL", "ES_MX", "FR", "JP", "KO", "PL", "PT", "PTBR", "RU", "TR" }
 local PZ = (os.getenv("PZ_PATH") or "D:/SteamLibrary/steamapps/common/ProjectZomboid"):gsub("\\", "/")
@@ -222,14 +223,19 @@ local function suite()
         end
     end
     local setOk = not dup
+    -- 原版來源 → 形狀（MDB_Upgrade.lua 由產生器寫的 MDB.THEME_SOURCES）：BUP 的每款都升級成它形狀的兩件主題強化版，兩件都在家族裡
+    local shapeOf = {}
+    for src, shape in readFile(F.UPG):gmatch('%["Base%.([%w_]+)"%] = { shape = "([%w_]+)"') do shapeOf[src] = shape end
     for b, set in pairs(BUP_BAGS) do
-        local f = bagFam[b]
-        if not f or table.concat(f.slots, ",") ~= table.concat(BUP_SETS[set], ",") then setOk = false end
+        for _, th in ipairs({ "Navy", "Olive" }) do
+            local f = shapeOf[b] and bagFam[shapeOf[b] .. "_" .. th]
+            if not f or table.concat(f.slots, ",") ~= table.concat(BUP_SETS[set], ",") then setOk = false end
+        end
     end
-    check("Bag Upgrade Plus 的 28 款各歸一個家族，掛點組合照 BUP（ALICE、行李袋、登山包三種）", setOk)
-    local sf = bagFam.Bag_Schoolbag
-    check("書包照 Bag Upgrade Plus 只加床捲掛點（School 家族、BedrollBottom、沒有額外掛點）",
-        sf ~= nil and sf.name == "School" and sf.base == "BedrollBottom" and #sf.slots == 0)
+    check("Bag Upgrade Plus 的 28 款升級後的兩件主題強化版都歸一個家族，掛點組合照 BUP（ALICE、行李袋、登山包三種）", setOk)
+    local sf, sf2 = bagFam.Bag_Schoolbag_Navy, bagFam.Bag_Schoolbag_Olive
+    check("書包照 Bag Upgrade Plus 只加床捲掛點（兩件都在 School 家族、BedrollBottom、沒有額外掛點）",
+        sf ~= nil and sf == sf2 and sf.name == "School" and sf.base == "BedrollBottom" and #sf.slots == 0)
 
     -- AttachmentsProvided：保留強化版原本的床捲掛點（書包原版沒有，照 BUP 加上），接上本 MOD 的掛點
     local apOk, missing = true, {}
@@ -339,8 +345,10 @@ local function suite()
         end
         check("原版核對：照抄的模型網格、貼圖、縮放和原版 SheetRope、Plushabug 相同（掛在背包上的樣子不變） " .. table.concat(bad, ","), #bad == 0)
         bad = {}
+        -- 主題強化版的名稱是「代表款_主題」，網格看代表款
+        local function repOf(stem) return (stem:gsub("_Navy$", ""):gsub("_Olive$", "")) end
         for b, f in pairs(bagFam) do
-            local ci = field(v.items[b], "ClothingItem")
+            local ci = field(v.items[repOf(b)], "ClothingItem")
             local xml = ci and readRaw(PZ .. "/media/clothing/clothingItems/" .. ci .. ".xml") or ""
             local mesh = xml:match("<m_MaleModel>[^<]-([%w_]+)</m_MaleModel>")
             if not mesh or mesh:lower() ~= MESH[f.name] then bad[#bad + 1] = b .. "(" .. tostring(mesh) .. ")" end
@@ -350,12 +358,13 @@ local function suite()
         local famOfMesh = {}
         for name, f in pairs(fams) do famOfMesh[MESH[name]] = f end
         for name in pairs(reinforced) do
-            local src = name:gsub("_Reinforced$", "")
+            local stem = name:gsub("_Reinforced$", "")
+            local src = repOf(stem)
             local ci = v.items[src] and field(v.items[src], "ClothingItem")
             local xml = ci and readRaw(PZ .. "/media/clothing/clothingItems/" .. ci .. ".xml") or ""
             local mesh = xml:match("<m_MaleModel>[^<]-([%w_]+)</m_MaleModel>")
             local f = mesh and famOfMesh[mesh:lower()]
-            if f and bagFam[src] ~= f then bad[#bad + 1] = src .. "(" .. f.name .. ")" end
+            if f and bagFam[stem] ~= f then bad[#bad + 1] = stem .. "(" .. f.name .. ")" end
         end
         check("原版核對：強化版只要穿戴網格是某個家族的，就在那個家族（座標照網格共用）" .. table.concat(bad, ","), #bad == 0)
     else
@@ -525,8 +534,8 @@ if arg and arg[1] == "--mutants" then
         { name = "床捲掛點被蓋掉", file = "SHARED", from = "local list = { f.base }", to = "local list = {}" },
         { name = "ALICE 床捲名稱錯", file = "SHARED", from = 'base = "BedrollBottomALICE"', to = 'base = "BedrollBottom"' },
         { name = "少一個家族掛點", file = "SHARED", from = '"Plushie", "UmbrellaR", "Flashlight" } },\n    { name = "Duffel"', to = '"Plushie", "UmbrellaR" } },\n    { name = "Duffel"' },
-        { name = "旅行登山包歸大登山包", file = "SHARED", from = 'bags = { "Bag_NormalHikingBag", "Bag_HikingBag_Travel" }', to = 'bags = { "Bag_NormalHikingBag" }' },
-        { name = "漏一款行李袋", file = "SHARED", from = '"Bag_FoodSnacks", "Bag_ToolBag", "Bag_DuffelBagTINT" }', to = '"Bag_FoodSnacks", "Bag_DuffelBagTINT" }' },
+        { name = "登山包漏保護傘款", file = "SHARED", from = 'bags = { "Bag_NormalHikingBag_Navy", "Bag_NormalHikingBag_Olive" }', to = 'bags = { "Bag_NormalHikingBag_Navy" }' },
+        { name = "行李袋漏保護傘款", file = "SHARED", from = 'bags = { "Bag_DuffelBag_Navy", "Bag_DuffelBag_Olive" }', to = 'bags = { "Bag_DuffelBag_Navy" }' },
         { name = "強化版前綴錯", file = "SHARED", from = '"MinidoracatBags." .. bag .. "_Reinforced"', to = '"Base." .. bag' },
         { name = "沒加 AttachmentType", file = "SHARED", from = 's:DoParam("AttachmentType = " .. kind)', to = "" },
         { name = "已有 StaticModel 也蓋", file = "SHARED", from = 'if model and (not cur or cur:sub(1, 4) == "???." or cur == MDB.ATTACH_STATIC_SOURCE[fullType]) then', to = "if model then" },
@@ -549,10 +558,10 @@ if arg and arg[1] == "--mutants" then
         { name = "右側面朝向錯", file = "CLIENT", from = "BottleR = { 0.030, -0.113, -0.057, -90 }", to = "BottleR = { 0.030, -0.113, -0.057, 90 }" },
         { name = "提示框沒去重", file = "CLIENT", from = 'if line == "" or not seen[key] then', to = "if true then" },
         { name = "提示框去重沒看縮排", file = "CLIENT", from = 'local key = line:gsub("^<INDENT:%d+> ", "")', to = "local key = line" },
-        { name = "家族漏同網格的背包", file = "SHARED", from = '"Bag_ToolBag", "Bag_DuffelBagTINT" }', to = '"Bag_ToolBag" }' },
+        { name = "家族指到不存在的強化版", file = "SHARED", from = 'bags = { "Bag_BigHikingBag_Navy", "Bag_BigHikingBag_Olive" }', to = 'bags = { "Bag_BigHikingBag_Navy", "Bag_BigHikingBag_Travel_Olive" }' },
         { name = "書包沒給床捲", file = "SHARED", from = '{ name = "School", base = "BedrollBottom",', to = '{ name = "School",' },
         { name = "書包床捲名稱錯", file = "SHARED", from = '{ name = "School", base = "BedrollBottom",', to = '{ name = "School", base = "BedrollBottomBig",' },
-        { name = "漏一款書包", file = "SHARED", from = '"Bag_Schoolbag_Patches", "Bag_Schoolbag_Travel" }', to = '"Bag_Schoolbag_Patches" }' },
+        { name = "漏一款書包", file = "SHARED", from = 'bags = { "Bag_Schoolbag_Navy", "Bag_Schoolbag_Olive" }', to = 'bags = { "Bag_Schoolbag_Navy" }' },
         { name = "行李袋沒加 AttachmentReplacement", file = "SHARED", from = '{ name = "Duffel", replacement = "Bag",', to = '{ name = "Duffel",' },
         { name = "AttachmentReplacement 沒 DoParam", file = "SHARED", from = 'if f.replacement then s:DoParam("AttachmentReplacement = " .. f.replacement) end', to = "" },
         { name = "AttachmentReplacement 名稱錯", file = "SHARED", from = '{ name = "Duffel", replacement = "Bag",', to = '{ name = "Duffel", replacement = "Bags",' },

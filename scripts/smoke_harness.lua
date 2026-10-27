@@ -120,12 +120,17 @@ for _, r in ipairs(registered) do
 end
 for _, name in ipairs(ALLOWED) do check(seen[name] == 1, name .. " 剛好掛一次") end
 for _, fn in ipairs({ "acceptLegacy", "acceptFirstAid", "acceptAmmo", "applyTier", "swapBag", "keepBag", "onConvertLegacy",
-                      "onMakeReinforcedSling", "onSwapKeepTier", "onTestUpgraded", "onUpgrade", "onTestTier1", "onTestTier2", "onTestTier3",
+                      "onMakeReinforcedSling", "onSwapKeepTier", "onSwapTheme", "toReinforced", "reinforcedOf", "themedId",
+                      "onTestUpgraded", "onUpgrade", "onTestTier1", "onTestTier2", "onTestTier3",
                       "addLoot", "reapplyLoot", "onZombieDead", "warnDuplicates", "opt",
                       "canWearFromFloor", "needsFloorWear", "onFillFloorWearMenu", "addSatchel2Location",
                       "installAttach", "installAttachClient", "attachTransform", "eachAttachPose" }) do
     check(type(MDB[fn]) == "function", "MDB." .. fn .. " 存在")
 end
+local nThemed, nSources = 0, 0
+for _ in pairs(MDB.THEMED or {}) do nThemed = nThemed + 1 end
+for _ in pairs(MDB.THEME_SOURCES or {}) do nSources = nSources + 1 end
+check(nThemed == 44 and nSources == 80, string.format("載入時建好主題強化版對照：%d 種原版來源、%d 件主題強化版", nSources, nThemed))
 check(type(MDB_WearFromFloor) == "table" and MDB_WearFromFloor.Type == "MDB_WearFromFloor", "計時動作 MDB_WearFromFloor 是同名全域")
 check(humanGroup[1] == SATCHEL2 and ISWearClothing.WalkBodyLocations[1] == SATCHEL2,
     "載入時第二個側背包位置加進 Human 群組、可以邊走邊穿脫")

@@ -19,5 +19,6 @@
     "MDB_ConvertLegacyBag": "Alte Plus-Tasche in verstärkte Version umbauen",
     "MDB_RestoreReinforced": "Verstärkte Tasche zurück zum Original umbauen",
     "MDB_ReinforceUpgradedBag": "Tasche ab Stufe 1 in verstärkte Version umbauen",
+    "MDB_SwapReinforcedTheme": "Thema der verstärkten Tasche wechseln (S.T.A.R.S./Umbrella)",
     "MDB_MakeSheetSlingBag_Reinforced": "Laken-Tragetasche nähen (verstärkt)"
 }

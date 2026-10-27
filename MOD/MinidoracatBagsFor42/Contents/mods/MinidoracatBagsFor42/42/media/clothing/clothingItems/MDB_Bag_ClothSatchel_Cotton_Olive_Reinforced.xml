@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<clothingItem>
+	<m_GUID>a02d2317-1962-5ed0-820a-3c2dd2996ba1</m_GUID>
+	<m_MaleModel>media\models_X\Skinned\BackPacks\MDB_M_ClothSatchel_Mirror.X</m_MaleModel>
+	<m_FemaleModel>media\models_X\Skinned\BackPacks\MDB_F_ClothSatchel_Mirror.X</m_FemaleModel>
+	<m_AltMaleModel></m_AltMaleModel>
+	<m_AltFemaleModel></m_AltFemaleModel>
+	<m_Static>false</m_Static>
+	<m_AllowRandomHue>false</m_AllowRandomHue>
+	<m_AllowRandomTint>false</m_AllowRandomTint>
+	<m_AttachBone></m_AttachBone>
+	<m_MasksFolder>none</m_MasksFolder>
+	<textureChoices>Clothes\Bag\MDB_Bag_ClothSatchel_Cotton_Olive</textureChoices>
+</clothingItem>

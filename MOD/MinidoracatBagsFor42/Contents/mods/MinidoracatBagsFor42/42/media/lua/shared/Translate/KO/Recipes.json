@@ -19,5 +19,6 @@
     "MDB_ConvertLegacyBag": "구 Plus 가방을 강화판으로 개조하기",
     "MDB_RestoreReinforced": "강화판 가방을 원래대로 되돌리기",
     "MDB_ReinforceUpgradedBag": "1단계 이상 가방을 강화판으로 바꾸기",
+    "MDB_SwapReinforcedTheme": "강화판 테마 바꾸기 (S.T.A.R.S./엄브렐라)",
     "MDB_MakeSheetSlingBag_Reinforced": "천 어깨 가방 만들기 (강화)"
 }

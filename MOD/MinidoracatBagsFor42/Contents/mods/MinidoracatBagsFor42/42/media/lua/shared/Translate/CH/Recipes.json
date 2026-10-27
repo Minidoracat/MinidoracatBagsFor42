@@ -19,5 +19,6 @@
     "MDB_ConvertLegacyBag": "改裝舊 Plus 背包為強化版",
     "MDB_RestoreReinforced": "強化版改回原版背包",
     "MDB_ReinforceUpgradedBag": "已升級背包改成強化版",
+    "MDB_SwapReinforcedTheme": "強化版換主題（S.T.A.R.S./保護傘）",
     "MDB_MakeSheetSlingBag_Reinforced": "製作床單斜背包（強化）"
 }

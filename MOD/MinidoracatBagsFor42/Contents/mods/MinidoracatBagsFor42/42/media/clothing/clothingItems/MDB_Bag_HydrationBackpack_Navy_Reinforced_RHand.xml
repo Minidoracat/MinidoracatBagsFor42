@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<clothingItem>
+	<m_MaleModel>media\models_X\Skinned\BackPacks\HydrationBackpack_RHand.x</m_MaleModel>
+	<m_FemaleModel>media\models_X\Skinned\BackPacks\HydrationBackpack_RHand.x</m_FemaleModel>
+	<m_GUID>367a6bfd-9cad-53e2-8891-994076af31aa</m_GUID>
+	<m_Static>false</m_Static>
+	<m_AllowRandomHue>false</m_AllowRandomHue>
+	<m_AllowRandomTint>false</m_AllowRandomTint>
+	<m_AttachBone></m_AttachBone>
+	<textureChoices>Clothes\Bag\MDB_Bag_HydrationBackpack_Navy</textureChoices>
+</clothingItem>

@@ -1,5 +1,5 @@
 -- 舊 Bag Upgrade Plus 背包外殼的放入鎖與改裝配方（MDB_Legacy.txt、MDB_Convert.txt）。
--- MDB.opt、MDB.applyTier、MDB.swapBag、MDB.REINFORCED 在 MDB_Upgrade.lua；這裡只在呼叫時用到，不受載入順序影響。
+-- MDB.opt、MDB.applyTier、MDB.toReinforced、MDB.reinforcedOf 在 MDB_Upgrade.lua；這裡只在呼叫時用到，不受載入順序影響。
 MDB = MDB or {}
 
 -- AcceptItemFunction（ItemContainer.isItemAllowed，ItemContainer.java:296-304）：
@@ -8,7 +8,8 @@ function MDB.acceptLegacy(container, item)
     return MDB.opt("LockLegacyBags") == false
 end
 
--- 舊背包外殼 → 對應的原版背包（BUP 升級配方的對照表；ALICEpackPlus 對 Bag_ALICEpack）。改裝成它的強化版
+-- 舊背包外殼 → 對應的原版背包（BUP 升級配方的對照表；ALICEpackPlus 對 Bag_ALICEpack）。改裝成它的強化版，主題照外殼的顏色
+-- 查原版那張表（外殼 XML 的 textureChoices 和原版同款相同，test_legacy.lua 核對）
 MDB.LEGACY_TARGET = {
     ["BagUpgradePlus.ALICEpackPlus"] = "Base.Bag_ALICEpack",
     ["BagUpgradePlus.ALICEpack_CamoPlus"] = "Base.Bag_ALICEpack_Army",
@@ -51,18 +52,18 @@ MDB.LEGACY_TARGET = {
 }
 
 -- 改裝配方 OnCreate（只在單機或伺服器執行，ISHandcraftAction.lua:221-234）：舊背包換成對應原版的強化版、直接給最高階；
--- 內容物、modData、液體（舊水袋 5 升）照 MDB.swapBag 搬過去
+-- 內容物、modData、液體（舊水袋 5 升）照 MDB.swapBag 搬過去，原款記成對應的原版（還原時換回它）
 function MDB.onConvertLegacy(data, character)
     local bag = MDB.keepBag(data)
     if not bag then return end
-    MDB.swapBag(bag, MDB.REINFORCED[MDB.LEGACY_TARGET[bag:getFullType()]], MDB.opt("MaxTier"), character)
+    MDB.toReinforced(bag, MDB.LEGACY_TARGET[bag:getFullType()], MDB.opt("MaxTier"), character)
 end
 
 -- 強化版布吊帶包直接製作（BUP 的 MakeSheetSlingBagPlus 同材料）：配方 RemoveResultItems 不產出，這裡自己建。
 -- 還沒放進容器時套最高階（applyTier 不重送），再放進主物品欄（自重 0.1，超重也不丟地上），伺服器整件送一次
 -- （AddInventoryItemToContainerPacket.java:54-58；sendAddItemToContainer 只在伺服器有作用，LuaManager.java:12370-12374）
 function MDB.onMakeReinforcedSling(data, character)
-    local bag = instanceItem("MinidoracatBags.Bag_SheetSlingBag_Reinforced")
+    local bag = instanceItem(MDB.reinforcedOf("Base.Bag_SheetSlingBag"))
     MDB.applyTier(bag, MDB.opt("MaxTier"))
     local inv = character:getInventory()
     inv:AddItem(bag)

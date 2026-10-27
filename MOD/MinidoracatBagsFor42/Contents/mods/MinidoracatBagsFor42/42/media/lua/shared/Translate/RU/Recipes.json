@@ -19,5 +19,6 @@
     "MDB_ConvertLegacyBag": "Переделать старую сумку Plus в укреплённую версию",
     "MDB_RestoreReinforced": "Вернуть укреплённую сумку к исходной",
     "MDB_ReinforceUpgradedBag": "Переделать сумку уровня 1 и выше в укреплённую версию",
+    "MDB_SwapReinforcedTheme": "Сменить тему укреплённой сумки (S.T.A.R.S./«Амбрелла»)",
     "MDB_MakeSheetSlingBag_Reinforced": "Сделать наплечную сумку из простыни (укреплённая версия)"
 }

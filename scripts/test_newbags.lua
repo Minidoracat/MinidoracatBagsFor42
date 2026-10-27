@@ -32,7 +32,9 @@ local F = {
     I18N_FLUIDS = TRANSLATE .. "EN/Fluids.json",
     REIN = MEDIA .. "scripts/MDB_Reinforced.txt",
     CONVERT = MEDIA .. "scripts/MDB_Convert.txt",
-    REIN_XML = MEDIA .. "clothing/clothingItems/MDB_Bag_Satchel_Reinforced.xml",
+    REIN_XML = MEDIA .. "clothing/clothingItems/MDB_Bag_Satchel_Navy_Reinforced.xml",
+    REIN_HAND_XML = MEDIA .. "clothing/clothingItems/MDB_Bag_DuffelBag_Olive_Reinforced_LHand.xml",
+    SHAPES = "scripts/theme_shapes.json",
     REG = MEDIA .. "registries.lua",
     BODYLOC = MEDIA .. "lua/shared/MDB_BodyLocations.lua",
     GEN = "scripts/gen_reinforced.py",
@@ -152,13 +154,35 @@ local VARIANTS = {
 local SWAP_FIELDS = { CanBeEquipped = true, BodyLocation = true, ClothingItem = true, ClothingItemExtra = true,
     ClothingItemExtraOption = true, ClothingExtraSubmenu = true }
 local SKINS = { "Navy", "Olive" }
--- 強化版的來源＝升級配方清單裡的全部背包（原版可穿戴、沒有 AcceptItemFunction 的容器＋本 MOD 14 件）；suite 開頭算出
-local REIN_SPEC = {}
+-- 強化版的來源＝升級配方清單裡的全部背包（原版可穿戴、沒有 AcceptItemFunction 的容器 80 種＋本 MOD 18 件）；suite 開頭算出。
+-- 本 MOD 的一款一件 reinOf；原版的依穿戴網格併成形狀，每種兩件 themedOf（使用者 2026-10-27）
+local REIN_SPEC, VANILLA_SPEC, OWN_SPEC = {}, {}, {}
 local SATCHEL2 = "minidoracatbags:satchel2"   -- 第二個側背包位置（registries.lua）
 local function reinOf(full) return "MinidoracatBags." .. full:match("[^.]+$") .. "_Reinforced" end
-local function ciOf(full) return "MDB_" .. full:match("[^.]+$") .. "_Reinforced" end
+local function themedOf(shape, theme) return "MinidoracatBags." .. shape .. "_" .. theme .. "_Reinforced" end
+local function ciOf(full) return "MDB_" .. full:match("[^.]+$") end   -- 強化版全名 → 它的 ClothingItem
 local function isVanillaBag(b)
     return b.fields.ItemType == "base:container" and b.fields.CanBeEquipped ~= nil and b.fields.AcceptItemFunction == nil
+end
+-- 主題分類的固定點（使用者 2026-10-27：警用、警長、特警用 S.T.A.R.S.；軍用、ALICE、迷彩、醫療、自製與天然材質用保護傘；
+-- 多色的照那個包的顏色：行李袋第 2 色是綠色 duffelbaggreen）。完整的 160 種在清單檔，下面另和它逐一比對
+local THEME_SPEC = {
+    ["Base.Bag_Police"] = { "Navy" }, ["Base.Bag_Sheriff"] = { "Navy" }, ["Base.Bag_SWAT"] = { "Navy" },
+    ["Base.Bag_Military"] = { "Olive" }, ["Base.Bag_MedicalBag"] = { "Olive" }, ["Base.Bag_ALICEpack"] = { "Olive" },
+    ["Base.Bag_ALICEpack_DesertCamo"] = { "Olive" }, ["Base.Bag_HideSatchel"] = { "Olive" }, ["Base.Bag_SheetSlingBag"] = { "Olive" },
+    ["Base.Bag_Schoolbag_Medical"] = { "Olive", "Olive" },
+    ["Base.Bag_DuffelBag"] = { "Navy", "Olive", "Navy", "Navy", "Navy", "Navy", "Navy" },
+}
+-- 原版地面模型寫死貼圖的 4 種網格：主題款用 ThemeDesign 的模型腳本 MinidoracatBags.MDB_<形狀>_<主題>_Ground，其他照代表款
+local GROUND_OWN = { Bag_ChestRig = true, Bag_Satchel_Leather = true, Bag_CrudeLeatherBag = true, Bag_ClothSatchel_Cotton = true }
+-- 清單檔的 theme_by_source：{ 來源 = { 主題, ... } }
+local function readThemeTable(text)
+    local out = {}
+    for src, list in text:match('"theme_by_source"%s*:%s*(%b{})'):gmatch('"(Base%.[%w_]+)"%s*:%s*(%b[])') do
+        out[src] = {}
+        for t in list:gmatch('"(%a+)"') do out[src][#out[src] + 1] = t end
+    end
+    return out
 end
 -- 側背包鏡像對照檔（scripts/satchel_mirror_map.json，SatchelMirror 交付；沒有就照原模型路徑）。模型路徑裡沒有引號
 local MIRROR_MAP = "scripts/satchel_mirror_map.json"
@@ -210,10 +234,15 @@ local function resetEnv()
     SandboxVars = { MinidoracatBags = { LockLegacyBags = true, MaxTier = 3, FullCapacityPercent = 100,
         FullWeightReduction = 100, LootMultiplier = 1 } }
     -- MDB_Upgrade 會 require 並包住原版的 createItemNew；每次載入給新表，突變才不會吃到上一輪的包裝。
-    -- 照原版（ISClothingExtraAction.lua:66-112）搬內容物、改名、液體（依新容量截斷）、modData（先清空再複製，InventoryItem.java:3003-3011）
+    -- 照原版（ISClothingExtraAction.lua:66-112）搬顏色（textureChoice、染色）、內容物、改名、液體（依新容量截斷）、
+    -- modData（先清空再複製，InventoryItem.java:3003-3011）
     ISClothingExtraAction = {}
     function ISClothingExtraAction:createItemNew(item, newItem)
         if env.failCopy then error("copy failed") end
+        if item.visual and newItem.visual then
+            newItem.visual:setTint(item.visual:getTint())
+            newItem.visual:setTextureChoice(item.visual:getTextureChoice())
+        end
         for _, c in ipairs(item.contents or {}) do newItem.contents[#newItem.contents + 1] = c end
         item.contents = {}
         local shown = item.getName and item:getName() or item.name   -- 原版寫入 getName()（帶染血等前綴），不搬改名旗標
@@ -271,10 +300,37 @@ local function newContainer()
 end
 local CONTAINER = newContainer()
 local PLAYER = { getInventory = function() return CONTAINER end }
+-- ItemVisual：textureChoice 與染色。single＝ClothingItem 只有一張貼圖、不能隨機染色（主題強化版）：一畫就把 textureChoice
+-- 重設成 -1、染色變白（ItemVisual.java:153-166、:185-196），這裡讀的時候就照那樣回，還原時只能靠 modData 的紀錄
+local function newTint(r, g, b)
+    local t = { r = r, g = g, b = b }
+    function t:getRedFloat() return self.r end
+    function t:getGreenFloat() return self.g end
+    function t:getBlueFloat() return self.b end
+    return t
+end
+local WHITE = newTint(1, 1, 1)
+ImmutableColor = { decode = function(s)   -- ImmutableColor.java:102-119：低 8 位紅、再來綠、藍
+    local n = assert(math.tointeger(tonumber(s)), "ImmutableColor.decode: not an integer string " .. tostring(s))
+    return newTint((n % 256) / 255, (n // 256 % 256) / 255, (n // 65536 % 256) / 255)
+end }
+local function newVisual(single)
+    local v = { choice = -1, tint = WHITE, single = single }
+    function v:getTextureChoice() return self.single and -1 or self.choice end
+    function v:setTextureChoice(c) self.choice = c end
+    function v:getTint() return self.single and WHITE or self.tint end
+    function v:setTint(t) self.tint = t end
+    return v
+end
+local function isThemed(full)
+    local theme = tostring(full):match("^MinidoracatBags%.Bag_.+_(%a+)_Reinforced$")
+    return theme == "Navy" or theme == "Olive"
+end
 -- weight＝腳本自重；instanceWeight 模擬 getActualWeight()（伺服器上顯示名稱等於全名時回 0，InventoryItem.java:2740-2742）
 local function newBag(cap, wr, weight, fullType)
     local b = { __class = "InventoryContainer", cap = cap, wr = wr, weight = weight, md = {}, container = CONTAINER,
-        contents = {}, fullType = fullType, name = "name of " .. tostring(fullType), custom = false }
+        contents = {}, fullType = fullType, name = "name of " .. tostring(fullType), custom = false,
+        visual = newVisual(isThemed(fullType)) }
     local script = {}
     function script:getActualWeight() return weight end
     function script:getDisplayName() return "name of " .. tostring(fullType) end
@@ -293,6 +349,8 @@ local function newBag(cap, wr, weight, fullType)
     function b:getContainer() return self.container end
     function b:getFluidContainer() return self.fc end
     function b:getFullType() return self.fullType end
+    function b:getVisual() return self.visual end
+    function b:synchWithVisual() end
     return b
 end
 -- FluidContainer：setCapacity 下限 0.05，縮小時按比例截斷（FluidContainer.java:683-696）；
@@ -353,13 +411,33 @@ local function suite()
         return items[full] ~= nil or rein[full] ~= nil or VAN.items[full] ~= nil
     end
     local function srcBlock(full) return VAN.items[full] or items[full] end
+    VANILLA_SPEC, OWN_SPEC = {}, {}
+    for full, b in pairs(VAN.items) do if isVanillaBag(b) then VANILLA_SPEC[#VANILLA_SPEC + 1] = full end end
+    for k in pairs(MODELS) do for _, s in ipairs(SKINS) do OWN_SPEC[#OWN_SPEC + 1] = "MinidoracatBags." .. k .. "_" .. s end end
+    for v in pairs(VARIANTS) do for _, s in ipairs(SKINS) do OWN_SPEC[#OWN_SPEC + 1] = "MinidoracatBags." .. v .. "_" .. s end end
+    table.sort(VANILLA_SPEC); table.sort(OWN_SPEC)
     REIN_SPEC = {}
-    for full, b in pairs(VAN.items) do if isVanillaBag(b) then REIN_SPEC[#REIN_SPEC + 1] = full end end
-    for k in pairs(MODELS) do for _, s in ipairs(SKINS) do REIN_SPEC[#REIN_SPEC + 1] = "MinidoracatBags." .. k .. "_" .. s end end
-    for v in pairs(VARIANTS) do for _, s in ipairs(SKINS) do REIN_SPEC[#REIN_SPEC + 1] = "MinidoracatBags." .. v .. "_" .. s end end
-    table.sort(REIN_SPEC)
+    for _, s in ipairs(VANILLA_SPEC) do REIN_SPEC[#REIN_SPEC + 1] = s end
+    for _, s in ipairs(OWN_SPEC) do REIN_SPEC[#REIN_SPEC + 1] = s end
     local isSource = {}
     for _, s in ipairs(REIN_SPEC) do isSource[s] = true end
+    -- 形狀（MDB_Upgrade.lua 的 MDB.THEME_SOURCES，產生器照清單檔寫的）：形狀 → 成員；主題強化版 44 件＋本 MOD 18 件
+    loadAll()
+    local themeSources, shapes, shapeOf = MDB.THEME_SOURCES or {}, {}, {}
+    for src, s in pairs(themeSources) do
+        shapes[s.shape] = shapes[s.shape] or {}
+        table.insert(shapes[s.shape], src)
+        shapeOf[src] = s.shape
+    end
+    local THEMED_SPEC, REIN_ITEMS = {}, {}   -- 主題強化版全名 → { shape, theme }；強化版全名 → 取欄位的來源（代表款或本 MOD 原款）
+    for shape in pairs(shapes) do
+        for _, t in ipairs(SKINS) do
+            THEMED_SPEC[themedOf(shape, t)] = { shape = shape, theme = t }
+            REIN_ITEMS[themedOf(shape, t)] = "Base." .. shape
+        end
+    end
+    for _, s in ipairs(OWN_SPEC) do REIN_ITEMS[reinOf(s)] = s end
+    local themeTable = readThemeTable(readFile(F.SHAPES))
 
     -- 1. 物品欄位
     local count = 0
@@ -436,13 +514,82 @@ local function suite()
     check("clothing: unique non-vanilla names, XML present, GUID registered", clothingOk)
     check("clothing: GUIDs unique and not vanilla", dupOk)
 
-    -- 2a. 強化版（scripts/gen_reinforced.py 產生）：來源＝升級清單裡全部背包，每個一款；欄位逐一照來源，只差自重 0.1（沒寫也補）、
-    --     跑速 1.0、自己的 ClothingItem、換穿法指向目標的強化版、側背包改穿第二個側背包位置；FluidContainer 照來源只換 ContainerName；
-    --     XML 照來源換 GUID（全新、登記、不重複），側背包另照鏡像對照檔換男女模型
-    local reinCount, reinFieldsOk, reinXmlOk = 0, true, true
+    -- 2a. 強化版（scripts/gen_reinforced.py 產生）
+    --   原版 80 種依穿戴網格（ClothingItem XML 的 m_MaleModel）併成形狀，每種 Navy／Olive 兩件；本 MOD 18 件一款一件。
+    --   欄位逐一照代表款（本 MOD 的照來源），只差：自重 0.1（沒寫也補）、跑速與戰鬥速度 1.0、自己的 ClothingItem、換穿法指向目標的
+    --   強化版（主題款同主題）、側背包改穿第二個側背包位置、FluidContainer 換 ContainerName。主題款另外：Capacity、WeightReduction、
+    --   液體容量取同組最高（中間各階不比合併前低）、DisplayCategory = Bag、Icon 換主題圖示（沒有 IconsForTexture）、手持換自己的
+    --   ClothingItem、4 種網格的地面模型換主題款。XML 照來源換 GUID（全新、登記、不重複），主題款貼圖只剩主題那一張，
+    --   側背包另照鏡像對照檔換男女模型
+    local function xmlOf(full, ci)
+        local dir = full:find("^MinidoracatBags%.") and (MEDIA .. "clothing/clothingItems/") or (PZ .. "clothing/clothingItems/")
+        return ci and readFile(dir .. ci .. ".xml", true)
+    end
+    local function meshOf(full)
+        local b = VAN.items[full]
+        local path = (b and xmlOf(full, b.fields.ClothingItem) or ""):match("<m_MaleModel>([^<]*)</m_MaleModel>") or ""
+        local m = path:gsub("%.[Xx]$", ""):match("([%w_]+)$")   -- 檔名，不含副檔名
+        return m and m:lower()
+    end
+    local function nChoices(xml)
+        local n = 0
+        for _ in (xml or ""):gmatch("<textureChoices>") do n = n + 1 end
+        return n
+    end
+    local function mediaFile(rel)
+        local fh = io.open(MEDIA .. rel, "rb")
+        if fh then fh:close() end
+        return fh ~= nil
+    end
+    local modModels = {}
+    for _, path in ipairs(listFiles(MEDIA .. "scripts/", "*.txt")) do
+        local fh = io.open(path, "rb"); local text = fh:read("*a"); fh:close()
+        for _, b in ipairs(parseBlocks(text, "model")) do modModels[b.module .. "." .. b.name] = true end
+    end
+
+    -- 形狀：80 種各在一種形狀裡、和代表款同網格，同網格的都在同一種；每種顏色一個主題，和清單檔與使用者的分類一致，
+    --       每種顏色升級後都有對應的強化版
+    local nShapes, groupOk, meshShape = 0, true, {}
+    for shape, members in pairs(shapes) do
+        nShapes = nShapes + 1
+        local mesh = meshOf("Base." .. shape)
+        if not mesh or meshShape[mesh] or not VAN.items["Base." .. shape] then groupOk = false; diag("    shape problem: " .. shape) end
+        if mesh then meshShape[mesh] = shape end
+        for _, m in ipairs(members) do
+            if meshOf(m) ~= mesh then groupOk = false; diag("    " .. m .. " mesh " .. tostring(meshOf(m)) .. " not " .. tostring(mesh)) end
+        end
+    end
+    local colorOk, everyColorOk, nColors = true, true, 0
+    for _, src in ipairs(VANILLA_SPEC) do
+        local s = themeSources[src]
+        if not s then groupOk = false; diag("    no shape: " .. src)
+        else
+            local want = math.max(1, nChoices(xmlOf(src, VAN.items[src].fields.ClothingItem)))
+            local json = themeTable[src] or {}
+            if #s.themes ~= want or table.concat(s.themes, ",") ~= table.concat(json, ",") then
+                colorOk = false; diag("    themes " .. src .. ": " .. table.concat(s.themes, ",") .. " want " .. want .. " = " .. table.concat(json, ","))
+            end
+            if THEME_SPEC[src] and table.concat(s.themes, ",") ~= table.concat(THEME_SPEC[src], ",") then colorOk = false; diag("    spec " .. src) end
+            for i, t in ipairs(s.themes) do
+                nColors = nColors + 1
+                local r = MDB.reinforcedOf and MDB.reinforcedOf(src, i - 1)
+                if r ~= themedOf(s.shape, t) or not rein[r] then everyColorOk = false; diag("    color " .. i .. " of " .. src .. " -> " .. tostring(r)) end
+            end
+        end
+    end
+    check("shapes: all " .. #VANILLA_SPEC .. " vanilla sources merged by worn mesh into " .. nShapes .. " shapes (one per mesh, keyed by the representative)",
+        groupOk and #VANILLA_SPEC == 80 and nShapes == 22)
+    check("shapes: one theme per texture choice (" .. nColors .. "), same as theme_shapes.json and the user's classification (police/sheriff/SWAT Navy, military/medical/natural Olive)",
+        colorOk and nColors == 160)
+    check("shapes: every vanilla source in every color upgrades to an existing reinforced bag of its theme", everyColorOk)
+
+    local reinCount, nThemed, reinFieldsOk, reinXmlOk, artOk = 0, 0, true, true, true
     for _ in pairs(rein) do reinCount = reinCount + 1 end
-    check("reinforced: one per source (" .. #REIN_SPEC .. " = 80 vanilla + 14 own + 4 swap variants), nothing else",
-        reinCount == #REIN_SPEC and #REIN_SPEC == 98)
+    for _ in pairs(THEMED_SPEC) do nThemed = nThemed + 1 end
+    local allThere = true
+    for full in pairs(REIN_ITEMS) do if not rein[full] then allThere = false; diag("    reinforced missing: " .. full) end end
+    check("reinforced: 22 shapes x 2 themes = 44, plus one per own bag (14 + 4 swap variants), nothing else",
+        nThemed == 44 and allThere and reinCount == nThemed + #OWN_SPEC and #OWN_SPEC == 18)
     local mirror = readMirrorMap(MIRROR_MAP)
     local function plainXml(x) return (x:gsub("^\239\187\191", ""):gsub("\r\n", "\n"):gsub("<m_GUID>[^<]*</m_GUID>", "")) end
     local function mirrored(x)
@@ -453,34 +600,76 @@ local function suite()
         end
         return x
     end
-    local satchelSources, satchel2Count, pairCount = 0, 0, 0
-    for _, src in ipairs(REIN_SPEC) do
-        local full, ci = reinOf(src), ciOf(src)
-        local r, v = rein[full], srcBlock(src)
+    local function themedXml(x, th)
+        local tex, first = "Clothes\\Bag\\MDB_" .. th.shape .. "_" .. th.theme, true
+        return (x:gsub("([ \t]*)<textureChoices>[^<]*</textureChoices>\r?\n", function(ind)
+            if not first then return "" end
+            first = false
+            return ind .. "<textureChoices>" .. tex .. "</textureChoices>\n"
+        end))
+    end
+    local function xmlMatches(name, vxml)
+        local xml = readFile(MEDIA .. "clothing/clothingItems/" .. name .. ".xml", true)
+        local g = xml and xml:match("<m_GUID>%s*(.-)%s*</m_GUID>")
+        local ok = xml and vxml and plainXml(xml) == plainXml(vxml) and not VAN.clothing[name] and g
+            and guidOf["media/clothing/clothingItems/" .. name .. ".xml"] == g:lower() and not VAN.guids[g:lower()]
+            and not seenGuid[g:lower()]
+        if g then seenGuid[g:lower()] = true end
+        if not ok then diag("    reinforced clothing problem: " .. name) end
+        return ok
+    end
+    local HAND = { { "ReplaceInPrimaryHand", "_RHand" }, { "ReplaceInSecondHand", "_LHand" } }
+    local satchelSources, satchel2Count, pairCount, srcPairs = 0, 0, 0, 0
+    for full, src in pairs(REIN_ITEMS) do
+        local r, v, th, ci = rein[full], srcBlock(src), THEMED_SPEC[full], ciOf(full)
         local ok = r ~= nil and v ~= nil
         local satchel = v ~= nil and v.fields.CanBeEquipped == "base:satchel"
         if satchel then satchelSources = satchelSources + 1 end
+        if v and v.fields.ClothingItemExtra then srcPairs = srcPairs + 1 end
         if ok then
-            local want = {}
+            local want, fluidCap = {}, nil
             for k, val in pairs(v.fields) do want[k] = val end
             want.Weight, want.RunSpeedModifier, want.ClothingItem = "0.1", "1.0", ci
             -- 戰鬥也不減速：來源有寫且不是 1 才改成 1.0；沒寫就不加（引擎預設 1.0，Item.java:374）
             if want.CombatSpeedModifier and tonumber(want.CombatSpeedModifier) ~= 1 then want.CombatSpeedModifier = "1.0" end
+            if th then
+                local cap, wr = 0, 0
+                for _, m in ipairs(shapes[th.shape]) do
+                    local mf = VAN.items[m].fields
+                    cap, wr = math.max(cap, tonumber(mf.Capacity)), math.max(wr, tonumber(mf.WeightReduction))
+                    for _, l in ipairs(VAN.items[m].lines) do
+                        local c = l.text:match("^Capacity = ([%d.]+)$")
+                        if c and (not fluidCap or tonumber(c) > tonumber(fluidCap)) then fluidCap = c end
+                    end
+                end
+                want.Capacity, want.WeightReduction, want.DisplayCategory = tostring(cap), tostring(wr), "Bag"
+                want.Icon, want.IconsForTexture = "MDB_" .. th.shape .. "_" .. th.theme, nil
+                if GROUND_OWN[th.shape] then want.WorldStaticModel = "MinidoracatBags.MDB_" .. th.shape .. "_" .. th.theme .. "_Ground" end
+                for _, h in ipairs(HAND) do
+                    if want[h[1]] then want[h[1]] = (want[h[1]]:gsub("^%S+", ci .. h[2])) end
+                end
+                local texOk = mediaFile("textures/Item_" .. want.Icon .. ".png")
+                    and mediaFile("textures/Clothes/Bag/MDB_" .. th.shape .. "_" .. th.theme .. ".png")
+                    and (not GROUND_OWN[th.shape] or modModels[want.WorldStaticModel])
+                if not texOk then artOk = false; diag("    theme art missing: " .. full) end
+            end
             if want.ClothingItemExtra then
                 local target = want.ClothingItemExtra:find(".", 1, true) and want.ClothingItemExtra or (v.module .. "." .. want.ClothingItemExtra)
-                want.ClothingItemExtra = isSource[target] and reinOf(target) or "(target is not a source: " .. target .. ")"
+                want.ClothingItemExtra = th and shapeOf[target] and themedOf(shapeOf[target], th.theme)
+                    or not th and isSource[target] and reinOf(target) or "(target has no reinforced version: " .. target .. ")"
             end
             if want.CanBeEquipped == "base:satchel" then want.CanBeEquipped = SATCHEL2 end
             if want.BodyLocation == "base:satchel" then want.BodyLocation = SATCHEL2 end
             for k, val in pairs(want) do
-                if r.fields[k] ~= val then ok = false; diag("    reinforced " .. src .. " " .. k .. "=" .. tostring(r.fields[k]) .. " want " .. val) end
+                if r.fields[k] ~= val then ok = false; diag("    reinforced " .. full .. " " .. k .. "=" .. tostring(r.fields[k]) .. " want " .. val) end
             end
-            for k in pairs(r.fields) do if want[k] == nil then ok = false; diag("    reinforced " .. src .. " extra field " .. k) end end
+            for k in pairs(r.fields) do if want[k] == nil then ok = false; diag("    reinforced " .. full .. " extra field " .. k) end end
             ok = ok and #r.lines == #v.lines
             -- 液體元件照來源，只有 ContainerName 改成自己的（顯示名稱取 Fluid_Container_<ContainerName>，FluidContainer.java:398-404）
             for i, l in ipairs(v.lines) do
                 local wantLine = l.text:gsub("^ContainerName = .*$", "ContainerName = " .. ci)
-                ok = ok and r.lines[i] ~= nil and r.lines[i].text == wantLine
+                if fluidCap then wantLine = wantLine:gsub("^Capacity = .*$", "Capacity = " .. fluidCap) end
+                if not (r.lines[i] ~= nil and r.lines[i].text == wantLine) then ok = false; diag("    reinforced " .. full .. " line " .. l.text) end
             end
             if r.fields.CanBeEquipped == SATCHEL2 then satchel2Count = satchel2Count + 1 end
             -- 換穿法成對：目標的強化版也指回這一款
@@ -491,38 +680,35 @@ local function suite()
             end
         end
         if not ok then reinFieldsOk = false end
-        local xml = readFile(MEDIA .. "clothing/clothingItems/" .. ci .. ".xml", true)
-        local srcDir = src:find("^MinidoracatBags%.") and (MEDIA .. "clothing/clothingItems/") or (PZ .. "clothing/clothingItems/")
-        local vxml = v and readFile(srcDir .. v.fields.ClothingItem .. ".xml", true)
+        local vxml = v and xmlOf(src, v.fields.ClothingItem)
         if vxml and satchel then vxml = mirrored(vxml) end
-        local g = xml and xml:match("<m_GUID>%s*(.-)%s*</m_GUID>")
-        if not (xml and vxml and plainXml(xml) == plainXml(vxml) and not VAN.clothing[ci] and g
-            and guidOf["media/clothing/clothingItems/" .. ci .. ".xml"] == g:lower() and not VAN.guids[g:lower()]
-            and not seenGuid[g:lower()]) then
-            reinXmlOk = false; diag("    reinforced clothing problem: " .. ci)
+        if vxml and th then vxml = themedXml(vxml, th) end
+        if not xmlMatches(ci, vxml) then reinXmlOk = false end
+        for _, h in ipairs(th and v and HAND or {}) do
+            local hand = v.fields[h[1]] and v.fields[h[1]]:match("^%S+")
+            if hand and not xmlMatches(ci .. h[2], themedXml(xmlOf(src, hand) or "", th)) then reinXmlOk = false end
         end
-        if g then seenGuid[g:lower()] = true end
     end
-    check("reinforced: fields copy the source except Weight 0.1, RunSpeedModifier 1.0, CombatSpeedModifier 1.0, own ClothingItem, extra -> paired reinforced, satchel -> " .. SATCHEL2,
+    check("reinforced: fields copy the representative / own source except Weight 0.1, RunSpeed/CombatSpeed 1.0, own ClothingItem, extra -> paired reinforced, satchel -> "
+        .. SATCHEL2 .. "; themed: highest Capacity/WeightReduction/fluid of the shape, DisplayCategory Bag, theme Icon, own hand ClothingItems, theme ground model for 4 meshes",
         reinFieldsOk)
+    check("reinforced: theme icons, textures and ground models exist", artOk)
     local slowCombat = {}
     for full, r in pairs(rein) do
         local c = tonumber(r.fields.CombatSpeedModifier or "1")
         if not c or c < 1 then slowCombat[#slowCombat + 1] = full end
     end
     check("reinforced: no CombatSpeedModifier below 1 (" .. table.concat(slowCombat, ",") .. ")", #slowCombat == 0)
-    check("reinforced: every satchel source (" .. satchelSources .. ") wears in " .. SATCHEL2 .. ", no reinforced bag uses base:satchel",
-        satchelSources >= 15 and satchel2Count == satchelSources and not readFile(F.REIN):find("base:satchel", 1, true))
-    -- 成對數照來源算：有 ClothingItemExtra 的來源（原版一般、獸皮、防水布腰包 3 對＋本 MOD 兩款腰包 × 2 外觀 4 對）
-    local srcPairs = 0
-    for _, s in ipairs(REIN_SPEC) do if (srcBlock(s) or { fields = {} }).fields.ClothingItemExtra then srcPairs = srcPairs + 1 end end
-    check("reinforced: every swap pair (" .. pairCount .. " items = 3 vanilla + 4 own fanny pack pairs) points at each other's reinforced version",
-        pairCount == srcPairs and pairCount == 14)
-    check("reinforced: ClothingItem XML = source XML (satchels via mirror map if present) with a new registered unique GUID",
+    check("reinforced: every satchel (" .. satchelSources .. " = 3 shapes x 2 + 2 own) wears in " .. SATCHEL2 .. ", no reinforced bag uses base:satchel",
+        satchelSources == 8 and satchel2Count == satchelSources and not readFile(F.REIN):find("base:satchel", 1, true))
+    -- 成對數照來源算：原版前、後腰包各一種形狀 × 2 主題，本 MOD 兩款腰包 × 2 外觀 × 前後
+    check("reinforced: every swap pair (" .. pairCount .. " items = 2 themed fanny shapes x 2 + 8 own) points at each other's reinforced version",
+        pairCount == srcPairs and pairCount == 12)
+    check("reinforced: ClothingItem XML (worn and in hand) = source XML with only the theme texture (satchels via mirror map if present) and a new registered unique GUID",
         reinXmlOk)
     check("reinforced: never in loot or zombie drops", not readFile(F.LOOT):find("Reinforced", 1, true)
         and not readFile(F.ZD):find("Reinforced", 1, true))
-    -- 還原與「已升級原版背包改成強化版」：背包 keep＋不能穿著、沒有產出，換型在 OnCreate
+    -- 還原、「已升級原版背包改成強化版」、換主題：背包 keep＋不能穿著、沒有產出，換型在 OnCreate
     local function bagSet(r)
         local set, n, line = {}, 0, nil
         for _, l in ipairs(r and r.lines or {}) do
@@ -541,19 +727,24 @@ local function suite()
     end
     local rset, rn = bagSet(reinRecipes.MDB_RestoreReinforced)
     local mset, mn = bagSet(reinRecipes.MDB_ReinforceUpgradedBag)
-    local covered = rn == #REIN_SPEC and mn == #REIN_SPEC
-    for _, s in ipairs(REIN_SPEC) do covered = covered and rset[reinOf(s)] and mset[s] end
-    local rr, mr = reinRecipes.MDB_RestoreReinforced, reinRecipes.MDB_ReinforceUpgradedBag
+    local tset, tn = bagSet(reinRecipes.MDB_SwapReinforcedTheme)
+    local covered = rn == reinCount and mn == #REIN_SPEC and tn == nThemed
+    for full in pairs(REIN_ITEMS) do covered = covered and rset[full] and (tset[full] or not THEMED_SPEC[full]) end
+    for _, s in ipairs(REIN_SPEC) do covered = covered and mset[s] end
+    local rr, mr, tr = reinRecipes.MDB_RestoreReinforced, reinRecipes.MDB_ReinforceUpgradedBag, reinRecipes.MDB_SwapReinforcedTheme
     local recipeCount = 0
     for _ in pairs(reinRecipes) do recipeCount = recipeCount + 1 end
-    check("restore / reinforce-upgraded recipes: exactly these 2, bag lists cover all " .. #REIN_SPEC .. " (reinforced / source)",
-        recipeCount == 2 and covered == true)
+    check("restore / reinforce-upgraded / swap-theme recipes: exactly these 3; bags = all " .. reinCount .. " reinforced / all "
+        .. #REIN_SPEC .. " sources / the " .. nThemed .. " themed ones", recipeCount == 3 and covered == true)
     check("MDB_RestoreReinforced: scissors kept, no other input, no outputs, MDB.onSwapKeepTier, no OnTest",
         rr ~= nil and #rr.lines == 2 and hasLine(rr, "item 1 tags[base:scissors] mode:keep flags[IsNotDull;MayDegradeLight]")
         and noOutputs(rr) and rr.fields.OnCreate == "MDB.onSwapKeepTier" and rr.fields.OnTest == nil)
     check("MDB_ReinforceUpgradedBag: needle kept, no outputs, OnTest MDB.onTestUpgraded, MDB.onSwapKeepTier",
         mr ~= nil and #mr.lines == 2 and hasLine(mr, "item 1 tags[base:sewingneedle] mode:keep") and noOutputs(mr)
         and mr.fields.OnTest == "MDB.onTestUpgraded" and mr.fields.OnCreate == "MDB.onSwapKeepTier")
+    check("MDB_SwapReinforcedTheme: needle kept + thread 1, no skill, no outputs, MDB.onSwapTheme, no OnTest",
+        tr ~= nil and #tr.lines == 3 and hasLine(tr, "item 1 tags[base:sewingneedle] mode:keep") and hasLine(tr, "item 1 tags[base:thread]")
+        and noOutputs(tr) and tr.fields.OnCreate == "MDB.onSwapTheme" and tr.fields.OnTest == nil and tr.fields.SkillRequired == nil)
 
     -- 2b. 自製資產的款式（scripts/blender/bags/build.py）：圖示、地面模型、左右手、穿戴模型、貼圖都指向 MOD 自己的檔，
     --     而且檔案存在。xml 的模型路徑要寫 media\ 開頭與副檔名（PopTemplateManager.java:272-275、FileTask_AbstractLoadModel.java:53-87）。
@@ -668,9 +859,11 @@ local function suite()
         end
         check("MDB_Make" .. k .. ": Navy and Olive use different fabric", fabric.Navy and fabric.Olive and fabric.Navy ~= fabric.Olive)
     end
-    -- 升級配方：背包清單＝原版可穿戴、無 AcceptItemFunction 的容器＋14 件新背包＋4 件換穿變體（也就是全部強化版來源）＋它們的強化版
+    -- 升級配方：背包清單＝原版可穿戴、無 AcceptItemFunction 的容器 80 種＋14 件新背包＋4 件換穿變體（也就是全部強化版來源）
+    --          ＋全部強化版（主題 44 件、本 MOD 18 件）
     local expectBags = {}
-    for _, s in ipairs(REIN_SPEC) do expectBags[s] = true; expectBags[reinOf(s)] = true end
+    for _, s in ipairs(REIN_SPEC) do expectBags[s] = true end
+    for full in pairs(REIN_ITEMS) do expectBags[full] = true end
     for t = 1, 3 do
         local r = recipes["MDB_UpgradeBagTier" .. t]
         local bagLine, outputs = nil, 0
@@ -682,7 +875,7 @@ local function suite()
         for full in (bagLine and bagLine:match("%[(.-)%]") or ""):gmatch("[^;]+") do got[full] = true end
         for full in pairs(expectBags) do if not got[full] then setOk = false; diag("    upgrade missing: " .. full) end end
         for full in pairs(got) do if not expectBags[full] then setOk = false; diag("    upgrade extra: " .. full) end end
-        check("MDB_UpgradeBagTier" .. t .. ": bag list = wearable vanilla containers + 14 new + 4 variants + all their reinforced versions", setOk)
+        check("MDB_UpgradeBagTier" .. t .. ": bag list = 80 wearable vanilla containers + 14 new + 4 variants + all 62 reinforced", setOk)
         check("MDB_UpgradeBagTier" .. t .. ": bag is keep + IsNotWorn, outputs empty", bagLine ~= nil
             and bagLine:find("mode:keep", 1, true) and bagLine:find("flags[IsNotWorn]", 1, true) and outputs == 0)
         check("MDB_UpgradeBagTier" .. t .. ": Tailoring " .. (t + 1) .. ", hooks wired", r ~= nil
@@ -767,6 +960,35 @@ local function suite()
         end
     end
     check("variants: ItemName in 16 languages = their original pouch", variantNameOk)
+    -- 主題強化版的名稱：主題詞與語序照本 MOD 7 款的譯名（從日行背包兩款與它的強化版算出前後、保護傘的詞、強化標記），
+    -- 兩個主題只差主題詞；英文另核對＝主題詞＋代表款的原版名稱＋標記。水袋的容器名稱也帶主題詞（使用者 2026-10-27）
+    local vanEN = readFile(PZ .. "lua/shared/Translate/EN/ItemName.json", true)
+    local themeNameOk = true
+    for _, lang in ipairs(LANGS) do
+        local text = readFile(TRANSLATE .. lang .. "/ItemName.json", true)
+        local fluids = readFile(TRANSLATE .. lang .. "/Fluids.json", true)
+        local navy = jsonValue(text, "MinidoracatBags.DayPack_Navy") or ""
+        local olive = jsonValue(text, "MinidoracatBags.DayPack_Olive") or ""
+        local prefix = navy:sub(1, 11) == "S.T.A.R.S. "
+        local base = prefix and navy:sub(12) or navy:sub(1, -12)
+        local words = { Navy = "S.T.A.R.S.", Olive = prefix and olive:sub(1, #olive - #base - 1) or olive:sub(#base + 2) }
+        local mark = (jsonValue(text, "MinidoracatBags.DayPack_Navy_Reinforced") or ""):sub(#navy + 1)
+        for full, th in pairs(THEMED_SPEC) do
+            local name, w = jsonValue(text, full) or "", words[th.theme]
+            local core = #mark > 0 and name:sub(-#mark) == mark and name:sub(1, -#mark - 1) or ""
+            local bare = prefix and core:sub(1, #w + 1) == w .. " " and core:sub(#w + 2)
+                or not prefix and core:sub(-#w - 1) == " " .. w and core:sub(1, -#w - 2)
+            local other = themedOf(th.shape, th.theme == "Navy" and "Olive" or "Navy")
+            local otherBare = (jsonValue(text, other) or ""):sub(1, -#mark - 1)
+            local ok = bare and bare ~= "" and otherBare:find(bare, 1, true) ~= nil
+                and (lang ~= "EN" or bare == jsonValue(vanEN, "Base." .. th.shape))
+            local fc = full:find("Hydration", 1, true) and jsonValue(fluids, "Fluid_Container_" .. ciOf(full))
+            if fc and not fc:find(w, 1, true) then ok = false end
+            if not ok then themeNameOk = false; diag("    themed name: " .. lang .. " " .. full .. " = " .. name) end
+        end
+    end
+    check("themed reinforced names (and water bag container names) carry the theme word in the order of the own 7 bags, English = theme + vanilla name + (Reinforced)",
+        themeNameOk)
 
     -- 6. Lua 載入與函式名解析
     loadAll()
@@ -941,20 +1163,27 @@ local function suite()
     end
     check("own fanny pouches <-> swap variants keep tier 2 both ways and still upgrade to 49/100", variantSwapOk)
 
-    -- 8c. 強化版：對照表、各階數值、升級換型、還原、腰包換穿、0.1.0 升過級的原版背包
-    local specOk = #(MDB.REINFORCED_SOURCES or {}) == #REIN_SPEC
-    for _, s in ipairs(REIN_SPEC) do
+    -- 8c. 強化版：對照表、各階數值、升級換型（照顏色選主題、記下原款）、還原（換回原款與顏色）、換主題、腰包換穿、
+    --     0.1.0 升過級的原版背包
+    local specOk = #(MDB.REINFORCED_SOURCES or {}) == #OWN_SPEC
+    for _, s in ipairs(OWN_SPEC) do
         local r = MDB.REINFORCED[s]
-        specOk = specOk and r == reinOf(s) and MDB.ORIGINAL[r] == s
+        specOk = specOk and r == reinOf(s) and MDB.ORIGINAL[r] == s and MDB.reinforcedOf(s) == r
     end
-    check("REINFORCED_SOURCES = every bag in the upgrade list (" .. #REIN_SPEC .. "), REINFORCED / ORIGINAL map both ways", specOk)
-    local tiersOk = true
-    for _, s in ipairs(REIN_SPEC) do
-        local b = instanceItem(reinOf(s))
+    for full, th in pairs(THEMED_SPEC) do
+        local t = MDB.THEMED[full]
+        specOk = specOk and MDB.ORIGINAL[full] == "Base." .. th.shape and t and t.shape == th.shape and t.theme == th.theme
+    end
+    check("REINFORCED_SOURCES = the 18 own bags (REINFORCED / ORIGINAL both ways); the 44 themed ones restore to the representative by default",
+        specOk)
+    local tiersOk, nTiers = true, 0
+    for full in pairs(REIN_ITEMS) do
+        nTiers = nTiers + 1
+        local b = instanceItem(full)
         for t = 1, 3 do MDB.applyTier(b, t) end
-        if not (b.weight == 0.1 and b.cap == 49 and b.wr == 100) then tiersOk = false; diag("    reinforced tier 3: " .. s) end
+        if not (b.weight == 0.1 and b.cap == 49 and b.wr == 100) then tiersOk = false; diag("    reinforced tier 3: " .. full) end
     end
-    check("reinforced: all " .. #REIN_SPEC .. " weigh 0.1 and reach 49/100 at tier 3", tiersOk)
+    check("reinforced: all " .. nTiers .. " weigh 0.1 and reach 49/100 at tier 3", tiersOk and nTiers == 62)
     check("reinforced ALICE (weight 0.1): 28/85 -> 35/90 -> 42/95 -> 49/100",
         walk(28, 85, 0.1, { { 28, 85 }, { 35, 90 }, { 42, 95 }, { 49, 100 } }))
 
@@ -975,7 +1204,7 @@ local function suite()
             and new.contents[1] == "nail" and new.contents[2] == "apple" and #old.contents == 0
             and new.name == "My Bag" and new.custom == true and new.md.custom == "kept", new
     end
-    local A, RA = "Base.Bag_ALICEpack", "MinidoracatBags.Bag_ALICEpack_Reinforced"
+    local A, RA = "Base.Bag_ALICEpack", "MinidoracatBags.Bag_ALICEpack_Olive_Reinforced"
     env.sent, env.replaced = {}, {}
     local old = stocked(A)
     MDB.onUpgrade(keepData(old), PLAYER)
@@ -998,9 +1227,9 @@ local function suite()
     env.server = false
     old = stocked("Base.Bag_HydrationBackpack", nil, 2.0)
     MDB.onUpgrade(keepData(old), PLAYER)
-    okSwap, new = swapped(old, "MinidoracatBags.Bag_HydrationBackpack_Reinforced")
-    check("upgrade: water bag 2.0 L full -> reinforced tier 1 with 3.0 L capacity, water kept",
-        okSwap and near(new.fc.capacity, 3.0) and near(new.fc.amount, 2.0))
+    okSwap, new = swapped(old, "MinidoracatBags.Bag_HydrationBackpack_Navy_Reinforced")
+    check("upgrade: water bag 2.0 L full -> reinforced tier 1 with 3.667 L (base = the camo pack's 3.0 L), water kept",
+        okSwap and near(new.fc.capacity, 3.667) and near(new.fc.amount, 2.0) and new.md.MDB_fluid == 3.0)
     old = stocked(A)
     old.name, old.custom = "Bloody, name of " .. A, false   -- 沒改名，getName() 帶染血前綴
     MDB.onUpgrade(keepData(old), PLAYER)
@@ -1023,7 +1252,7 @@ local function suite()
     check("restore (server): reinforced tier 2 -> vanilla tier 2 = 41/95 (top 48), one replace",
         okSwap and new.md.MDB_tier == 2 and new.cap == 41 and new.wr == 95 and #env.sent == 1 and env.sent[1][3] == new)
     env.server = false
-    old = stocked("MinidoracatBags.Bag_HydrationBackpack_Reinforced")
+    old = stocked("MinidoracatBags.Bag_HydrationBackpack_Navy_Reinforced")
     MDB.applyTier(old, 3)
     old.fc.amount = 5.0
     MDB.onSwapKeepTier(keepData(old), PLAYER)
@@ -1031,18 +1260,107 @@ local function suite()
     check("restore: tier-3 water bag keeps 5.0 L capacity and all 5.0 L of water",
         okSwap and new.md.MDB_tier == 3 and near(new.fc.capacity, 5.0) and near(new.fc.amount, 5.0))
 
+    -- 每個原版來源的每種顏色：升級換成那個顏色的主題款，記下原款與顏色；還原換回原款、同一個顏色、階級照舊
+    local colorUpOk, colorBackOk = true, true
+    for _, src in ipairs(VANILLA_SPEC) do
+        for i, t in ipairs(themeTable[src] or {}) do
+            CONTAINER.items = {}
+            local b = CONTAINER:AddItem(instanceItem(src))
+            b.visual.choice = i - 1
+            MDB.onUpgrade(keepData(b), PLAYER)
+            local up = CONTAINER.items[1]
+            if not (up.fullType == themedOf(shapeOf[src] or "?", t) and up.md.MDB_origin == src and up.md.MDB_originTex == i - 1
+                and up.md.MDB_tier == 1) then
+                colorUpOk = false; diag("    upgrade color " .. i .. " of " .. src .. " -> " .. up.fullType)
+            end
+            MDB.onSwapKeepTier(keepData(up), PLAYER)
+            local back = CONTAINER.items[1]
+            if not (back.fullType == src and back.visual:getTextureChoice() == i - 1 and back.md.MDB_tier == 1) then
+                colorBackOk = false; diag("    restore color " .. i .. " of " .. src .. " -> " .. back.fullType .. " " .. back.visual:getTextureChoice())
+            end
+        end
+    end
+    check("upgrade: every vanilla source in every color (160) -> reinforced of that color's theme, original and color recorded", colorUpOk)
+    check("restore: every one of them goes back to the recorded original in the same color, tier kept", colorBackOk)
+    -- 階級的基準換成新背包自己的：側背包組最高 13（皮側背包），釣具側背包 12、自重 1.0
+    old = stocked("Base.Bag_Satchel_Fishing")
+    MDB.onUpgrade(keepData(old), PLAYER)
+    new = CONTAINER.items[1]
+    local upCap = new.cap
+    MDB.onSwapKeepTier(keepData(new), PLAYER)
+    local fish = CONTAINER.items[1]
+    check("tier base follows the new bag: fishing satchel tier 1 -> themed 25/77 (base 13) -> restored fishing satchel 24/77 (base 12)",
+        new.fullType == "MinidoracatBags.Bag_Satchel_Leather_Olive_Reinforced" and upCap == 25 and fish.fullType == "Base.Bag_Satchel_Fishing"
+        and fish.md.MDB_tier == 1 and fish.cap == 24 and fish.wr == 77 and fish.md.MDB_cap == 12)
+    -- 隨機染色的原版（小偷袋）：主題款一畫就變白，還原時換回記下的染色
+    old = stocked("Base.Bag_BurglarBag")
+    old.visual.tint = newTint(0.2, 0.4, 0.6)
+    MDB.onUpgrade(keepData(old), PLAYER)
+    MDB.onSwapKeepTier(keepData(CONTAINER.items[1]), PLAYER)
+    local tint = CONTAINER.items[1].visual:getTint()
+    check("restore: randomly tinted burglar bag gets its recorded tint back",
+        CONTAINER.items[1].fullType == "Base.Bag_BurglarBag" and math.abs(tint.r - 0.2) < 0.003
+        and math.abs(tint.g - 0.4) < 0.003 and math.abs(tint.b - 0.6) < 0.003)
+    -- 沒有紀錄、或記的不是這個形狀：還原成代表款
+    local LT = "MinidoracatBags.Bag_Satchel_Leather_Navy_Reinforced"
+    old = stocked(LT)
+    MDB.onSwapKeepTier(keepData(old), PLAYER)
+    local plainBack = CONTAINER.items[1].fullType
+    old = stocked(LT, { MDB_origin = "Base.Bag_DuffelBag", MDB_originTex = 3 })
+    MDB.onSwapKeepTier(keepData(old), PLAYER)
+    check("restore: no record -> representative; a record of another shape is ignored",
+        plainBack == "Base.Bag_Satchel_Leather" and CONTAINER.items[1].fullType == "Base.Bag_Satchel_Leather")
+
+    -- 換主題：S.T.A.R.S.↔保護傘，階級、容量、內容物、改過的名字、記下的原款、液體照舊；伺服器只送一次
+    local DN, DO = "MinidoracatBags.Bag_DuffelBag_Navy_Reinforced", "MinidoracatBags.Bag_DuffelBag_Olive_Reinforced"
+    env.server, env.sent = true, {}
+    old = stocked(DN, { MDB_origin = "Base.Bag_Police", MDB_originTex = 0 })
+    MDB.applyTier(old, 2)
+    local capBefore = old.cap
+    env.sent = {}
+    MDB.onSwapTheme(keepData(old), PLAYER)
+    okSwap, new = swapped(old, DO)
+    check("swap theme (server): Navy duffel tier 2 -> Olive, same tier/capacity, contents, custom name, recorded original, one replace",
+        okSwap and new.md.MDB_tier == 2 and new.cap == capBefore and new.md.MDB_origin == "Base.Bag_Police" and #env.sent == 1
+        and env.sent[1][2] == old and env.sent[1][3] == new)
+    MDB.onSwapTheme(keepData(new), PLAYER)
+    check("swap theme: and back to Navy", CONTAINER.items[1].fullType == DN and CONTAINER.items[1].md.MDB_tier == 2)
+    env.server = false
+    old = stocked(DN)
+    old.custom, old.name = false, "name of " .. DN
+    MDB.onSwapTheme(keepData(old), PLAYER)
+    check("swap theme: un-renamed bag gets the other theme's name", CONTAINER.items[1].name == "name of " .. DO)
+    old = stocked("MinidoracatBags.Bag_HydrationBackpack_Olive_Reinforced")
+    MDB.applyTier(old, 3)
+    old.fc.amount = 5.0
+    MDB.onSwapTheme(keepData(old), PLAYER)
+    new = CONTAINER.items[1]
+    check("swap theme: tier-3 water bag keeps 5.0 L capacity and all the water",
+        new.fullType == "MinidoracatBags.Bag_HydrationBackpack_Navy_Reinforced" and near(new.fc.capacity, 5.0) and near(new.fc.amount, 5.0))
+    local untouched = true
+    for _, full in ipairs({ "MinidoracatBags.DayPack_Navy_Reinforced", "MinidoracatBags.DayPack_Navy", A }) do
+        old = stocked(full)
+        MDB.onSwapTheme(keepData(old), PLAYER)
+        untouched = untouched and CONTAINER.items[1] == old
+    end
+    check("swap theme: own bags (reinforced or not) and vanilla bags are left alone", untouched)
+
     -- 強化版腰包換前後（原版換穿法 → 包裝依 MDB_tier 重算）
-    local front = instanceItem("MinidoracatBags.Bag_FannyPackFront_Reinforced")
+    local front = instanceItem("MinidoracatBags.Bag_FannyPackFront_Navy_Reinforced")
     for t = 1, 3 do MDB.applyTier(front, t) end
-    local back = ISClothingExtraAction:createItemNew(front, instanceItem("MinidoracatBags.Bag_FannyPackBack_Reinforced"))
+    local back = ISClothingExtraAction:createItemNew(front, instanceItem("MinidoracatBags.Bag_FannyPackBack_Navy_Reinforced"))
     check("reinforced fanny pack front -> back keeps tier 3 = 49/100", back.md.MDB_tier == 3 and back.cap == 49 and back.wr == 100)
-    local hide = instanceItem("MinidoracatBags.Bag_FannyPackFront_Hide_Reinforced")
+    -- 獸皮腰包（1／65）升級成保護傘腰包（組內最高 1／85），換穿到後背照樣是保護傘款、階級照舊
+    old = stocked("Base.Bag_FannyPackFront_Hide")
+    MDB.onUpgrade(keepData(old), PLAYER)
+    local hide = CONTAINER.items[1]
     MDB.applyTier(hide, 2)
-    local hideX = rein["MinidoracatBags.Bag_FannyPackFront_Hide_Reinforced"].fields.ClothingItemExtra
+    local hideX = (rein[hide.fullType] or { fields = {} }).fields.ClothingItemExtra
     local hideBack = SCRIPT_BLOCKS[hideX] and ISClothingExtraAction:createItemNew(hide, instanceItem(hideX))
-    check("reinforced hide fanny pack front -> its reinforced back keeps tier 2 (1/65 -> 33/88 at weight 0.1)",
-        hideBack and hideBack.fullType == "MinidoracatBags.Bag_FannyPackBack_Hide_Reinforced" and hideBack.md.MDB_tier == 2
-        and hideBack.cap == 33 and hideBack.wr == 88)
+    check("hide fanny pack -> Umbrella fanny front (base 1/85), swapped to its back keeps tier 2 = 33/95",
+        hide.fullType == "MinidoracatBags.Bag_FannyPackFront_Olive_Reinforced" and hideBack
+        and hideBack.fullType == "MinidoracatBags.Bag_FannyPackBack_Olive_Reinforced" and hideBack.md.MDB_tier == 2
+        and hideBack.cap == 33 and hideBack.wr == 95)
     -- 改過名的腰包換穿再升級（E2EWear H5）：換穿要帶著改名旗標與不帶前綴的名字，升級才會沿用
     old = stocked("Base.Bag_FannyPackFront")   -- 改名 My Bag、第 0 階（沒有 MDB_tier）
     function old:getName() return "Bloody, " .. self.name end
@@ -1054,7 +1372,7 @@ local function suite()
     MDB.onUpgrade(keepData(renamedBack), PLAYER)
     new = CONTAINER.items[1]
     check("renamed fanny pack swapped to the back, then upgraded: reinforced back tier 1 keeps the name",
-        new.fullType == "MinidoracatBags.Bag_FannyPackBack_Reinforced" and new.md.MDB_tier == 1
+        new.fullType == "MinidoracatBags.Bag_FannyPackBack_Navy_Reinforced" and new.md.MDB_tier == 1
         and new.name == "My Bag" and new.custom == true)
 
     -- 本 MOD 的背包也是來源：第一次升級換成自己的強化版（日行背包 20／75，自重 0.1 → 第 1 階 30／83）
@@ -1438,7 +1756,7 @@ if arg and arg[1] == "--mutants" then
         { name = "OnTest 階級差一", file = "UPG", from = "tierOf(item) == tier - 1", to = "tierOf(item) <= tier - 1" },
         { name = "onUpgrade 不看 MaxTier", file = "UPG", from = 'if tier > MDB.opt("MaxTier") then return end', to = "" },
         { name = "換穿法沒包裝", file = "UPG", from = "function ISClothingExtraAction:createItemNew(item, newItem)", to = "function MDB:unusedCreateItemNew(item, newItem)" },
-        { name = "升級不換型", file = "UPG", from = "local target = MDB.REINFORCED[bag:getFullType()]", to = "local target = nil" },
+        { name = "升級不換型", file = "UPG", from = "    if MDB.reinforcedOf(ft) then\n", to = "    if false then\n" },
         { name = "換型途中照送", file = "UPG", from = "if isServer() and container and not swapping then", to = "if isServer() and container then" },
         { name = "換型最後不送", file = "UPG", from = "        sendReplaceItemInContainer(cont, old, new)\n", to = "" },
         { name = "單機不換動作佇列", file = "UPG", from = "        replaceItemInContainer(cont, old, new)", to = "" },
@@ -1449,21 +1767,21 @@ if arg and arg[1] == "--mutants" then
         { name = "換穿沒搬改名旗標", file = "UPG", from = "        newItem:setCustomName(true)\n", to = "" },
         { name = "換穿沿用帶前綴的名字", file = "UPG", from = "        newItem:setName(item:getDisplayName())\n", to = "" },
         { name = "沒改名也沿用舊名", file = "UPG", from = "            new:setName(new:getScriptItem():getDisplayName())\n", to = "" },
-        { name = "還原掉級", file = "UPG", from = "MDB.ORIGINAL[ft] or MDB.REINFORCED[ft], tierOf(bag)", to = "MDB.ORIGINAL[ft] or MDB.REINFORCED[ft], 0" },
+        { name = "還原掉級", file = "UPG", from = "MDB.swapBag(bag, back, tierOf(bag), character)", to = "MDB.swapBag(bag, back, 0, character)" },
         { name = "第 0 階也能改強化版", file = "UPG", from = "tierOf(item) >= 1", to = "tierOf(item) >= 0" },
-        { name = "對照表少一款", file = "UPG", from = '"Base.Bag_SWAT",', to = "" },
+        { name = "主題表少一款", file = "UPG", from = '    ["Base.Bag_SWAT"] = { shape = "Bag_DuffelBag", themes = { "Navy" } },\n', to = "" },
         { name = "對照表少本 MOD 一款", file = "UPG", from = '"MinidoracatBags.DayPack_Navy", ', to = "" },
-        { name = "本 MOD 背包升級不換型", file = "UPG", from = "local target = MDB.REINFORCED[bag:getFullType()]", to = 'local target = bag:getFullType():find("^Base%.") and MDB.REINFORCED[bag:getFullType()]' },
-        { name = "胸掛沒補自重", file = "REIN", from = "    item Bag_ChestRig_Reinforced\n    {\n        DisplayCategory = Bag,\n        ItemType = base:container,\n        Weight = 0.1,\n", to = "    item Bag_ChestRig_Reinforced\n    {\n        DisplayCategory = Bag,\n        ItemType = base:container,\n" },
+        { name = "本 MOD 背包升級不換型", file = "UPG", from = "    if MDB.reinforcedOf(ft) then\n", to = "    if MDB.THEME_SOURCES[ft] then\n" },
+        { name = "胸掛沒補自重", file = "REIN", from = "    item Bag_ChestRig_Navy_Reinforced\n    {\n        DisplayCategory = Bag,\n        ItemType = base:container,\n        Weight = 0.1,\n", to = "    item Bag_ChestRig_Navy_Reinforced\n    {\n        DisplayCategory = Bag,\n        ItemType = base:container,\n" },
         { name = "強化側背包穿回原版位置", file = "REIN", from = "CanBeEquipped = minidoracatbags:satchel2,", to = "CanBeEquipped = base:satchel," },
-        { name = "獸皮腰包換穿指回原版", file = "REIN", from = "ClothingItemExtra = MinidoracatBags.Bag_FannyPackBack_Hide_Reinforced,", to = "ClothingItemExtra = Base.Bag_FannyPackBack_Hide," },
-        { name = "腰包換穿沒成對", file = "REIN", from = "ClothingItemExtra = MinidoracatBags.Bag_FannyPackBack_Tarp_Reinforced,", to = "ClothingItemExtra = MinidoracatBags.Bag_FannyPackBack_Reinforced," },
+        { name = "主題腰包換穿指回原版", file = "REIN", from = "ClothingItemExtra = MinidoracatBags.Bag_FannyPackFront_Olive_Reinforced,", to = "ClothingItemExtra = Base.Bag_FannyPackFront," },
+        { name = "腰包換穿換了主題", file = "REIN", from = "ClothingItemExtra = MinidoracatBags.Bag_FannyPackBack_Navy_Reinforced,", to = "ClothingItemExtra = MinidoracatBags.Bag_FannyPackBack_Olive_Reinforced," },
         { name = "本 MOD 強化版丟了放入限制", file = "REIN", from = "AcceptItemFunction = MDB.acceptFirstAid,", to = "" },
         { name = "強化版前腰醫療包丟了放入限制", file = "REIN", from = "        AcceptItemFunction = MDB.acceptFirstAid,\n    }\n\n    item AmmoBandolier_Navy_Reinforced", to = "    }\n\n    item AmmoBandolier_Navy_Reinforced" },
         { name = "強化版變體換穿指回非強化", file = "REIN", from = "ClothingItemExtra = MinidoracatBags.ToolBeltPouch_Navy_Reinforced,", to = "ClothingItemExtra = MinidoracatBags.ToolBeltPouch_Navy," },
         { name = "強化版原款換穿沒成對", file = "REIN", from = "ClothingItemExtra = MinidoracatBags.MedicHipPouchFront_Olive_Reinforced,", to = "ClothingItemExtra = MinidoracatBags.MedicHipPouchFront_Navy_Reinforced," },
         { name = "對照表少變體", file = "UPG", from = '"MinidoracatBags.ToolBeltPouchBack_Olive",', to = "" },
-        { name = "強化版變體成了配方產出", file = "CONVERT", from = "item 1 MinidoracatBags.Bag_SheetSlingBag_Reinforced,", to = "item 1 MinidoracatBags.MedicHipPouchFront_Navy_Reinforced," },
+        { name = "強化版變體成了配方產出", file = "CONVERT", from = "item 1 MinidoracatBags.Bag_SheetSlingBag_Olive_Reinforced,", to = "item 1 MinidoracatBags.MedicHipPouchFront_Navy_Reinforced," },
         { name = "強化版變體被放進戰利品", file = "LOOT", from = '{ "NurseOutfit"', to = '{ "MedicHipPouchFront_Olive_Reinforced", "x" }, { "NurseOutfit"' },
         { name = "註冊用 base 命名空間", file = "REG", from = 'ItemBodyLocation.register("minidoracatbags:satchel2")', to = 'ItemBodyLocation.register("satchel2")' },
         { name = "註冊沒先查", file = "REG", from = 'if not ItemBodyLocation.get(ResourceLocation.of("minidoracatbags:satchel2")) then', to = "if true then" },
@@ -1477,20 +1795,46 @@ if arg and arg[1] == "--mutants" then
         { name = "強化版跑速沒改", file = "REIN", from = "RunSpeedModifier = 1.0,", to = "RunSpeedModifier = 0.94," },
         { name = "產生器不改戰鬥速度（胸掛）", file = "REIN", from = "        CombatSpeedModifier = 1.0,\n        Researchablerecipes = MakeTarpChestRig,", to = "        CombatSpeedModifier = 0.99,\n        Researchablerecipes = MakeTarpChestRig," },
         { name = "產生器不改戰鬥速度（背帶）", file = "REIN", from = "CombatSpeedModifier = 1.0,", to = "CombatSpeedModifier = 0.98," },
-        { name = "強化版沿用原版 ClothingItem", file = "REIN", from = "ClothingItem = MDB_Bag_Satchel_Reinforced,", to = "ClothingItem = Bag_Satchel," },
-        { name = "強化腰包換穿指回原版", file = "REIN", from = "ClothingItemExtra = MinidoracatBags.Bag_FannyPackBack_Reinforced,", to = "ClothingItemExtra = Base.Bag_FannyPackBack," },
-        { name = "強化版多一個欄位", file = "REIN", from = "ClothingItem = MDB_Bag_Satchel_Reinforced,", to = "ClothingItem = MDB_Bag_Satchel_Reinforced,\n        AcceptItemFunction = MDB.acceptAmmo," },
-        { name = "強化版水袋容量改了", file = "REIN", from = "Capacity = 2.0,", to = "Capacity = 5.0," },
-        { name = "強化版水袋沿用原版容器名", file = "REIN", from = "ContainerName = MDB_Bag_HydrationBackpack_Reinforced,", to = "ContainerName = HydrationBackpack," },
-        { name = "液體容器名稱缺鍵", file = "I18N_FLUIDS", from = '"Fluid_Container_MDB_Bag_HydrationBackpack_Camo_Reinforced"', to = '"Fluid_Container_MDB_X"' },
-        { name = "液體容器名稱帶括號", file = "I18N_FLUIDS", from = '"Reinforced Hydration Pack"', to = '"Hydration Pack (Reinforced)"' },
-        { name = "液體容器名稱沒有強化詞", file = "I18N_FLUIDS", from = '"Reinforced Hydration Pack"', to = '"Hydration Pack"' },
-        { name = "還原配方漏一款", file = "REIN", from = "MinidoracatBags.Bag_SWAT_Reinforced;", to = "" },
+        { name = "強化版沿用原版 ClothingItem", file = "REIN", from = "ClothingItem = MDB_Bag_Satchel_Navy_Reinforced,", to = "ClothingItem = Bag_Satchel," },
+        { name = "強化版多一個欄位", file = "REIN", from = "ClothingItem = MDB_Bag_Satchel_Navy_Reinforced,", to = "ClothingItem = MDB_Bag_Satchel_Navy_Reinforced,\n        AcceptItemFunction = MDB.acceptAmmo," },
+        { name = "強化版水袋容量改了", file = "REIN", from = "Capacity = 3.0,", to = "Capacity = 5.0," },
+        { name = "水袋液體容量沒取組內最高", file = "REIN", from = "Capacity = 3.0,", to = "Capacity = 2.0," },
+        { name = "強化版水袋沿用原版容器名", file = "REIN", from = "ContainerName = MDB_Bag_HydrationBackpack_Navy_Reinforced,", to = "ContainerName = HydrationBackpack," },
+        { name = "液體容器名稱缺鍵", file = "I18N_FLUIDS", from = '"Fluid_Container_MDB_Bag_HydrationBackpack_Olive_Reinforced"', to = '"Fluid_Container_MDB_X"' },
+        { name = "液體容器名稱帶括號", file = "I18N_FLUIDS", from = '"S.T.A.R.S. Reinforced Hydration Pack"', to = '"S.T.A.R.S. Hydration Pack (Reinforced)"' },
+        { name = "液體容器名稱沒有強化詞", file = "I18N_FLUIDS", from = '"S.T.A.R.S. Reinforced Hydration Pack"', to = '"S.T.A.R.S. Hydration Pack"' },
+        { name = "液體容器名稱沒有主題詞", file = "I18N_FLUIDS", from = '"Umbrella Reinforced Hydration Pack"', to = '"Reinforced Hydration Pack"' },
+        { name = "還原配方漏一款", file = "REIN", from = "MinidoracatBags.Bag_GolfBag_Olive_Reinforced;", to = "" },
         { name = "還原配方可用穿著中的背包", file = "REIN", from = "_Reinforced] mode:keep flags[IsNotWorn],", to = "_Reinforced] mode:keep," },
         { name = "改強化版配方沒 OnTest", file = "REIN", from = "OnTest = MDB.onTestUpgraded,", to = "" },
         { name = "強化版 XML 換了模型", file = "REIN_XML", from = "<m_MaleModel>", to = "<m_MaleModel>x" },
-        { name = "升級清單漏強化版", file = "RECIPES", from = "MinidoracatBags.Bag_SWAT_Reinforced;", to = "" },
-        { name = "翻譯缺強化版名稱", file = "I18N_ITEMS", from = '"MinidoracatBags.Bag_SWAT_Reinforced"', to = '"MinidoracatBags.Bag_SWATX_Reinforced"' },
+        { name = "升級清單漏強化版", file = "RECIPES", from = "MinidoracatBags.Bag_GolfBag_Olive_Reinforced;", to = "" },
+        { name = "翻譯缺強化版名稱", file = "I18N_ITEMS", from = '"MinidoracatBags.Bag_GolfBag_Olive_Reinforced"', to = '"MinidoracatBags.Bag_GolfBagX_Olive_Reinforced"' },
+        -- 合併與主題（使用者 2026-10-27）
+        { name = "升級不照顏色選主題", file = "UPG", from = "s.themes[(choice or 0) + 1] or s.themes[1]", to = "s.themes[1]" },
+        { name = "顏色索引差一", file = "UPG", from = "s.themes[(choice or 0) + 1]", to = "s.themes[(choice or 0) + 2]" },
+        { name = "主題表顏色錯", file = "UPG", from = '["Base.Bag_DuffelBag"] = { shape = "Bag_DuffelBag", themes = { "Navy", "Olive"', to = '["Base.Bag_DuffelBag"] = { shape = "Bag_DuffelBag", themes = { "Navy", "Navy"' },
+        { name = "主題表形狀錯", file = "UPG", from = '["Base.Bag_HideSatchel"] = { shape = "Bag_ClothSatchel_Cotton"', to = '["Base.Bag_HideSatchel"] = { shape = "Bag_Satchel_Leather"' },
+        { name = "升級沒記原款", file = "UPG", from = "md.MDB_origin, md.MDB_originTex = sourceType, choice", to = "md.MDB_originTex = choice" },
+        { name = "還原不看紀錄", file = "UPG", from = "    if t and s and s.shape == t.shape then back = origin end\n", to = "" },
+        { name = "還原沒核對形狀", file = "UPG", from = "if t and s and s.shape == t.shape then", to = "if t and s then" },
+        { name = "還原沒換回顏色", file = "UPG", from = "            v:setTextureChoice(md.MDB_originTex or -1)\n", to = "" },
+        { name = "還原沒換回染色", file = "UPG", from = "            if md.MDB_originTint then v:setTint(ImmutableColor.decode(md.MDB_originTint)) end\n", to = "" },
+        { name = "換型沿用舊基準", file = "UPG", from = "        md.MDB_cap, md.MDB_wr, md.MDB_fluid = cap, wr, fluid\n", to = "" },
+        { name = "換主題沒換", file = "UPG", from = 't.theme == "Navy" and "Olive" or "Navy"', to = "t.theme" },
+        { name = "換主題掉級", file = "UPG", from = '"Olive" or "Navy"), tierOf(bag), character)', to = '"Olive" or "Navy"), 0, character)' },
+        { name = "換主題配方漏一款", file = "REIN", from = "inputs\n        {\n            item 1 [MinidoracatBags.Bag_DuffelBag_Navy_Reinforced;MinidoracatBags.Bag_DuffelBag_Olive_Reinforced;MinidoracatBags.Bag_ClothSatchel_Cotton_Navy_Reinforced;", to = "inputs\n        {\n            item 1 [MinidoracatBags.Bag_DuffelBag_Navy_Reinforced;MinidoracatBags.Bag_ClothSatchel_Cotton_Navy_Reinforced;" },
+        { name = "換主題配方消耗針", file = "REIN", from = "            item 1 tags[base:sewingneedle] mode:keep,\n            item 1 tags[base:thread],", to = "            item 1 tags[base:sewingneedle],\n            item 1 tags[base:thread]," },
+        { name = "換主題配方要技能", file = "REIN", from = "OnCreate = MDB.onSwapTheme,", to = "OnCreate = MDB.onSwapTheme,\n        SkillRequired = Tailoring:1," },
+        { name = "主題強化版容量沒取組內最高", file = "REIN", from = "    item Bag_SheetSlingBag_Navy_Reinforced\n    {\n        DisplayCategory = Bag,\n        ItemType = base:container,\n        Weight = 0.1,\n        Icon = MDB_Bag_SheetSlingBag_Navy,\n        CanBeEquipped = base:back,\n        CanHaveHoles = false,\n        Capacity = 14,", to = "    item Bag_SheetSlingBag_Navy_Reinforced\n    {\n        DisplayCategory = Bag,\n        ItemType = base:container,\n        Weight = 0.1,\n        Icon = MDB_Bag_SheetSlingBag_Navy,\n        CanBeEquipped = base:back,\n        CanHaveHoles = false,\n        Capacity = 10," },
+        { name = "主題強化版用了別的主題圖示", file = "REIN", from = "Icon = MDB_Bag_Schoolbag_Olive,", to = "Icon = MDB_Bag_Schoolbag_Navy," },
+        { name = "主題地面模型換回原版", file = "REIN", from = "WorldStaticModel = MinidoracatBags.MDB_Bag_CrudeLeatherBag_Olive_Ground,", to = "WorldStaticModel = CrudeLeatherBag_Ground," },
+        { name = "手持沿用原版 ClothingItem", file = "REIN", from = "ReplaceInPrimaryHand = MDB_Bag_GolfBag_Navy_Reinforced_RHand holdingbagright,", to = "ReplaceInPrimaryHand = Bag_GolfBag_RHand holdingbagright," },
+        { name = "強化版 XML 貼圖沒換", file = "REIN_XML", from = "Clothes\\Bag\\MDB_Bag_Satchel_Navy", to = "clothes\\bag\\satchel" },
+        { name = "手持 XML 貼圖是另一個主題", file = "REIN_HAND_XML", from = "MDB_Bag_DuffelBag_Olive", to = "MDB_Bag_DuffelBag_Navy" },
+        { name = "主題詞放錯邊", file = "I18N_ITEMS", from = '"S.T.A.R.S. Duffel Bag (Reinforced)"', to = '"Duffel Bag S.T.A.R.S. (Reinforced)"' },
+        { name = "主題名稱少主題詞", file = "I18N_ITEMS", from = '"Umbrella Duffel Bag (Reinforced)"', to = '"Duffel Bag (Reinforced)"' },
+        { name = "清單檔分類和產生結果不同", file = "SHAPES", from = '"Base.Bag_Police": [\n   "Navy"', to = '"Base.Bag_Police": [\n   "Olive"' },
         { name = "彈藥背帶收彈藥盒", file = "FIL", from = "return item:hasTag(ItemTag.AMMO)", to = 'return item:getDisplayCategory() == "Ammo"' },
         { name = "彈藥背帶不收霰彈", file = "FIL", from = "return item:hasTag(ItemTag.AMMO)", to = "return item:hasTag(ItemTag.AMMO) and not item:hasTag(ItemTag.SHOTGUN_SHELL)" },
         { name = "醫療腰包分類錯", file = "FIL", from = '== "FirstAid"', to = '== "Medical"' },

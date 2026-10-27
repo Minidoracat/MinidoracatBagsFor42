@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<clothingItem>
+	<m_MaleModel>skinned\backpacks\m_schoolbag</m_MaleModel>
+	<m_FemaleModel>skinned\backpacks\f_schoolbag</m_FemaleModel>
+	<m_GUID>f010e8eb-02de-5873-92ef-a49bf5c9436a</m_GUID>
+	<m_Static>false</m_Static>
+	<m_AllowRandomHue>false</m_AllowRandomHue>
+	<m_AllowRandomTint>false</m_AllowRandomTint>
+	<m_AttachBone></m_AttachBone>
+	<textureChoices>Clothes\Bag\MDB_Bag_Schoolbag_Olive</textureChoices>
+</clothingItem>

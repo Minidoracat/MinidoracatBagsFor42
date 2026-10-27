@@ -19,5 +19,6 @@
     "MDB_ConvertLegacyBag": "Convert Old Plus Bag to Reinforced",
     "MDB_RestoreReinforced": "Revert Reinforced Bag to Original",
     "MDB_ReinforceUpgradedBag": "Convert Upgraded Bag to Reinforced",
+    "MDB_SwapReinforcedTheme": "Switch Reinforced Bag Theme (S.T.A.R.S./Umbrella)",
     "MDB_MakeSheetSlingBag_Reinforced": "Make Sheet Sling Bag (Reinforced)"
 }

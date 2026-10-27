@@ -19,5 +19,6 @@
     "MDB_ConvertLegacyBag": "Eski Plus Çantayı Güçlendirilmiş Sürüme Dönüştür",
     "MDB_RestoreReinforced": "Güçlendirilmiş Çantayı Orijinaline Döndür",
     "MDB_ReinforceUpgradedBag": "1. Seviye ve Üstü Çantayı Güçlendirilmiş Sürüme Dönüştür",
+    "MDB_SwapReinforcedTheme": "Güçlendirilmiş Çantanın Temasını Değiştir (S.T.A.R.S./Umbrella)",
     "MDB_MakeSheetSlingBag_Reinforced": "Çarşaftan Omuz Çantası Yap (Güçlendirilmiş)"
 }

@@ -19,5 +19,6 @@
     "MDB_ConvertLegacyBag": "旧 Plus のバッグを強化版に改造する",
     "MDB_RestoreReinforced": "強化版のバッグを元に戻す",
     "MDB_ReinforceUpgradedBag": "第1段階以上のバッグを強化版にする",
+    "MDB_SwapReinforcedTheme": "強化版のテーマを切り替える（S.T.A.R.S./アンブレラ）",
     "MDB_MakeSheetSlingBag_Reinforced": "布シートのスリングバッグを作る（強化）"
 }

@@ -19,5 +19,6 @@
     "MDB_ConvertLegacyBag": "Przerób starą torbę Plus na wersję wzmocnioną",
     "MDB_RestoreReinforced": "Przywróć wzmocnioną torbę do oryginału",
     "MDB_ReinforceUpgradedBag": "Przerób torbę poziomu 1 lub wyższego na wersję wzmocnioną",
+    "MDB_SwapReinforcedTheme": "Zmień motyw wzmocnionej torby (S.T.A.R.S./Umbrella)",
     "MDB_MakeSheetSlingBag_Reinforced": "Zrób torbę na ramię z prześcieradła (wersja wzmocniona)"
 }

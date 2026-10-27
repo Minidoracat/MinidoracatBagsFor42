@@ -19,5 +19,6 @@
     "MDB_ConvertLegacyBag": "Convertir un ancien sac Plus en version renforcée",
     "MDB_RestoreReinforced": "Ramener un sac renforcé à l'original",
     "MDB_ReinforceUpgradedBag": "Convertir un sac de niveau 1 ou plus en version renforcée",
+    "MDB_SwapReinforcedTheme": "Changer le thème d'un sac renforcé (S.T.A.R.S./Umbrella)",
     "MDB_MakeSheetSlingBag_Reinforced": "Improviser un sac en bandoulière (version renforcée)"
 }
