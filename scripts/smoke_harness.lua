@@ -110,7 +110,9 @@ for _, dir in ipairs({ "shared", "server", "client" }) do   -- 遊戲也是 shar
 end
 check(loadedCount >= 6, "載入 " .. loadedCount .. " 個 Lua 檔（列目錄失敗時會是 0）")
 
-local ALLOWED = { "OnGameBoot", "OnPreDistributionMerge", "OnInitGlobalModData", "OnZombieDead", "OnFillInventoryObjectContextMenu" }
+-- OnServerCommand：只在伺服器送來指令時跑（地上背包原地升階後的 floorTier），不是每幀
+local ALLOWED = { "OnGameBoot", "OnPreDistributionMerge", "OnInitGlobalModData", "OnZombieDead", "OnFillInventoryObjectContextMenu",
+                  "OnServerCommand" }
 local allowed, seen = {}, {}
 for _, name in ipairs(ALLOWED) do allowed[name] = true end
 for _, r in ipairs(registered) do
@@ -121,7 +123,7 @@ end
 for _, name in ipairs(ALLOWED) do check(seen[name] == 1, name .. " 剛好掛一次") end
 for _, fn in ipairs({ "acceptLegacy", "acceptFirstAid", "acceptAmmo", "applyTier", "swapBag", "keepBag", "onConvertLegacy",
                       "onMakeReinforcedSling", "onSwapKeepTier", "onSwapTheme", "toReinforced", "reinforcedOf", "themedId",
-                      "onTestUpgraded", "onUpgrade", "onTestTier1", "onTestTier2", "onTestTier3",
+                      "onTestUpgraded", "onUpgrade", "onTestTier1", "onTestTier2", "onTestTier3", "onServerCommand",
                       "addLoot", "reapplyLoot", "onZombieDead", "warnDuplicates", "opt",
                       "canWearFromFloor", "needsFloorWear", "onFillFloorWearMenu", "addSatchel2Location",
                       "installAttach", "installAttachClient", "attachTransform", "eachAttachPose" }) do
