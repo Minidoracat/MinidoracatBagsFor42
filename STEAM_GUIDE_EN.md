@@ -341,6 +341,7 @@ On the "Tactical Bags" page of the sandbox settings.
 [*] [b]EFT compatibility version not supported[/b]: saves from Bag Upgrade Plus EFT compatibility (3781184534) are not taken over.
 [*] [b]Old bags cannot be upgraded[/b]: use "Convert Old Plus Bag to Reinforced" to go straight to the highest tier.
 [*] [b]Bags of the same shape upgrade into the same bag[/b]: for example, the Police Duffel Bag and the sports duffel bag both become the same reinforced duffel bag (S.T.A.R.S. or Umbrella), with the sounds and tags of that shape's base bag and the Bag category. Reverting brings back the original bag.
+[*] [b]Bag colors missing from the save[/b]: on a multiplayer server, a bag whose color was never stored in the save (such as some old Bag Upgrade Plus bags) can look different on your screen than on the server the first time you log in after the switch. Converting and upgrading follow the server's color, so the theme you get may not match the color you saw; after you log in again, your screen matches the server. If the theme is wrong, use "Switch Reinforced Bag Theme".
 [/list]
 === ❓ FAQ
 [h3]Can I run this together with Bag Upgrade Plus?[/h3]
