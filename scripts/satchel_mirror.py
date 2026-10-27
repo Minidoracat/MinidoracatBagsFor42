@@ -45,6 +45,7 @@ STRAP_Y = 0.7   # 背帶連通塊伸到肩上；包身、扣環、提把都在 y
 ORBIT_Y = (0.59, 0.76)   # 背帶跟著包身轉的範圍：包頂以下全轉、肩下以上不轉
 ORBIT_MAX, ORBIT_MARGIN, ORBIT_STEP = 75, 2, 5   # 度
 SCALE = 0.8   # 包身（連背帶下段）縮放（--scale）：0.8＝縮小斜掛（使用者 2026-10-27 選定，見知識庫 art.md）、1＝斜掛
+FOLD = 0.25   # rotate 的剛體部分：BackPack 以外的骨頭權重合計不超過這個就併進 BackPack（布側背包女版包頂，見 mirror_model）
 # 手腳穿進包裡的量（limb_check）：原版 Bob_<動作>.x 動畫的這幾格（一圈 3200 tick）。女性也用 Bob_*：AnimSets 的站、走、跑節點都引用 Bob_*，Kate_* 只在假人節點
 ANIM_TICKS = {"Idle": (0, 1600), "Walk": tuple(range(0, 3200, 320)), "Run": tuple(range(0, 3200, 400))}
 LIMBS = {"arm": ("UpperArm", "Forearm", "Hand", "Finger0", "Finger1"), "leg": ("Thigh", "Calf")}
@@ -52,8 +53,9 @@ LIMB_TOL = 2.0   # 百分點：鏡像版那側手腳表面在包裡的比例，�
 
 # 每個模型怎麼做，看過它所有貼圖才分類（新模型不在表裡就失敗，先看貼圖有沒有字）
 MODE = {
-    "M_ClothSatchel": "mirror", "F_ClothSatchel": "mirror",   # 布側背包 6 款：補丁與縫線，沒有字
-    "M_Satchel": "mirror", "F_Satchel": "mirror",             # 側背包／相機包：Satchel、_green、_khaki，扣帶沒有字
+    # 布側背包、側背包／相機包：原版貼圖沒有字，但強化版換成主題外觀後有徽章（gen_theme.py），整件鏡像會讓徽章左右反
+    "M_ClothSatchel": "rotate", "F_ClothSatchel": "rotate",
+    "M_Satchel": "rotate", "F_Satchel": "rotate",
     "M_Satchel_New": "rotate", "F_Satchel_New": "rotate",     # FIRST AID、MAIL、ARMY＋序號、釣具徽章
     "MDB_CourierSatchel_M": "rotate", "MDB_CourierSatchel_F": "rotate",   # 深藍款 S.T.A.R.S. 隊徽
 }
@@ -355,10 +357,27 @@ def mirror_model(src, dst, mode, body, avoid, motion, scale):
     rigid = ~strap if mode == "rotate" else np.zeros(len(V), bool)
     V2, N2 = V * S, N * S
     info = dict(mode=mode, verts=len(V), strap_verts=int(strap.sum()), rigid_verts=int(rigid.sum()))
+    sw = dict(X["sw"])
     if rigid.any():
-        for b, (idx, w, _) in X["sw"].items():
-            if b != "Bip01_BackPack" and (w[rigid[idx]] > 0).any():
-                sys.exit(f"{src}: 剛體部分掛到 {b}，旋轉後權重對不上，改用別的做法")
+        # 剛體部分只能掛 Bip01_BackPack（旋轉後 L 骨頭的權重對不上）。布側背包女版包頂有 46 點另帶 Spine／Spine1／L_Clavicle 的小權重
+        # （合計 ≤ 0.17）：合計不超過 FOLD 的併進 BackPack，包身照樣跟著包走；超過就停下來
+        extra_w = np.zeros(len(V))
+        for b, (idx, w, _) in sw.items():
+            if b != "Bip01_BackPack":
+                np.add.at(extra_w, idx, w * rigid[idx])
+        if extra_w.max() > FOLD:
+            sys.exit(f"{src}: 剛體部分掛到 BackPack 以外的骨頭（權重 {extra_w.max():.2f} > {FOLD}），旋轉後權重對不上，改用別的做法")
+        if extra_w.any():
+            for b, (idx, w, m) in list(sw.items()):
+                if b != "Bip01_BackPack":
+                    k = ~(rigid[idx] & (w > 0))
+                    sw[b] = (idx[k], w[k], m)
+            idx, w, m = sw["Bip01_BackPack"]
+            dense = np.zeros(len(V)); dense[idx] = w; dense += extra_w
+            nz = np.nonzero(dense > 0)[0]
+            sw["Bip01_BackPack"] = (nz, dense[nz], m)
+            sw = {b: v for b, v in sw.items() if len(v[0])}
+            info.update(folded_verts=int((extra_w > 0).sum()), folded_max=round(float(extra_w.max()), 3))
         R, t, rms = fit_rotate(V[rigid])
         V2[rigid] = V[rigid] @ R.T + t
         N2[rigid] = N[rigid] @ R.T
@@ -368,9 +387,9 @@ def mirror_model(src, dst, mode, body, avoid, motion, scale):
     F2 = F.copy()
     F2[flip] = F[flip][:, ::-1]
     Fb2 = F2[~strap[F2[:, 0]]]
-    W = {b.replace("_L_", "_R_") if "_L_" in b else b: (idx, w) for b, (idx, w, _) in X["sw"].items()}
+    W = {b.replace("_L_", "_R_") if "_L_" in b else b: (idx, w) for b, (idx, w, _) in sw.items()}
     extra = {b: body["sw"][b][2] for b in W if "_R_" in b}
-    ibm = {b: v[2] for b, v in X["sw"].items()} | extra
+    ibm = {b: v[2] for b, v in sw.items()} | extra
     if scale != 1:   # 繞背帶兩端的中心縮放，背帶照 follow 的比例跟著縮，接縫不裂
         c = V2[strap & (V[:, 1] < 0.6)].mean(0)
         V2 = c + (V2 - c) * (1 + (scale - 1) * follow(V2, strap))[:, None]

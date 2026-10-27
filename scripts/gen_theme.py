@@ -3,30 +3,34 @@
 # dependencies = ["numpy", "pillow", "scipy"]
 # ///
 """強化版主題外觀產生器（2026-10-27 使用者裁定：80 種原版背包依網格合併成 22 種形狀，每種做 S.T.A.R.S.／保護傘兩件）。
-  uv run scripts/gen_theme.py            # 寫 scripts/theme_shapes.json、44 張穿戴貼圖、44 個圖示、主題地面模型腳本
-  uv run scripts/gen_theme.py --check    # 重建到暫存目錄，和已提交的檔逐位元組比對（遊戲更新後跑）
+  uv run scripts/gen_theme.py            # 寫 scripts/theme_shapes.json、44 張穿戴貼圖、44 個圖示、主題地面模型腳本（要 Blender）
+  uv run scripts/gen_theme.py --check    # 重建到暫存目錄比對（遊戲更新後跑）：圖示以外逐位元組，圖示照 ICON_TOL 容差（見 main）
   uv run scripts/gen_theme.py --plain    # 只換色（不去字、不貼徽章），除錯用
 做法（每種形狀一列，設定在 SHAPES）：
 1. 底圖＝代表款（同網格裡最適合當底的那張原版貼圖）放大到主題邊長（common.TEX_SIZE：深藍 512、保護傘 256）。
-2. 去字：erase 矩形內用周圍同類像素的調和補色蓋掉（POLICE、HYDRO、Ivanov 之類）。
+2. 去字：erase 矩形內用周圍同類像素的調和補色蓋掉（Ivanov、HYDRO 之類）。
 3. 換色：seeds 那一群顏色＝主布料，照相對亮度換成主題色；其他（背帶、扣具、灰黑部件）換成黑色尼龍（同 stage2 keep_paint）。
-   keep 列的顏色群（框架包的木頭）只降彩度、照原明暗。
+   keep 取色點的顏色群、和主布料裡亮過 keep_light 的（框架包的木頭）只降彩度、照原明暗；gain＝整張再乘的亮度。
 4. 徽章：decal.apply 把隊徽／保護傘章（含黃黑警示條）照 3D 表面投影到 badge.seed 那一點，方向一定是正的（decal.py 檔頭）。
-5. 圖示（設計稿 A 案）：原版圖示（UI.pack／UI2.pack）照同一套換色。
+5. 圖示（使用者 2026-10-27 在設計稿頁面選 B）：主題貼圖貼回男版穿戴網格、拿掉繞過身體的背帶（icon_mesh），
+   Blender 算圖（blender/bags/theme_icons.py），再照本 MOD 7 款的後製（build.icon）。icon_dir＝相機方向，icon_strap＝拿掉背帶。
 6. 地面：原版地面模型腳本寫死 texture 的 4 種網格，各做兩個主題的模型腳本（MDB_ThemeGround.txt）。
-theme_by_source：每個原版來源的每個 textureChoice 升級後用哪個主題（SOURCE_THEME 與 COLOR_OLIVE，規則見 theme_of）。
+theme_by_source：每個原版來源的每個 textureChoice 升級後用哪個主題（NAVY_SOURCES、OLIVE_SOURCES、COLOR_OLIVE，規則見 theme_of）。
 """
-import io, json, os, re, struct, sys, tempfile
+import json, os, re, subprocess, sys, tempfile
 
 import numpy as np
-from PIL import Image, ImageDraw, ImageEnhance
+from PIL import Image, ImageDraw
 from scipy import ndimage as nd
+from scipy.sparse import coo_matrix
+from scipy.sparse.csgraph import connected_components
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(HERE)
 sys.path.insert(0, os.path.join(HERE, "blender", "bags"))
 import decal, emblem, xio  # noqa: E402
-from common import TEX_SIZE  # noqa: E402
+from build import icon as build_icon  # noqa: E402  本 MOD 7 款圖示的後製
+from common import BLENDER, TEX_SIZE  # noqa: E402
 
 MEDIA = os.path.join(REPO, "MOD", "MinidoracatBagsFor42", "Contents", "mods", "MinidoracatBagsFor42", "42", "media")
 PZ = os.path.join(os.environ.get("PZ_PATH", r"D:\SteamLibrary\steamapps\common\ProjectZomboid"), "media")
@@ -34,6 +38,8 @@ MODULE = "MinidoracatBags"
 THEMES = ("Navy", "Olive")
 MANIFEST = os.path.join(HERE, "theme_shapes.json")
 GROUND_SCRIPT = os.path.join(MEDIA, "scripts", "MDB_ThemeGround.txt")
+ICON_TOL = (6, 24)   # 圖示重建容差：不透明範圍差幾個像素、兩邊都不透明處 RGB 差幾個色階（--check）
+FRONT = (0.55, 1, 0.45)   # 穿在身體前面的（胸掛、背帶、前腰包）從前面拍圖示
 
 # 主布料色取本 MOD 7 款貼圖的中位數（深藍 59,69,97；橄欖 90,85,63 偏亮一點，日行包卡其 133,120,88）；黑色尼龍的色偏
 PALETTE = {
@@ -43,24 +49,25 @@ PALETTE = {
 
 # ---- 22 種形狀 ----
 # key＝代表款去掉 Base.；base＝代表款的哪個 textureChoice 當底圖；seeds＝主布料取色點 (u, v)；keep＝只降彩度的顏色群取色點；
-# erase＝去字矩形 (u0, v0, u1, v1)；badge＝徽章 (seed (u, v)＝外側面上一點, h＝徽章高，.X 單位約公尺)
+# erase＝去字矩形 (u0, v0, u1, v1)；badge＝徽章：seed (u, v)＝外側面上一點，或 out＋hf（frame_out 自己找朝 out 的面）；h＝徽章高，.X 單位約公尺
 SHAPES = [
-    dict(mesh="m_duffelbag", rep="Base.Bag_DuffelBag", base="clothes\\bag\\duffelbagblue", seeds=[(0.35, 0.25)],
+    dict(mesh="m_duffelbag", icon_strap=True, icon_dir=(1, -0.5, 0.4), rep="Base.Bag_DuffelBag", base="clothes\\bag\\duffelbagblue", seeds=[(0.35, 0.25)],
          badge=dict(seed=(0.62, 0.2), h=0.045),   # 端蓋：左右兩半共用 UV，貼側面會出現兩個（一個左右反）
          members=["Base.Bag_BaseballBag", "Base.Bag_BreakdownBag", "Base.Bag_BurglarBag", "Base.Bag_DuffelBag", "Base.Bag_DuffelBagTINT",
                   "Base.Bag_FoodCanned", "Base.Bag_FoodSnacks", "Base.Bag_InmateEscapedBag", "Base.Bag_MedicalBag", "Base.Bag_Military",
                   "Base.Bag_MoneyBag", "Base.Bag_Police", "Base.Bag_SWAT", "Base.Bag_Sheriff", "Base.Bag_ShotgunBag", "Base.Bag_ShotgunDblBag",
                   "Base.Bag_ShotgunDblSawnoffBag", "Base.Bag_ShotgunSawnoffBag", "Base.Bag_TennisBag", "Base.Bag_ToolBag", "Base.Bag_WeaponBag",
                   "Base.Bag_WorkerBag"]),
-    dict(mesh="m_clothsatchel", rep="Base.Bag_ClothSatchel_Cotton", base="clothes\\bag\\clothsatchel_cotton", seeds=[(0.3, 0.5)],
-         badge=dict(seed=(0.3, 0.5), h=0.03), ground="Satchel_Fishing_Ground", ground_tex="Bag_Satchel_Leather",
+    dict(mesh="m_clothsatchel", icon_strap=True, icon_dir=(1, -0.5, 0.3), rep="Base.Bag_ClothSatchel_Cotton", base="clothes\\bag\\clothsatchel_cotton", seeds=[(0.3, 0.5)],
+         badge=dict(seed=(0.15, 0.75), h=0.03), ground="Satchel_Fishing_Ground", ground_tex="Bag_Satchel_Leather",
          members=["Base.Bag_ClothSatchel_Burlap", "Base.Bag_ClothSatchel_Cotton", "Base.Bag_ClothSatchel_Denim",
                   "Base.Bag_ClothSatchel_DenimBlack", "Base.Bag_ClothSatchel_DenimLight", "Base.Bag_HideSatchel"]),
-    dict(mesh="m_riflecasecloth", rep="Base.Bag_RifleCaseCloth", base="clothes\\bag\\riflecasecloth_green", seeds=[(0.2, 0.5)],
+    dict(mesh="m_riflecasecloth", icon_strap=True, rep="Base.Bag_RifleCaseCloth", base="clothes\\bag\\riflecasecloth_green", seeds=[(0.2, 0.5)],
+         gain=0.68,   # 整件幾乎都是主布料，沒有深色部件，照原明暗換色後看起來偏淡
          badge=dict(seed=(0.13, 0.4), h=0.03),
          members=["Base.Bag_RifleCaseCloth", "Base.Bag_RifleCaseCloth2", "Base.Bag_RifleCaseClothCamo", "Base.Bag_ShotgunCaseCloth",
                   "Base.Bag_ShotgunCaseCloth2"]),
-    dict(mesh="m_satchel_new", rep="Base.Bag_Satchel_Leather", base="clothes\\bag\\Satchel_Leather", seeds=[(0.4, 0.4)],
+    dict(mesh="m_satchel_new", icon_strap=True, rep="Base.Bag_Satchel_Leather", base="clothes\\bag\\Satchel_Leather", seeds=[(0.4, 0.4)],
          badge=dict(seed=(0.37, 0.4), h=0.035), ground="Satchel_Leather_Ground",
          members=["Base.Bag_Satchel_Fishing", "Base.Bag_Satchel_Leather", "Base.Bag_Satchel_Mail", "Base.Bag_Satchel_Medical",
                   "Base.Bag_Satchel_Military"]),
@@ -71,29 +78,34 @@ SHAPES = [
     dict(mesh="m_alice_pack", rep="Base.Bag_ALICEpack", base="clothes\\bag\\alicepack_green", seeds=[(0.5, 0.3)],
          badge=dict(seed=(0.47, 0.33), h=0.045),
          members=["Base.Bag_ALICEpack", "Base.Bag_ALICEpack_Army", "Base.Bag_ALICEpack_DesertCamo", "Base.Bag_SurvivorBag"]),
-    dict(mesh="m_alice_beltsus", rep="Base.Bag_ALICE_BeltSus", base="clothes\\bag\\alice_beltsus_green", seeds=[(0.5, 0.5)],
+    dict(mesh="m_alice_beltsus", icon_dir=FRONT, rep="Base.Bag_ALICE_BeltSus", base="clothes\\bag\\alice_beltsus_green", seeds=[(0.5, 0.5)],
+         badge=dict(out=(0, 0, -1), hf=0.15, h=0.022),
          members=["Base.Bag_ALICE_BeltSus", "Base.Bag_ALICE_BeltSus_Camo", "Base.Bag_ALICE_BeltSus_Green"]),
     dict(mesh="m_fannypactback", rep="Base.Bag_FannyPackBack", base="clothes\\bag\\fannypack", seeds=[(0.3, 0.3)],
-         badge=dict(seed=(0.5, 0.65), h=0.025),
+         badge=dict(out=(0, 0, 1), hf=0.5, h=0.025),
          members=["Base.Bag_FannyPackBack", "Base.Bag_FannyPackBack_Hide", "Base.Bag_FannyPackBack_Tarp"]),
-    dict(mesh="m_fannypackfront", rep="Base.Bag_FannyPackFront", base="clothes\\bag\\fannypack", seeds=[(0.3, 0.3)],
+    dict(mesh="m_fannypackfront", icon_dir=FRONT, rep="Base.Bag_FannyPackFront", base="clothes\\bag\\fannypack", seeds=[(0.3, 0.3)],
          badge=dict(seed=(0.5, 0.65), h=0.025),
          members=["Base.Bag_FannyPackFront", "Base.Bag_FannyPackFront_Hide", "Base.Bag_FannyPackFront_Tarp"]),
     dict(mesh="m_sheetslingbag", rep="Base.Bag_SheetSlingBag", base="clothes\\bag\\sheetslingbag", seeds=[(0.8, 0.2)],
          badge=dict(seed=(0.43, 0.45), h=0.03),
          members=["Base.Bag_HideSlingBag", "Base.Bag_SheetSlingBag", "Base.Bag_TarpSlingBag"]),
     dict(mesh="m_bighikingbag", rep="Base.Bag_BigHikingBag", base="clothes\\bag\\bighikingbagblue", seeds=[(0.9, 0.6)],
+         badge=dict(seed=(0.42, 0.5), h=0.04),
          members=["Base.Bag_BigHikingBag", "Base.Bag_BigHikingBag_Travel"]),
-    dict(mesh="bob_chestrig", rep="Base.Bag_ChestRig", base="clothes\\bag\\chestrig", seeds=[(0.5, 0.4)],
-         badge=dict(seed=(0.52, 0.52), h=0.022), ground="ChestRig_Ground",
+    dict(mesh="bob_chestrig", icon_dir=FRONT, rep="Base.Bag_ChestRig", base="clothes\\bag\\chestrig", seeds=[(0.5, 0.4)],
+         badge=dict(out=(0, 0, -1), hf=0.75, h=0.032), ground="ChestRig_Ground",   # 胸前上方那片；胸掛在貼圖上只佔一小塊，徽章放大才看得到
          members=["Base.Bag_ChestRig", "Base.Bag_ChestRig_Tarp"]),
     dict(mesh="m_craftedframepack_lrg", rep="Base.Bag_CraftedFramepack_Large", base="clothes\\bag\\craftedframepack_lrg", seeds=[(0.2, 0.5)],
+         keep_light=0.55, badge=dict(out=(0, 0, 1), hf=0.6, h=0.045),
          members=["Base.Bag_CraftedFramepack_Large", "Base.Bag_TarpFramepack_Large"]),
     dict(mesh="m_craftedframepack_small", rep="Base.Bag_CraftedFramepack_Small", base="clothes\\bag\\craftedframepack_small",
-         seeds=[(0.3, 0.5)], members=["Base.Bag_CraftedFramepack_Small", "Base.Bag_TarpFramepack_Small"]),
+         seeds=[(0.3, 0.5)], keep_light=0.55, badge=dict(out=(0, 0, 1), hf=0.6, h=0.04),
+         members=["Base.Bag_CraftedFramepack_Small", "Base.Bag_TarpFramepack_Small"]),
     dict(mesh="m_crudeleatherbag", rep="Base.Bag_CrudeLeatherBag", base="clothes\\bag\\crudeleatherbag", seeds=[(0.5, 0.7)],
+         badge=dict(out=(0, 0, 1), hf=0.55, h=0.035),
          ground="CrudeLeatherBag_Ground", members=["Base.Bag_CrudeLeatherBag", "Base.Bag_CrudeTarpBag"]),
-    dict(mesh="m_golfbag", rep="Base.Bag_GolfBag", base="clothes\\bag\\golfbag_blue", seeds=[(0.3, 0.85)],
+    dict(mesh="m_golfbag", icon_strap=True, icon_dir=(0.2, -1, 0.1), rep="Base.Bag_GolfBag", base="clothes\\bag\\golfbag_blue", seeds=[(0.3, 0.85)],
          erase=[(0.17, 0.035, 0.43, 0.135), (0.05, 0.215, 0.16, 0.555), (0.45, 0.215, 0.575, 0.565), (0.6, 0.17, 0.76, 0.235)],
          badge=dict(seed=(0.51, 0.45), h=0.035), members=["Base.Bag_GolfBag", "Base.Bag_GolfBag_Melee"]),
     dict(mesh="m_hikingbag", rep="Base.Bag_NormalHikingBag", base="clothes\\bag\\hikingbagblue", seeds=[(0.9, 0.25)],
@@ -101,13 +113,13 @@ SHAPES = [
     dict(mesh="m_hydrationbackpack", rep="Base.Bag_HydrationBackpack", base="clothes\\bag\\hydrationbackpack_blue", seeds=[(0.35, 0.4)],
          erase=[(0.22, 0.21, 0.43, 0.33)], badge=dict(seed=(0.33, 0.3), h=0.035),
          members=["Base.Bag_HydrationBackpack", "Base.Bag_HydrationBackpack_Camo"]),
-    dict(mesh="m_satchel", rep="Base.Bag_Satchel", base="clothes\\bag\\satchel", seeds=[(0.6, 0.5)],
+    dict(mesh="m_satchel", icon_strap=True, rep="Base.Bag_Satchel", base="clothes\\bag\\satchel", seeds=[(0.6, 0.5)],
          badge=dict(seed=(0.5, 0.62), h=0.035), members=["Base.Bag_Satchel", "Base.Bag_SatchelPhoto"]),
     dict(mesh="m_craftedframepack_lrg2", rep="Base.Bag_CraftedFramepack_Large2", base="clothes\\bag\\craftedframepacl_lrg2",
-         seeds=[(0.5, 0.75)], members=["Base.Bag_CraftedFramepack_Large2"]),
+         seeds=[(0.5, 0.75)], keep_light=0.55, badge=dict(out=(0, 0, 1), hf=0.6, h=0.045), members=["Base.Bag_CraftedFramepack_Large2"]),
     dict(mesh="m_craftedframepack_lrg3", rep="Base.Bag_CraftedFramepack_Large3", base="clothes\\bag\\craftedframepack_lrg3",
-         seeds=[(0.5, 0.75)], members=["Base.Bag_CraftedFramepack_Large3"]),
-    dict(mesh="m_fishingbasket", rep="Base.Bag_FishingBasket", base="clothes\\bag\\fishingbasket", seeds=[(0.5, 0.5)],
+         seeds=[(0.5, 0.75)], keep_light=0.55, badge=dict(out=(0, 0, 1), hf=0.6, h=0.045), members=["Base.Bag_CraftedFramepack_Large3"]),
+    dict(mesh="m_fishingbasket", icon_strap=True, rep="Base.Bag_FishingBasket", base="clothes\\bag\\fishingbasket", seeds=[(0.5, 0.5)],
          badge=dict(seed=(0.62, 0.45), h=0.035), members=["Base.Bag_FishingBasket"]),
 ]
 
@@ -230,43 +242,6 @@ def read_mesh(path):
     return dict(V=V, F=F, N=N, UV=UV)
 
 
-def ui_icons(names):
-    """原版物品圖示在 texturepacks 的 UI.pack／UI2.pack：照 TexturePackDevice.java:80-150 讀頁面與子圖，裁出 {名稱: RGBA}。
-    版本 1（PZPK 開頭）每頁 PNG 前有長度；版本 0 的 PNG 一直讀到 0xDEADBEEF。子圖 (x, y, w, h, 偏移 x, y, 原寬, 原高)。"""
-    out = {}
-    for pack in ("UI.pack", "UI2.pack"):
-        b = open(os.path.join(PZ, "texturepacks", pack), "rb").read()
-        p, ver = 0, 0
-        if b[:4] == b"PZPK":
-            p, ver = 8, struct.unpack_from("<i", b, 4)[0]
-        def i32():
-            nonlocal p
-            p += 4
-            return struct.unpack_from("<i", b, p - 4)[0]
-        def string():
-            nonlocal p
-            n = i32(); p += n
-            return b[p - n:p].decode("latin-1")
-        for _ in range(i32()):
-            string(); n = i32(); i32()
-            subs = [(string(),) + tuple(i32() for _ in range(8)) for _ in range(n)]
-            if ver == 1:
-                n = i32(); page = b[p:p + n]; p += n
-            else:
-                end = b.index(b"\xef\xbe\xad\xde", p); page = b[p:end]; p = end + 4
-            hits = [s for s in subs if s[0] in names and s[0] not in out]
-            if hits:
-                im = Image.open(io.BytesIO(page)).convert("RGBA")
-                for nm, x, y, w, h, ox, oy, fw, fh in hits:
-                    c = Image.new("RGBA", (fw, fh), (0, 0, 0, 0))
-                    c.paste(im.crop((x, y, x + w, y + h)), (ox, oy))
-                    out[nm] = c
-    miss = set(names) - set(out)
-    if miss:
-        sys.exit(f"UI.pack／UI2.pack 找不到圖示 {sorted(miss)}")
-    return out
-
-
 # ---- 換色 ----
 def lum(a):
     return a @ np.array([0.299, 0.587, 0.114])
@@ -365,16 +340,34 @@ def umbrella(size=1024):
     return im.resize((size, int(H / S)), Image.LANCZOS)
 
 
+def frame_of(n0, p0):
+    up = np.array([0.0, 1.0, 0.0]) if abs(n0[1]) < 0.9 else np.array([0.0, 0.0, -1.0])
+    et = up - (up @ n0) * n0
+    et /= np.linalg.norm(et)
+    return dict(center=p0, normal=n0, up=et, right=np.cross(n0, et))
+
+
 def frame_at(M, seed, res=512):
     """UV 點 (u, v) 在網格上的位置與面法線 → decal 用的 frame（上＝世界上方投影到表面）。"""
     V, F, UV, N = M["V"], M["F"], M["UV"], M["N"]
     ys, xs, fs, bs = decal.raster(V, F, UV, res)
     k = np.argmin((xs - seed[0] * res) ** 2 + (ys - seed[1] * res) ** 2)
-    n0 = decal.face_normals(V, F, N)[fs[k]]
-    up = np.array([0.0, 1.0, 0.0]) if abs(n0[1]) < 0.9 else np.array([0.0, 0.0, -1.0])
-    et = up - (up @ n0) * n0
-    et /= np.linalg.norm(et)
-    return dict(center=bs[k] @ V[F[fs[k]]], normal=n0, up=et, right=np.cross(n0, et))
+    return frame_of(decal.face_normals(V, F, N)[fs[k]], bs[k] @ V[F[fs[k]]])
+
+
+def frame_out(M, out, hf, xf=0.5):
+    """朝 out 方向（.X 空間；+z＝角色背後）的外側面上一點：法線和 out 夾角 < 35° 的面裡，最靠外、
+    高度在這些面的 hf、橫向在 xf 的那一面。框架包、胸掛這類 UV 島看不出朝向的用它，不用猜 UV 座標。"""
+    V, F, N = M["V"], M["F"], M["N"]
+    fn = decal.face_normals(V, F, N)
+    od = np.array(out, float) / np.linalg.norm(out)
+    cand = np.nonzero(fn @ od > 0.82)[0]
+    C = V[F[cand]].mean(1)
+    side = np.cross([0.0, 1.0, 0.0], od)
+    s, y, depth = C @ side, C[:, 1], C @ od
+    score = np.abs(y - (y.min() + hf * np.ptp(y))) + np.abs(s - (s.min() + xf * np.ptp(s))) - 0.6 * (depth - depth.max())
+    k = cand[np.argmin(score)]
+    return frame_of(fn[k], V[F[k]].mean(0))
 
 
 _EMB = {}
@@ -397,38 +390,58 @@ def texture(shape, theme, plain=False):
         a, hole = erase(a, shape["erase"], main)
         main = color_group(a, shape["seeds"]) | hole
     keep = color_group(a, shape["keep"]) & ~main if shape.get("keep") else None
-    tex = (recolor(a, theme, main, keep) * 255).round().astype(np.uint8)
+    if shape.get("keep_light"):   # 框架包的木頭和皮同色相、比較亮：亮過門檻的只降彩度
+        wood = main & (lum(a) > shape["keep_light"])
+        main, keep = main & ~wood, wood if keep is None else keep | wood
+    tex = (np.clip(recolor(a, theme, main, keep) * shape.get("gain", 1.0), 0, 1) * 255).round().astype(np.uint8)
     b = shape.get("badge")
     if not plain and b:
         M = shape["_mesh"]
-        fr = dict(frame_at(M, b["seed"]), old=np.zeros((res, res), bool))
+        fr = frame_at(M, b["seed"]) if "seed" in b else frame_out(M, b["out"], b["hf"], b.get("xf", 0.5))
+        fr = dict(fr, old=np.zeros((res, res), bool))
         h = b["h"] * (1.55 if theme == "Olive" else 1.0)   # 保護傘章下面多一條警示條：章本身和隊徽一樣高
         tex, _, _ = decal.apply(tex, M["V"], M["F"], M["UV"], M["N"], fr, badge_art(theme), h)
     return Image.fromarray(np.dstack([tex, alpha]))
 
 
-def icon(src, theme):
-    """A 案：原版圖示換色。主布料＝可見像素裡最常見的色相（有彩度）或中間灰；1 px 外框照原圖。深藍拉亮一點（同 build.icon 的理由）。"""
-    a = np.asarray(src.convert("RGBA")).astype(float) / 255
-    rgb, al = a[..., :3], a[..., 3]
-    vis = al > 0.5
-    h, s, _ = hsv(rgb)
-    L = lum(rgb)
-    sat = vis & (s > 0.2) & (L > 0.08) & (L < 0.9)
-    if sat.sum() > 0.3 * vis.sum():
-        h0 = (np.bincount((h[sat] * 24).astype(int) % 24, minlength=24).argmax() + 0.5) / 24
-        dh = np.abs(h - h0); dh = np.minimum(dh, 1 - dh)
-        main = vis & (dh < 0.09) & (s > 0.15)
-    else:
-        l0 = np.median(L[vis & (L > 0.1)])
-        main = vis & (s < 0.25) & (L > 0.5 * l0) & (L < 1.8 * l0 + 0.1)
-    out = recolor(rgb, theme, main)
-    im = Image.fromarray((np.dstack([out, al]) * 255).round().astype(np.uint8))
-    if theme == "Navy":
-        rgbim = ImageEnhance.Brightness(im.convert("RGB")).enhance(1.25)
-        rgbim.putalpha(im.getchannel("A"))
-        im = rgbim
-    return im
+def icon_mesh(shape):
+    """圖示只畫包本身：icon_strap 的款式（側背、斜背、手提類）拿掉繞過身體的背帶（伸到肩上 y ≥ 0.78、又繞到身體前面 z < −0.02 的連通塊），
+    否則側背包、釣具籃會畫成一條長背帶加一個小包。背包類的肩帶和包身連在一起，從背後拍也被包身擋住，整件畫。"""
+    V, F, UV = shape["_mesh"]["V"], shape["_mesh"]["F"], shape["_mesh"]["UV"]
+    if not shape.get("icon_strap"):
+        return V, F, UV
+    q = np.unique(np.round(V / 1e-4).astype(np.int64), axis=0, return_inverse=True)[1].ravel()
+    e = q[np.concatenate([F[:, [0, 1]], F[:, [1, 2]]])]
+    n = q.max() + 1
+    lab = connected_components(coo_matrix((np.ones(len(e)), (e[:, 0], e[:, 1])), shape=(n, n)), directed=False)[1][q]
+    drop = [c for c in np.unique(lab) if V[lab == c, 1].max() >= 0.78 and V[lab == c, 2].min() < -0.02]
+    keep = ~np.isin(lab, drop)
+    if not drop or not keep.any():
+        sys.exit(f"{shape['key']}: 找不到背帶，或整件都被當成背帶，先看網格的連通塊再改 icon_mesh")
+    return V, F[keep[F].all(1)], UV
+
+
+def render_icons(root, shapes, work):
+    """Blender 算圖示原圖（blender/bags/theme_icons.py），再照本 MOD 7 款的後製（build.icon）存成 32×32。"""
+    job = []
+    for s in shapes:
+        V, F, UV = icon_mesh(s)
+        npz = os.path.join(work, s["key"] + ".npz")
+        np.savez(npz, V=V, F=F, UV=UV)
+        for th in THEMES:
+            job.append(dict(npz=npz, dir=s.get("icon_dir", (0.55, -1, 0.45)), out=os.path.join(work, f"{s['key']}_{th}.png"),
+                            tex=os.path.join(root, os.path.relpath(MEDIA, REPO), "textures", *tex_name(s["key"], th).split("/")) + ".png"))
+    with open(os.path.join(work, "icons.json"), "w", encoding="utf-8") as f:
+        json.dump(job, f)
+    subprocess.run([BLENDER, "-b", "--factory-startup", "--python", os.path.join(HERE, "blender", "bags", "theme_icons.py"), "--",
+                    os.path.join(work, "icons.json")], check=True, stdout=subprocess.DEVNULL)
+    out = []
+    for s in shapes:
+        for th in THEMES:
+            p = os.path.join(root, os.path.relpath(MEDIA, REPO), "textures", f"Item_{icon_name(s['key'], th)}.png")
+            build_icon(os.path.join(work, f"{s['key']}_{th}.png"), p)
+            out.append(os.path.relpath(p, root))
+    return out
 
 
 # ---- 組裝 ----
@@ -473,21 +486,16 @@ def ground_script(shapes):
 
 
 def build(root, plain=False):
-    """把所有產物寫到 root（結構同 repo）：回 [相對路徑]。"""
+    """把所有產物寫到 root（結構同 repo）：回 (逐位元組重現的檔, 圖示)，都是相對路徑。"""
     items = vanilla_items()
     shapes, written, by_source = [], [], {}
     seen = []
-    want_icons = {}
     for cfg in SHAPES:
         s = dict(cfg, key=cfg["rep"].split(".", 1)[1])
         rep = items.get(s["rep"]) or sys.exit(f"原版沒有 {s['rep']}")
         ci = clothing(rep["ClothingItem"])
         if s["base"].lower() not in [t.lower() for t in ci["tex"]]:
             sys.exit(f"{s['rep']}: textureChoices 沒有 {s['base']}")
-        idx = [t.lower() for t in ci["tex"]].index(s["base"].lower())
-        icons = rep.get("IconsForTexture", "").split(";") if rep.get("IconsForTexture") else []
-        s["_icon"] = "Item_" + (icons[idx].strip() if idx < len(icons) else rep["Icon"])
-        want_icons[s["_icon"]] = True
         for m in s["members"]:
             f = items.get(m) or sys.exit(f"原版沒有 {m}")
             mesh = os.path.splitext(os.path.basename(clothing(f["ClothingItem"])["M"].replace("\\", "/")))[0].lower()
@@ -511,7 +519,6 @@ def build(root, plain=False):
             extra.append(full)
     if extra:
         print(f"注意：這些原版容器也用這 22 種網格，但不在 SHAPES（不在升級清單就不用管）：{sorted(extra)}")
-    art = ui_icons(list(want_icons))
     tex_dir = os.path.join(root, os.path.relpath(MEDIA, REPO), "textures")
     os.makedirs(os.path.join(tex_dir, "Clothes", "Bag"), exist_ok=True)
     for s in shapes:
@@ -519,10 +526,9 @@ def build(root, plain=False):
             p = os.path.join(tex_dir, *tex_name(s["key"], th).split("/")) + ".png"
             texture(s, th, plain).save(p, optimize=True)
             written.append(os.path.relpath(p, root))
-            p = os.path.join(tex_dir, f"Item_{icon_name(s['key'], th)}.png")
-            icon(art[s["_icon"]], th).save(p, optimize=True)
-            written.append(os.path.relpath(p, root))
         print(s["key"], flush=True)
+    with tempfile.TemporaryDirectory() as work:
+        icons = render_icons(root, shapes, work)
     manifest = dict(version=1, shapes=[dict(
         key=s["key"], mesh=s["mesh"], representative=s["rep"], members=s["members"], base_texture=s["base"],
         texture={th: tex_name(s["key"], th) for th in THEMES}, icon={th: icon_name(s["key"], th) for th in THEMES},
@@ -535,22 +541,41 @@ def build(root, plain=False):
         with open(p, "w", encoding="utf-8", newline="\n") as f:
             f.write(text)
         written.append(rel)
-    return written
+    return written, icons
+
+
+def icon_diff(a, b):
+    """兩張圖示的差：(不透明範圍不同的像素數, 兩邊都不透明處 RGB 最大差)。"""
+    x, y = (np.asarray(Image.open(p).convert("RGBA")).astype(int) for p in (a, b))
+    ma, mb = x[..., 3] > 127, y[..., 3] > 127
+    both = ma & mb
+    return int((ma != mb).sum()), int(np.abs(x[both, :3] - y[both, :3]).max(initial=0))
 
 
 def main():
     plain = "--plain" in sys.argv
     if "--check" in sys.argv:
+        # 貼圖、清單檔、地面模型腳本逐位元組比對。圖示是 Blender 算圖再縮到 32 px：同一台機器、同一版 Blender（5.2）重建兩次實測範圍差 0、顏色差 0，
+        # 但換顯示卡驅動或 Blender 版本可能差幾個色階，所以圖示用容差比：不透明範圍差 ≤ ICON_TOL[0] 像素、顏色差 ≤ ICON_TOL[1] 色階
         with tempfile.TemporaryDirectory() as tmp:
-            stale = [rel for rel in build(tmp, plain)
-                     if not os.path.isfile(os.path.join(REPO, rel))
+            exact, icons = build(tmp, plain)
+            stale = [rel for rel in exact if not os.path.isfile(os.path.join(REPO, rel))
                      or open(os.path.join(REPO, rel), "rb").read() != open(os.path.join(tmp, rel), "rb").read()]
+            worst = (0, 0)
+            for rel in icons:
+                if not os.path.isfile(os.path.join(REPO, rel)):
+                    stale.append(rel)
+                    continue
+                d = icon_diff(os.path.join(REPO, rel), os.path.join(tmp, rel))
+                worst = max(worst[0], d[0]), max(worst[1], d[1])
+                if d[0] > ICON_TOL[0] or d[1] > ICON_TOL[1]:
+                    stale.append(f"{rel}（範圍差 {d[0]} 像素、顏色差 {d[1]}）")
         if stale:
             sys.exit("主題產物和重建結果不同，重跑 uv run scripts/gen_theme.py：\n  " + "\n  ".join(stale))
-        print("OK：主題貼圖、圖示、清單檔、地面模型腳本和重建結果相同")
+        print(f"OK：{len(exact)} 個檔逐位元組相同；{len(icons)} 個圖示在容差內（最大範圍差 {worst[0]} 像素、顏色差 {worst[1]}）")
         return
-    written = build(REPO, plain)
-    print(f"寫了 {len(written)} 個檔")
+    exact, icons = build(REPO, plain)
+    print(f"寫了 {len(exact) + len(icons)} 個檔")
 
 
 if __name__ == "__main__":
