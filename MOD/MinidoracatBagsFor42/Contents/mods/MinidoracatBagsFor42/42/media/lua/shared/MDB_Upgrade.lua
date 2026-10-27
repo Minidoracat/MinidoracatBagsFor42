@@ -203,7 +203,8 @@ end
 
 -- 客戶端（OnServerCommand，GameClient.java:1071）：伺服器在地上原地升階後送來的數值，照 ID 找到那一格的世界物品，
 -- 寫在同一個物件上，排好的動作與開著的背包面板照舊指著它。階級與基準也寫進 modData：OnTest 在客戶端用 MDB_tier 判斷下一階。
--- 找不到（那一格沒載入）就不管，區塊載入時拿到的是伺服器存的那份
+-- 找不到（那一格沒載入）就不管，區塊載入時拿到的是伺服器存的那份。伺服器指令走 RELIABLE、不保證順序
+-- （GameServer.java:3497-3522 的 ClientCommand 封包，PacketTypes.java:510），原地升階只會往上，比現在低的是晚到的舊指令，不套
 function MDB.onServerCommand(module, command, args)
     if module ~= "MinidoracatBags" or command ~= "floorTier" then return end
     local sq = getCell():getGridSquare(args.x, args.y, args.z)
@@ -212,6 +213,7 @@ function MDB.onServerCommand(module, command, args)
         local bag = wos:get(i):getItem()
         if bag and bag:getID() == args.id then
             local md = bag:getModData()
+            if (md.MDB_tier or 0) > args.tier then return end
             md.MDB_tier, md.MDB_cap, md.MDB_wr, md.MDB_fluid = args.tier, args.baseCap, args.baseWr, args.baseFluid
             bag:setCapacity(args.cap)
             bag:setWeightReduction(args.wr)
@@ -318,7 +320,7 @@ local function tierOf(bag)
 end
 
 -- 配方的 keep 輸入裡第一個背包。原版介面開工前把輸入搬進主物品欄（ISWidgetHandCraftControl.lua:342-351），Neat Crafting 不搬，
--- 所以也可能在地上：換型由 swapBag 處理，只升階的由 applyTier 重送世界物品
+-- 所以也可能在地上：換型由 swapBag 處理，只升階的由 applyTier 送 floorTier 指令、客戶端原地套用
 function MDB.keepBag(data)
     local items = data:getAllKeepInputItems()
     for i = 0, items:size() - 1 do

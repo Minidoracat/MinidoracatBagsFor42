@@ -1590,6 +1590,8 @@ local function suite()
             local csq, decoy, cb = floorSquare(), instanceItem(server.fullType), instanceItem(server.fullType)
             csq:AddWorldInventoryItem(decoy, 0.1, 0.1, 0)
             MDB.applyTier(cb, tier)
+            cb.md.MDB_cap, cb.md.MDB_wr = -1, -1   -- 哨兵：基準要由指令寫入，不能靠同型號自己算出來的剛好相同
+            if cb.md.MDB_fluid then cb.md.MDB_fluid = -1 end
             cb.id = server.id
             if water then cb.fc.amount = water end
             csq:AddWorldInventoryItem(cb, 0.3, 0.6, 0.1)
@@ -1620,6 +1622,14 @@ local function suite()
         check("client: floorTier updates the same object on the ground (capacity, weight reduction, tier and bases), not the other bag",
             csq.objs[2] == cbWi and cbWi.item == cb and cb.cap == old.cap and cb.wr == old.wr and cb.md.MDB_tier == 2
             and cb.md.MDB_cap == old.md.MDB_cap and cb.md.MDB_wr == old.md.MDB_wr and decoy.cap == decoyCap and decoy.md.MDB_tier == nil)
+        local cmd2 = cmd
+        env.cmds = {}
+        MDB.onUpgrade(keepData(old), PLAYER)
+        local cmd3 = env.cmds[1] or { args = {} }
+        MDB.onServerCommand(cmd3.module, cmd3.command, cmd3.args)
+        MDB.onServerCommand(cmd2.module, cmd2.command, cmd2.args)   -- 第 2 階的指令晚到（RELIABLE 不保證順序）
+        check("client: a late tier-2 command after tier 3 is ignored (stays tier 3, 49/100)",
+            cmd3.args.tier == 3 and old.cap == 49 and cb.md.MDB_tier == 3 and cb.cap == 49 and cb.wr == 100)
         getCell = function() return { getGridSquare = function() return nil end } end
         check("client: square not loaded -> nothing to do", pcall(MDB.onServerCommand, cmd.module, cmd.command, cmd.args))
         env.cmds = {}
@@ -1996,6 +2006,8 @@ if arg and arg[1] == "--mutants" then
         { name = "客戶端不比 ID", file = "UPG", from = "if bag and bag:getID() == args.id then", to = "if bag then" },
         { name = "客戶端沒寫階級與基準", file = "UPG", from = "            md.MDB_tier, md.MDB_cap, md.MDB_wr, md.MDB_fluid = args.tier, args.baseCap, args.baseWr, args.baseFluid\n", to = "" },
         { name = "客戶端沒套容量", file = "UPG", from = "            bag:setCapacity(args.cap)\n", to = "" },
+        { name = "客戶端套用晚到的舊指令", file = "UPG", from = "            if (md.MDB_tier or 0) > args.tier then return end\n", to = "" },
+        { name = "客戶端只寫階級不寫基準", file = "UPG", from = "md.MDB_tier, md.MDB_cap, md.MDB_wr, md.MDB_fluid = args.tier, args.baseCap, args.baseWr, args.baseFluid", to = "md.MDB_tier = args.tier" },
         { name = "客戶端沒套負重減輕", file = "UPG", from = "            bag:setWeightReduction(args.wr)\n", to = "" },
         { name = "客戶端沒套液體容量", file = "UPG", from = "            if fc then fc:setCapacity(args.fluid) end\n", to = "" },
         { name = "客戶端只看物品本身的液體", file = "UPG", from = "args.fluid and bag:getFluidContainerFromSelfOrWorldItem()", to = "args.fluid and bag:getFluidContainer()" },
