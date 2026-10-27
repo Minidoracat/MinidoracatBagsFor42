@@ -282,7 +282,7 @@ Bag Upgrade Plus (BUP below) has been removed from the Workshop. This mod takes 
 {{img:craft-convert-en.jpg}}
 [list]
 [*] [b]Recipe[/b]: "Convert Old Plus Bag to Reinforced" in the Tailoring category of the crafting menu.
-[*] [b]Requirements[/b]: the old bag must not be worn; items can stay inside.
+[*] [b]Requirements[/b]: the old bag must not be worn, and you need a table or similar surface next to you; items can stay inside. When everything is in place, the recipe also shows up when you right-click the old bag.
 [*] [b]Materials[/b]: a Needle and 2 Thread. No Tailoring level needed.
 [*] [b]Result[/b]: the reinforced version of the matching vanilla bag, already at the highest tier (tier 3, 49/100 by default). The theme follows the old bag's color, by the same rules as upgrading a vanilla bag. An old ALICE pack becomes "Umbrella Military Backpack (Reinforced)", an old fanny pack becomes "S.T.A.R.S. Fanny Pack (Reinforced)". Reverting it later gives the matching vanilla bag.
 [*] [b]Carried over[/b]: contents, liquids and your custom name. The 5 L of water in an old Hydration Pack stays.

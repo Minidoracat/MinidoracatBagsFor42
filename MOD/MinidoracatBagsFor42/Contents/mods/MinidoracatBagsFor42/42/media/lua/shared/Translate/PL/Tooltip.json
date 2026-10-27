@@ -2,5 +2,5 @@
     "Tooltip_MDB_UpgradeBagTier1": "Torba musi mieć poziom 0 i nie może być założona. Przedmioty w środku mogą zostać. Najwyższy poziom ustala serwer.",
     "Tooltip_MDB_UpgradeBagTier2": "Torba musi mieć poziom 1 i nie może być założona. Przedmioty w środku mogą zostać. Najwyższy poziom ustala serwer.",
     "Tooltip_MDB_UpgradeBagTier3": "Torba musi mieć poziom 2 i nie może być założona. Przedmioty w środku mogą zostać. Najwyższy poziom ustala serwer.",
-    "Tooltip_MDB_LegacyBag": "Stara torba Plus: możesz wyjmować przedmioty, ale nie możesz ich wkładać. Igłą i nicią przerobisz ją na wzmocnioną wersję tej samej torby na najwyższym poziomie; przedmioty w środku mogą zostać."
+    "Tooltip_MDB_LegacyBag": "Stara torba Plus: przerób ją na wersję wzmocnioną, żeby dalej jej używać.\nDo tego czasu możesz wyjmować przedmioty, ale nie możesz ich wkładać.\nPrzeróbka: zdejmij torbę, z igłą i nicią podejdź do stołu i kliknij torbę prawym przyciskiem:\n„Przerób starą torbę Plus na wersję wzmocnioną”.\nDostaniesz wzmocnioną wersję tej samej torby na najwyższym poziomie; przedmioty w środku mogą zostać."
 }

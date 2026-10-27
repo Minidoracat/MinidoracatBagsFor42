@@ -2,5 +2,5 @@
     "Tooltip_MDB_UpgradeBagTier1": "Çanta 0. seviyede olmalı ve giyili olmamalı. İçindeki eşyalar kalabilir. En yüksek seviyeyi sunucu belirler.",
     "Tooltip_MDB_UpgradeBagTier2": "Çanta 1. seviyede olmalı ve giyili olmamalı. İçindeki eşyalar kalabilir. En yüksek seviyeyi sunucu belirler.",
     "Tooltip_MDB_UpgradeBagTier3": "Çanta 2. seviyede olmalı ve giyili olmamalı. İçindeki eşyalar kalabilir. En yüksek seviyeyi sunucu belirler.",
-    "Tooltip_MDB_LegacyBag": "Eski Plus çanta: içinden eşya alınabilir ama konulamaz. İğne ve iplikle aynı çantanın güçlendirilmiş sürümüne (en yüksek seviye) dönüştürülebilir; içindeki eşyalar kalabilir."
+    "Tooltip_MDB_LegacyBag": "Eski Plus çanta: kullanmaya devam etmek için güçlendirilmiş sürüme dönüştürün.\nO zamana kadar içinden eşya alınabilir ama konulamaz.\nDönüştürmek için: çantayı çıkarın, iğne ve iplikle bir masanın yanına gidin, çantaya sağ tıklayın:\n\"Eski Plus Çantayı Güçlendirilmiş Sürüme Dönüştür\".\nAynı çantanın güçlendirilmiş sürümü (en yüksek seviye) olur; içindeki eşyalar kalabilir."
 }
