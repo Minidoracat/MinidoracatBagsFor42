@@ -170,24 +170,60 @@ function MDB.applyTier(bag, tier)
     -- 原本的 Plus 背包就是 49。自重取腳本值（Item.java:533）：伺服器上 getActualWeight() 會回 0（顯示名稱等於全名時，InventoryItem.java:2740-2742）
     local top = math.floor(50 - bag:getScriptItem():getActualWeight())
     local fullCap = md.MDB_cap + math.floor((math.max(top - md.MDB_cap, 0) * pct + 50) / 100)
-    bag:setCapacity(step(md.MDB_cap, fullCap))
-    bag:setWeightReduction(step(md.MDB_wr, math.max(md.MDB_wr, MDB.opt("FullWeightReduction"))))
+    local cap, wr = step(md.MDB_cap, fullCap), step(md.MDB_wr, math.max(md.MDB_wr, MDB.opt("FullWeightReduction")))
+    bag:setCapacity(cap)
+    bag:setWeightReduction(wr)
     -- 液體容量存在 FluidContainer 元件（GameEntity.java:183、FluidContainer.java:683、存檔 :1202-1205）；
     -- 放在地上時元件搬到世界物品上（IsoWorldInventoryObject.java:103-105，撿起時搬回 :650-653）
-    local fc = bag:getFluidContainerFromSelfOrWorldItem()
+    local fc, fluid = bag:getFluidContainerFromSelfOrWorldItem(), nil
     if fc then
         if md.MDB_fluid == nil then md.MDB_fluid = fc:getCapacity() end
         local base = md.MDB_fluid
         local full = base + math.max(FULL_FLUID - base, 0) * pct / 100
-        fc:setCapacity(base + (full - base) * t / m)
+        fluid = base + (full - base) * t / m
+        fc:setCapacity(fluid)
     end
     md.MDB_tier = tier
-    -- 客戶端的容量與負重減輕要整件重送才會更新；單機無作用（LuaManager.java:12404-12412、RecipeCodeOnCreate.java:892-894）
-    local container = bag:getContainer()
-    if isServer() and container and not swapping then
-        sendReplaceItemInContainer(container, bag, bag)
+    -- 客戶端的容量與負重減輕要整件重送才會更新；單機無作用（LuaManager.java:12404-12412、RecipeCodeOnCreate.java:892-894）。
+    -- 地上（含桌面）的背包在伺服器上沒有 container（ContainerID.java:392-396），改用伺服器指令把新數值送給客戶端，
+    -- 由 MDB.onServerCommand 套在客戶端原本那件上。不用世界物品的 SWAP_ITEM：它在客戶端換成新物件（IsoWorldInventoryObject.java:115-153），
+    -- 不像容器的 replace 會換動作佇列裡的參照（ReplaceInventoryItemInContainerPacket.java:76-81），排好的搬移會被當成東西不在而跳過
+    -- （ItemContainer.java:634-635、ISInventoryTransferAction.lua:36-40）；原版也沒有帶容量與負重減輕的物品同步封包。
+    if isServer() and not swapping then
+        local wi, container = bag:getWorldItem(), bag:getContainer()
+        if wi then
+            local sq = wi:getSquare()
+            sendServerCommand("MinidoracatBags", "floorTier", { x = sq:getX(), y = sq:getY(), z = sq:getZ(), id = bag:getID(), tier = tier,
+                cap = cap, wr = wr, fluid = fluid, baseCap = md.MDB_cap, baseWr = md.MDB_wr, baseFluid = md.MDB_fluid })
+        elseif container then
+            sendReplaceItemInContainer(container, bag, bag)
+        end
     end
 end
+
+-- 客戶端（OnServerCommand，GameClient.java:1071）：伺服器在地上原地升階後送來的數值，照 ID 找到那一格的世界物品，
+-- 寫在同一個物件上，排好的動作與開著的背包面板照舊指著它。階級與基準也寫進 modData：OnTest 在客戶端用 MDB_tier 判斷下一階。
+-- 找不到（那一格沒載入）就不管，區塊載入時拿到的是伺服器存的那份。伺服器指令走 RELIABLE、不保證順序
+-- （GameServer.java:3497-3522 的 ClientCommand 封包，PacketTypes.java:510），原地升階只會往上，比現在低的是晚到的舊指令，不套
+function MDB.onServerCommand(module, command, args)
+    if module ~= "MinidoracatBags" or command ~= "floorTier" then return end
+    local sq = getCell():getGridSquare(args.x, args.y, args.z)
+    local wos = sq and sq:getWorldObjects()
+    for i = 0, (wos and wos:size() or 0) - 1 do
+        local bag = wos:get(i):getItem()
+        if bag and bag:getID() == args.id then
+            local md = bag:getModData()
+            if (md.MDB_tier or 0) > args.tier then return end
+            md.MDB_tier, md.MDB_cap, md.MDB_wr, md.MDB_fluid = args.tier, args.baseCap, args.baseWr, args.baseFluid
+            bag:setCapacity(args.cap)
+            bag:setWeightReduction(args.wr)
+            local fc = args.fluid and bag:getFluidContainerFromSelfOrWorldItem()
+            if fc then fc:setCapacity(args.fluid) end
+            return
+        end
+    end
+end
+Events.OnServerCommand.Add(MDB.onServerCommand)
 
 -- 換成另一種背包（升級換成強化版、還原、舊 Plus 改裝、換主題），再套 tier。
 -- copyClothingItem 搬內容物（同一批物件，ID 不變）、外觀、改名、顏色、耐久、最愛、液體與 modData（ISClothingExtraAction.lua:62-112）。
@@ -284,7 +320,7 @@ local function tierOf(bag)
 end
 
 -- 配方的 keep 輸入裡第一個背包。原版介面開工前把輸入搬進主物品欄（ISWidgetHandCraftControl.lua:342-351），Neat Crafting 不搬，
--- 所以也可能在地上：換型由 swapBag 處理；只升階的（onUpgrade 的 applyTier）在伺服器上不重送，見 applyTier
+-- 所以也可能在地上：換型由 swapBag 處理，只升階的由 applyTier 送 floorTier 指令、客戶端原地套用
 function MDB.keepBag(data)
     local items = data:getAllKeepInputItems()
     for i = 0, items:size() - 1 do
@@ -372,9 +408,9 @@ end
 -- （ISClothingExtraAction.lua:66-112），換完回到腳本預設、MDB_tier 卻還在，就升不回來了。這裡依 MDB_tier 重算。
 -- 同一個函式也是 copyClothingItem（:62-64，InventoryItem.java:5029-5036）與背負噴霧器換物（ISEquipWeaponAction.lua:152）的路徑。
 -- MP 的 complete() 在伺服器跑（NetTimedAction.java:132-139；客戶端不跑，LuaTimedActionNew.java:164-170）。
--- 新物品這時還沒放進容器，applyTier 不重送；接著 sendAddItemToContainer 整件送出，負重減輕與容量都在裡面
+-- 新物品這時還沒放進容器也沒放上地面，applyTier 不重送；接著 sendAddItemToContainer 整件送出，負重減輕與容量都在裡面
 -- （AddInventoryItemToContainerPacket.java:54-58、InventoryContainer.java:57-58、ItemContainer.java:2439）。
--- MDB.swapBag 呼叫 copyClothingItem 時新背包已在容器裡，由 swapping 擋下這次重送。
+-- MDB.swapBag 呼叫 copyClothingItem 時新背包已在容器裡或地上，由 swapping 擋下這次重送。
 -- 原版只搬改過的名字（:76-79），沒搬改名旗標；swapBag 看旗標決定沿不沿用舊名，換穿過的改名腰包一升級就變回預設名。
 -- 原版拿 getName() 比對、寫入，染血、磨損前綴也會寫進名字（InventoryItem.java:2435-2480），改過名的這裡換回原始名稱。
 require "TimedActions/ISClothingExtraAction"

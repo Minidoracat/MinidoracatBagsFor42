@@ -168,7 +168,7 @@ local env
 local function bootLua()
     MDB, SandboxVars, printed, bootHandlers = nil, nil, {}, {}
     env = { server = false, sent = {}, replaced = {}, added = {} }
-    Events = { OnGameBoot = { Add = function(fn) bootHandlers[#bootHandlers + 1] = fn end } }
+    Events = { OnGameBoot = { Add = function(fn) bootHandlers[#bootHandlers + 1] = fn end }, OnServerCommand = { Add = function() end } }
     -- MDB_Upgrade 會 require 並包住原版的換穿法。照原版搬顏色（textureChoice、染色）、內容物、液體（依新容量截斷）、
     -- modData（ISClothingExtraAction.lua:66-112）
     ISClothingExtraAction = {}
