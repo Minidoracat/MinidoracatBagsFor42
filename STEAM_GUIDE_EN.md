@@ -1,7 +1,7 @@
 <!-- 指南網址：https://steamcommunity.com/sharedfiles/filedetails/?id=3827498713 -->
 <!-- Steam guide source (English): the full reference for this mod; the Workshop description only summarizes. Format and sync: pz-family-docs/release.md「完整說明：Steam 指南」 -->
 <!-- 標題：📖 Minidoracat Bags Mod Guide: Seven Bags, Reinforced Upgrades and Bag Upgrade Plus Takeover -->
-<!-- 摘要：Illustrated guide to the Minidoracat Bags mod: stats, loot locations and sewing recipes for the seven S.T.A.R.S. and Umbrella bags, bag upgrades and reinforced bags, the second satchel slot, swapping fanny packs front and back, extra bag attachment slots, wearing full bags straight off the floor, taking over Bag Upgrade Plus saves with the server switch steps, and the sandbox options. -->
+<!-- 摘要：Illustrated guide to the Minidoracat Bags mod: stats, loot locations and sewing recipes for the seven S.T.A.R.S. and Umbrella bags, bag upgrades and reinforced bags, a list of all bags, the second satchel slot, swapping fanny packs front and back, extra bag attachment slots, wearing full bags straight off the floor, taking over Bag Upgrade Plus saves (with a list of old bags) and the server switch steps, and the sandbox options. -->
 === 🚀 Quick Start
 [b]繁體中文版：[/b][url=https://steamcommunity.com/sharedfiles/filedetails/?id=3827498698]Minidoracat Bags 完整說明[/url]
 
@@ -171,7 +171,7 @@ Every upgraded bag is a "Reinforced" bag: this mod's own item with "(Reinforced)
 
 [h3]Which bags have a reinforced version[/h3]
 [list]
-[*] [b]Vanilla bags are merged by shape[/b]: the 80 vanilla bags are grouped by shape (the model worn on the body) into 22 shapes, each with a S.T.A.R.S. and an Umbrella version: 44 in total. For example, all 22 duffel-style bags (police, sports, tool, medical and so on) upgrade into "S.T.A.R.S. Duffel Bag (Reinforced)" or "Umbrella Duffel Bag (Reinforced)".
+[*] [b]Vanilla bags are merged by shape[/b]: the 80 vanilla bags are grouped by shape (the model worn on the body) into 22 shapes, each with a S.T.A.R.S. and an Umbrella version: 44 in total. For example, all 22 duffel-style bags (police, sports, tool, medical and so on) upgrade into "S.T.A.R.S. Duffel Bag (Reinforced)" or "Umbrella Duffel Bag (Reinforced)". "All Bags at a Glance" lists which vanilla bags go into each shape.
 [*] [b]Best stats of the group[/b]: starting capacity, Encumbrance Reduction and Hydration Pack water capacity are the highest in the shape, so no tier is lower than the original's; full upgrade is still 49/100.
 [*] [b]Which theme you get[/b]: police, sheriff and SWAT bags become S.T.A.R.S.; military, ALICE, camo, chest rigs, gun cases, medical, crafted and natural materials (leather, hide, wicker, canvas, sheets), and green or khaki bags become Umbrella; other colors become S.T.A.R.S. Bags that come in several colors (such as the seven duffel bag colors) follow the color of your bag. For the other theme, use "Switch Reinforced Bag Theme" below.
 [*] [b]This mod's bags[/b]: the seven bags in both looks and the swapped-side fanny pouches each have their own reinforced version: 18 in total.
@@ -194,6 +194,44 @@ Every upgraded bag is a "Reinforced" bag: this mod's own item with "(Reinforced)
 [*] [b]Crafted reinforced Sheet Sling Bag[/b]: it was never upgraded from anything, so reverting gives a vanilla Sheet Sling Bag.
 [*] [b]Tier 0 bags[/b]: cannot use "Convert Upgraded Bag to Reinforced"; use the normal upgrade recipe.
 [*] [b]Theme switching is for reinforced vanilla bags only[/b]: you already pick the look of this mod's seven bags when sewing them.
+[/list]
+=== 🧰 All Bags at a Glance
+This mod's bags come in three groups: the seven new bags, their reinforced versions, and the reinforced versions of vanilla bags. To see what an old Bag Upgrade Plus bag converts into, read "Bag Upgrade Plus Takeover: Old Bag List".
+[h3]The seven new bags and their reinforced versions[/h3]
+[list]
+[*] [b]The seven bags[/b]: Tool Belt Pouch, Medic Hip Pouch, Ammo Bandolier, Courier Satchel, Day Pack, Expedition Frame Pack and Scout Chest Rig. Each comes in a S.T.A.R.S. (navy) and an Umbrella (olive khaki) look; see "The Seven Bags" for stats.
+[*] [b]Swapped-side versions[/b]: the Tool Belt Pouch moved to the back and the Medic Hip Pouch moved to the front, in both looks. You only get them by swapping.
+[*] [b]Reinforced versions[/b]: each bag above upgrades into its own reinforced version with "(Reinforced)" after the name, such as "S.T.A.R.S. Day Pack (Reinforced)": 18 in total.
+[/list]
+[h3]Reinforced vanilla bags[/h3]
+Each row has a S.T.A.R.S. and an Umbrella version: 44 in total. Every vanilla bag in the right column upgrades into the reinforced bag in the same row; the theme follows your bag's color (rules in "Reinforced Bags").
+[table]
+[tr][th]Reinforced bag (S.T.A.R.S. and Umbrella)[/th][th]Upgraded from these vanilla bags[/th][/tr]
+[tr][td]Military Backpack (Reinforced)[/td][td]Military Backpack[/td][/tr]
+[tr][td]Hiking Backpack (Reinforced)[/td][td]Hiking Backpack[/td][/tr]
+[tr][td]Big Hiking Backpack (Reinforced)[/td][td]Big Hiking Backpack[/td][/tr]
+[tr][td]Small Backpack (Reinforced)[/td][td]Small Backpack[/td][/tr]
+[tr][td]Hydration Pack (Reinforced)[/td][td]Hydration Pack[/td][/tr]
+[tr][td]Small Leather Backpack (Reinforced)[/td][td]Small Leather Backpack, Small Tarp Backpack[/td][/tr]
+[tr][td]Small Simple Framepack (Reinforced)[/td][td]Small Simple Framepack[/td][/tr]
+[tr][td]Simple Framepack (Reinforced)[/td][td]Simple Framepack[/td][/tr]
+[tr][td]Framepack (Reinforced)[/td][td]Framepack[/td][/tr]
+[tr][td]Large Framepack (Reinforced)[/td][td]Large Framepack[/td][/tr]
+[tr][td]Duffel Bag (Reinforced)[/td][td]Duffel Bag, Trauma Bag, Police Duffel Bag, SWAT Duffel Bag, Sheriff Duffel Bag[/td][/tr]
+[tr][td]Golf Bag (Reinforced)[/td][td]Golf Bag[/td][/tr]
+[tr][td]Cloth Gun Case (Reinforced)[/td][td]Cloth Gun Case[/td][/tr]
+[tr][td]Satchel (Reinforced)[/td][td]Satchel[/td][/tr]
+[tr][td]Leather Satchel (Reinforced)[/td][td]Fishing Satchel, Leather Satchel, Mail Satchel, Medical Satchel, Military Satchel[/td][/tr]
+[tr][td]Crafted Cotton Satchel (Reinforced)[/td][td]Crafted Burlap Satchel, Crafted Cotton Satchel, Crafted Denim Satchel, Crafted Hide Satchel[/td][/tr]
+[tr][td]Sheet Sling Bag (Reinforced)[/td][td]Hide Sling Bag, Sheet Sling Bag, Tarp Sling Bag[/td][/tr]
+[tr][td]Fanny Pack (Reinforced) (front)[/td][td]Fanny Pack (front), Hide Fanny Pack (front), Tarp Fanny Pack (front)[/td][/tr]
+[tr][td]Fanny Pack (Reinforced) (back)[/td][td]Fanny Pack (back), Hide Fanny Pack (back), Tarp Fanny Pack - Back[/td][/tr]
+[tr][td]Chest Rig (Reinforced)[/td][td]Chest Rig, Tarp Chest Rig[/td][/tr]
+[tr][td]ALICE Belt and Suspenders (Reinforced)[/td][td]ALICE Belt and Suspenders[/td][/tr]
+[tr][td]Fishing Basket (Reinforced)[/td][td]Fishing Basket[/td][/tr]
+[/table]
+[list]
+[*] [b]Each name listed once[/b]: several vanilla bags share a name. For example, "Duffel Bag" comes in several colors and in versions that spawn with baseball gear, tools or shotguns inside.
 [/list]
 === 🧰 Second Satchel Slot
 {{img:satchel2-front-en.jpg}}
@@ -266,6 +304,8 @@ Bag Upgrade Plus (BUP below) has been removed from the Workshop. This mod takes 
 [/list]
 
 [h3]What old bags look like after the switch[/h3]
+{{img:legacy-tooltip-en.jpg}}
+Hover over an old bag: its tooltip says to convert it to the reinforced version to keep using it, and how.
 [list]
 [*] [b]Look and weight[/b]: same as the matching vanilla bag. An old ALICE pack looks like the vanilla Military Backpack.
 [*] [b]Capacity and Encumbrance Reduction[/b]: kept from the save. The main version saved 49/100; the Realistic version and CloudBag keep their own values, for example ALICE 40/90 and Satchel 18/80.
@@ -280,13 +320,57 @@ Bag Upgrade Plus (BUP below) has been removed from the Workshop. This mod takes 
 
 [h3]Converting to a reinforced bag[/h3]
 {{img:craft-convert-en.jpg}}
+{{img:legacy-menu-en.jpg}}
 [list]
 [*] [b]Recipe[/b]: "Convert Old Plus Bag to Reinforced" in the Tailoring category of the crafting menu.
 [*] [b]Requirements[/b]: the old bag must not be worn, and you need a table or similar surface next to you; items can stay inside. When everything is in place, the recipe also shows up when you right-click the old bag.
 [*] [b]Materials[/b]: a Needle and 2 Thread. No Tailoring level needed.
-[*] [b]Result[/b]: the reinforced version of the matching vanilla bag, already at the highest tier (tier 3, 49/100 by default). The theme follows the old bag's color, by the same rules as upgrading a vanilla bag. An old ALICE pack becomes "Umbrella Military Backpack (Reinforced)", an old fanny pack becomes "S.T.A.R.S. Fanny Pack (Reinforced)". Reverting it later gives the matching vanilla bag.
+[*] [b]Result[/b]: the reinforced version of the matching vanilla bag, already at the highest tier (tier 3, 49/100 by default). The theme follows the old bag's color, by the same rules as upgrading a vanilla bag. An old ALICE pack becomes "Umbrella Military Backpack (Reinforced)", an old fanny pack becomes "S.T.A.R.S. Fanny Pack (Reinforced)". "Bag Upgrade Plus Takeover: Old Bag List" lists every old bag. Reverting it later gives the matching vanilla bag.
 [*] [b]Carried over[/b]: contents, liquids and your custom name. The 5 L of water in an old Hydration Pack stays.
 [*] [b]Satchels[/b]: after converting they go in the second satchel slot.
+[/list]
+{{img:legacy-converted-en.jpg}}
+=== 🧰 Bag Upgrade Plus Takeover: Old Bag List
+After the switch, old bags get "(Old Plus)" after their name, look like the matching vanilla bag and are take-out only by default. "Convert Old Plus Bag to Reinforced" turns them into the reinforced bag in the right column, already at the highest tier.
+[table]
+[tr][th]Name under BUP[/th][th]After the switch (take out only)[/th][th]After converting[/th][/tr]
+[tr][td]Military Backpack Plus[/td][td]Military Backpack (Old Plus)[/td][td]Umbrella Military Backpack (Reinforced)[/td][/tr]
+[tr][td]Military Backpack Camo Plus[/td][td]Military Backpack (Old Plus)[/td][td]Umbrella Military Backpack (Reinforced)[/td][/tr]
+[tr][td]Military Backpack Desert Camo Plus[/td][td]Military Backpack (Old Plus)[/td][td]Umbrella Military Backpack (Reinforced)[/td][/tr]
+[tr][td]Duffel Bag Plus[/td][td]Duffel Bag (Old Plus)[/td][td]S.T.A.R.S. or Umbrella Duffel Bag (Reinforced), by color[/td][/tr]
+[tr][td]Duffel Bag Medical Plus[/td][td]Trauma Bag (Old Plus)[/td][td]Umbrella Duffel Bag (Reinforced)[/td][/tr]
+[tr][td]Duffel Bag Military Plus[/td][td]Duffel Bag (Old Plus)[/td][td]Umbrella Duffel Bag (Reinforced)[/td][/tr]
+[tr][td]Duffel Bag Police Plus[/td][td]Police Duffel Bag (Old Plus)[/td][td]S.T.A.R.S. Duffel Bag (Reinforced)[/td][/tr]
+[tr][td]Duffel Bag Sheriff Plus[/td][td]Sheriff Duffel Bag (Old Plus)[/td][td]S.T.A.R.S. Duffel Bag (Reinforced)[/td][/tr]
+[tr][td]Duffel Bag SWAT Plus[/td][td]SWAT Duffel Bag (Old Plus)[/td][td]S.T.A.R.S. Duffel Bag (Reinforced)[/td][/tr]
+[tr][td]Duffel Bag Burglar Plus[/td][td]Duffel Bag (Old Plus)[/td][td]S.T.A.R.S. Duffel Bag (Reinforced)[/td][/tr]
+[tr][td]Duffel Bag Baseball Plus[/td][td]Duffel Bag (Old Plus)[/td][td]S.T.A.R.S. Duffel Bag (Reinforced)[/td][/tr]
+[tr][td]Duffel Bag Tennis Plus[/td][td]Duffel Bag (Old Plus)[/td][td]S.T.A.R.S. Duffel Bag (Reinforced)[/td][/tr]
+[tr][td]Duffel Bag Weapon Plus[/td][td]Duffel Bag (Old Plus)[/td][td]S.T.A.R.S. Duffel Bag (Reinforced)[/td][/tr]
+[tr][td]Duffel Bag Money Plus[/td][td]Duffel Bag (Old Plus)[/td][td]S.T.A.R.S. Duffel Bag (Reinforced)[/td][/tr]
+[tr][td]Duffel Bag Worker Plus[/td][td]Duffel Bag (Old Plus)[/td][td]S.T.A.R.S. Duffel Bag (Reinforced)[/td][/tr]
+[tr][td]Duffel Bag Food Canned Plus[/td][td]Duffel Bag (Old Plus)[/td][td]S.T.A.R.S. Duffel Bag (Reinforced)[/td][/tr]
+[tr][td]Duffel Bag Food Snack Plus[/td][td]Duffel Bag (Old Plus)[/td][td]S.T.A.R.S. Duffel Bag (Reinforced)[/td][/tr]
+[tr][td]Duffel Bag Tool Plus[/td][td]Duffel Bag (Old Plus)[/td][td]S.T.A.R.S. Duffel Bag (Reinforced)[/td][/tr]
+[tr][td]Fanny Pack - Front Plus[/td][td]Fanny Pack (Old Plus)[/td][td]S.T.A.R.S. Fanny Pack (Reinforced) (front)[/td][/tr]
+[tr][td]Fanny Pack - Back Plus[/td][td]Fanny Pack (Old Plus)[/td][td]S.T.A.R.S. Fanny Pack (Reinforced) (back)[/td][/tr]
+[tr][td]Hydration Backpack Plus[/td][td]Hydration Pack (Old Plus)[/td][td]S.T.A.R.S. Hydration Pack (Reinforced)[/td][/tr]
+[tr][td]Hydration Backpack Camo Plus[/td][td]Hydration Pack (Old Plus)[/td][td]Umbrella Hydration Pack (Reinforced)[/td][/tr]
+[tr][td]Hiking Backpack Plus[/td][td]Hiking Backpack (Old Plus)[/td][td]S.T.A.R.S. or Umbrella Hiking Backpack (Reinforced), by color[/td][/tr]
+[tr][td]Hiking Backpack - Large Plus[/td][td]Big Hiking Backpack (Old Plus)[/td][td]S.T.A.R.S. or Umbrella Big Hiking Backpack (Reinforced), by color[/td][/tr]
+[tr][td]Large Hiking Backpack with Travel Patches Plus[/td][td]Hiking Backpack (Old Plus)[/td][td]S.T.A.R.S. or Umbrella Hiking Backpack (Reinforced), by color[/td][/tr]
+[tr][td]BagUpgradePlus.SchoolbagPlus (no English name in BUP)[/td][td]Small Backpack (Old Plus)[/td][td]S.T.A.R.S. Small Backpack (Reinforced)[/td][/tr]
+[tr][td]Satchel Plus[/td][td]Satchel (Old Plus)[/td][td]Umbrella Satchel (Reinforced)[/td][/tr]
+[tr][td]Satchel Plus Fishing[/td][td]Fishing Satchel (Old Plus)[/td][td]Umbrella Leather Satchel (Reinforced)[/td][/tr]
+[tr][td]Satchel Plus Medical[/td][td]Medical Satchel (Old Plus)[/td][td]Umbrella Leather Satchel (Reinforced)[/td][/tr]
+[tr][td]Satchel Plus Military[/td][td]Military Satchel (Old Plus)[/td][td]Umbrella Leather Satchel (Reinforced)[/td][/tr]
+[tr][td]Fabric Sling Bag Plus[/td][td]Sheet Sling Bag (Old Plus)[/td][td]Umbrella Sheet Sling Bag (Reinforced)[/td][/tr]
+[tr][td]ExtraCraft.SheetSlingBagPlus (no English name in BUP)[/td][td]Sheet Sling Bag (Old Plus)[/td][td]Umbrella Sheet Sling Bag (Reinforced)[/td][/tr]
+[/table]
+[list]
+[*] [b]Names under BUP[/b]: BUP's own English names. Two old items had no English name in BUP, so the table shows their item IDs; the second one is the sheet sling bag from the old branches (3403697073, 3640342538, 3780399230).
+[*] [b]By color[/b]: "S.T.A.R.S. or Umbrella" means the theme follows the old bag's color. For the other theme, use "Switch Reinforced Bag Theme (S.T.A.R.S./Umbrella)" after converting.
+[*] [b]Water bottles[/b]: BUP's two water bottles keep working and are not converted.
 [/list]
 === 🧰 Bag Upgrade Plus Takeover: Server Switch
 [b]Do it in a single restart[/b]: disabling BUP and enabling this mod must happen together. If the server runs once without BUP and you add this mod later, every old bag loaded during that time is deleted along with its contents.
