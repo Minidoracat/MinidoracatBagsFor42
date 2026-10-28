@@ -3,11 +3,13 @@
     "Sandbox_MinidoracatBagsLockLegacyBags": "旧 Bag Upgrade Plus のバッグをロックする",
     "Sandbox_MinidoracatBagsLockLegacyBags_tooltip": "オン（初期値）の間、Bag Upgrade Plus のセーブに残った旧バッグは中身を取り出すことしかできず、何も入れられません。プレイヤーは裁縫レシピで新しいバッグに改造できます。\nオフにすると通常のバッグとして使えるようになります。",
     "Sandbox_MinidoracatBagsMaxTier": "最高強化段階",
-    "Sandbox_MinidoracatBagsMaxTier_tooltip": "バッグを最大まで強化するのに必要な強化回数です。最高段階が最大強化です。0 にすると強化できなくなります。\n改造した旧バッグは最初からこの段階になります。",
+    "Sandbox_MinidoracatBagsMaxTier_tooltip": "バッグを最大まで強化するのに必要な強化回数です。最高段階が最大強化です。0 にすると強化できなくなります。\n改造した旧バッグは最初からこの段階になります。\n後から下げると、強化済みのバッグは、それを持っているプレイヤーが次にゲームに入ったときに新しい段階数で再計算されます。上げたり 0 にしたりしたときは今の値のままです。",
     "Sandbox_MinidoracatBagsFullCapacityPercent": "最大強化時の容量（上限までの差のパーセント）",
-    "Sandbox_MinidoracatBagsFullCapacityPercent_tooltip": "最高段階では、バッグ本来の容量と容量上限との差のこの割合が加わり、整数に四捨五入されます。途中の段階は均等に分けて上がります。容量上限は 50 からバッグ自身の重さを引いた値です（ほとんどのバッグは 49）。ハイドレーションパックの水の容量も同じように増え、最大 5 L になります。\n変更後に強化したバッグにだけ適用されます。",
+    "Sandbox_MinidoracatBagsFullCapacityPercent_tooltip": "最高段階では、バッグ本来の容量と容量上限との差のこの割合が加わり、整数に四捨五入されます。途中の段階は均等に分けて上がります。容量上限は 50 からバッグ自身の重さを引いた値です（ほとんどのバッグは 49）。ハイドレーションパックの水の容量も同じように増え、最大 5 L になります。\n変更後、強化済みのバッグは、それを持っているプレイヤーが次にゲームに入ったときに再計算されます。",
+    "Sandbox_MinidoracatBagsFullCapacityGainLimit": "最大強化時の容量増加の上限（本来の容量のパーセント）",
+    "Sandbox_MinidoracatBagsFullCapacityGainLimit_tooltip": "最高段階でバッグに加わる容量は、本来の容量のこの割合までになり、整数に四捨五入されます。0 にすると制限しません。この値と上の設定で求めた値のうち小さいほうが使われるので、小さいバッグは小さいまま、大きいバッグは上限まで上がります。例：100 のとき、容量 3 のバッグは最大 6、容量 28 のバッグは 49 まで上がります。ハイドレーションパックの水の容量も同じように制限されます。\n変更後、強化済みのバッグは、それを持っているプレイヤーが次にゲームに入ったときに再計算されます。",
     "Sandbox_MinidoracatBagsFullWeightReduction": "最大強化時の負荷軽減",
-    "Sandbox_MinidoracatBagsFullWeightReduction_tooltip": "最高段階でのバッグの負荷軽減です。途中の段階は均等に分けて上がります。もともとこの値より高いバッグはそのままです。\n変更後に強化したバッグにだけ適用されます。",
+    "Sandbox_MinidoracatBagsFullWeightReduction_tooltip": "最高段階でのバッグの負荷軽減です。途中の段階は均等に分けて上がります。もともとこの値より高いバッグはそのままです。\n変更後、強化済みのバッグは、それを持っているプレイヤーが次にゲームに入ったときに再計算されます。",
     "Sandbox_MinidoracatBagsLootMultiplier": "戦利品・ゾンビドロップ倍率",
     "Sandbox_MinidoracatBagsLootMultiplier_tooltip": "警察・軍事・医療関連のコンテナに新しいバッグが出る頻度と、警官・兵士・医療従事者のゾンビがバッグを落とす頻度を調整します。0 にすると両方オフになります。\nコンテナの戦利品はワールド読み込み時にこの値を読みます。"
 }
