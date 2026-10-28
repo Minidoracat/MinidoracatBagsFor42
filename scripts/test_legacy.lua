@@ -168,7 +168,8 @@ local env
 local function bootLua()
     MDB, SandboxVars, printed, bootHandlers = nil, nil, {}, {}
     env = { server = false, sent = {}, replaced = {}, added = {} }
-    Events = { OnGameBoot = { Add = function(fn) bootHandlers[#bootHandlers + 1] = fn end }, OnServerCommand = { Add = function() end } }
+    Events = { OnGameBoot = { Add = function(fn) bootHandlers[#bootHandlers + 1] = fn end }, OnServerCommand = { Add = function() end },
+        OnClientCommand = { Add = function() end }, OnGameStart = { Add = function() end }, OnCreatePlayer = { Add = function() end } }
     -- MDB_Upgrade 會 require 並包住原版的換穿法。照原版搬顏色（textureChoice、染色）、內容物、液體（依新容量截斷）、
     -- modData（ISClothingExtraAction.lua:66-112）
     ISClothingExtraAction = {}
@@ -220,6 +221,7 @@ local function newFluid(capacity, amount)
     function fc:copyFluidsFrom(o) self.amount = math.min(o.amount, self.capacity) end
     return fc
 end
+local lastBagId = 0
 local function newBag(fullType, cap, wr, weight, fluid)
     local b = { __class = "InventoryContainer", fullType = fullType, cap = cap, wr = wr, md = {}, contents = {},
         fc = fluid and newFluid(fluid), visual = { choice = -1 } }
@@ -229,6 +231,9 @@ local function newBag(fullType, cap, wr, weight, fluid)
     function b.visual:setTextureChoice(c) self.choice = c end
     function b.visual:getTint() return self.tint end
     function b.visual:setTint(t) self.tint = t end
+    lastBagId = lastBagId + 1
+    b.id = lastBagId
+    function b:getID() return self.id end
     function b:getFullType() return self.fullType end
     function b:getDisplayName() return self.name end
     function b:setName(n) self.name = n end

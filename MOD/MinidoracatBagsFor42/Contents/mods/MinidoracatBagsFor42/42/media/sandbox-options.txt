@@ -9,6 +9,9 @@ option MinidoracatBags.MaxTier
 option MinidoracatBags.FullCapacityPercent
 {type = integer, min = 0, max = 100, default = 100, page = MinidoracatBags, translation = MinidoracatBagsFullCapacityPercent,}
 
+option MinidoracatBags.FullCapacityGainLimit
+{type = integer, min = 0, max = 1000, default = 0, page = MinidoracatBags, translation = MinidoracatBagsFullCapacityGainLimit,}
+
 option MinidoracatBags.FullWeightReduction
 {type = integer, min = 0, max = 100, default = 100, page = MinidoracatBags, translation = MinidoracatBagsFullWeightReduction,}
 

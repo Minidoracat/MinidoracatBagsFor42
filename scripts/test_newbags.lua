@@ -216,7 +216,8 @@ local OUTFIT_SPEC = {
 }
 local SANDBOX_SPEC = {
     LockLegacyBags = { "boolean", "true" }, MaxTier = { "integer", "3", "0", "3" },
-    FullCapacityPercent = { "integer", "100", "0", "100" }, FullWeightReduction = { "integer", "100", "0", "100" },
+    FullCapacityPercent = { "integer", "100", "0", "100" }, FullCapacityGainLimit = { "integer", "0", "0", "1000" },
+    FullWeightReduction = { "integer", "100", "0", "100" },
     LootMultiplier = { "double", "1.0", "0.0", "10.0" },
 }
 
@@ -227,12 +228,15 @@ local function resetEnv()
     Events = setmetatable({}, { __index = function(t, k)
         local e = { handlers = {} }
         function e.Add(f) e.handlers[#e.handlers + 1] = f end
+        function e.Remove(f)
+            for i, h in ipairs(e.handlers) do if h == f then table.remove(e.handlers, i); return end end
+        end
         rawset(t, k, e)
         return e
     end })
     MDB = nil
     SandboxVars = { MinidoracatBags = { LockLegacyBags = true, MaxTier = 3, FullCapacityPercent = 100,
-        FullWeightReduction = 100, LootMultiplier = 1 } }
+        FullCapacityGainLimit = 0, FullWeightReduction = 100, LootMultiplier = 1 } }
     -- MDB_Upgrade 會 require 並包住原版的 createItemNew；每次載入給新表，突變才不會吃到上一輪的包裝。
     -- 照原版（ISClothingExtraAction.lua:66-112）搬顏色（textureChoice、染色）、內容物、改名、液體（依新容量截斷）、
     -- modData（先清空再複製，InventoryItem.java:3003-3011）
@@ -261,7 +265,11 @@ function isServer() return env.server end
 function isClient() return env.client end
 ItemPickerJava = { Parse = function() env.parsed = env.parsed + 1 end }
 function sendReplaceItemInContainer(c, a, b) env.sent[#env.sent + 1] = { c, a, b } end
-function sendServerCommand(module, command, args) env.cmds[#env.cmds + 1] = { module = module, command = command, args = args } end
+-- sendServerCommand 有兩種：全部玩家（module, command, args），或只送給一位玩家（player, module, command, args）
+function sendServerCommand(a, b, c, d)
+    if type(a) == "string" then a, b, c, d = nil, a, b, c end
+    env.cmds[#env.cmds + 1] = { player = a, module = b, command = c, args = d }
+end
 function replaceItemInContainer(c, a, b) env.replaced[#env.replaced + 1] = { c, a, b } end
 function copyClothingItem(item, newItem) ISClothingExtraAction:createItemNew(item, newItem) end
 function instanceof(o, cls) return type(o) == "table" and rawget(o, "__class") == cls end
@@ -292,6 +300,10 @@ local function resolve(path)
     return v
 end
 
+local function javaList(arr)
+    return { size = function() return #arr end, get = function(_, i) return arr[i + 1] end }
+end
+
 local function newContainer()
     local c = { items = {} }
     function c:AddItem(i) self.items[#self.items + 1] = i; i.container = self; return i end
@@ -299,6 +311,18 @@ local function newContainer()
         for k, v in ipairs(self.items) do if v == i then table.remove(self.items, k); i.container = nil; return end end
     end
     function c:DoRemoveItem(i) self:Remove(i) end
+    function c:getItems() return javaList(self.items) end
+    -- ItemContainer.getItemWithIDRecursiv（ItemContainer.java:3094-3108）：也往背包裡找
+    function c:getItemWithIDRecursiv(id)
+        local function find(list)
+            for _, it in ipairs(list) do
+                if type(it) == "table" and it.id == id then return it end
+                local inner = type(it) == "table" and it.contents and find(it.contents)
+                if inner then return inner end
+            end
+        end
+        return find(self.items)
+    end
     return c
 end
 local CONTAINER = newContainer()
@@ -365,10 +389,11 @@ local function newBag(cap, wr, weight, fullType)
     -- 內容物容器：copyClothingItem 用 takeItemsFrom 整批搬（ISClothingExtraAction.lua:74-75、ItemContainer.java:2646-2652）
     function b:getItemContainer()
         local owner = self
-        return { owner = owner, takeItemsFrom = function(c, other)
-            for _, it in ipairs(other.owner.contents) do c.owner.contents[#c.owner.contents + 1] = it end
-            other.owner.contents = {}
-        end }
+        return { owner = owner, getItems = function(c) return javaList(c.owner.contents) end,
+            takeItemsFrom = function(c, other)
+                for _, it in ipairs(other.owner.contents) do c.owner.contents[#c.owner.contents + 1] = it end
+                other.owner.contents = {}
+            end }
     end
     function b:getFullType() return self.fullType end
     function b:getVisual() return self.visual end
@@ -412,9 +437,6 @@ local function vanillaItem(fullType)
         getDisplayCategory = function() return b.fields.DisplayCategory end,
         hasTag = function(_, tag) assert(tag ~= nil, "hasTag(nil)"); return tags[tag] == true end,
     }
-end
-local function javaList(arr)
-    return { size = function() return #arr end, get = function(_, i) return arr[i + 1] end }
 end
 
 -- ===== 套件 =====
@@ -1088,6 +1110,22 @@ local function suite()
     o.FullWeightReduction = 50
     check("applyTier: FullWeightReduction below original never lowers it", walk(14, 70, 0.6, { { 14, 70 }, { 26, 70 }, { 37, 70 }, { 49, 70 } }))
     o.FullWeightReduction = 100
+    do   -- 每個背包最多增加原容量的百分比（FullCapacityGainLimit，0＝不限）；區塊內的 local 不佔 suite 的 200 個上限
+        o.FullCapacityGainLimit = 100
+        check("applyTier: gain limit 100 keeps a 3-capacity pouch at 6 (3/80 -> 4 -> 5 -> 6), WR still 100",
+            walk(3, 80, 0.3, { { 3, 80 }, { 4, 87 }, { 5, 93 }, { 6, 100 } }))
+        check("applyTier: gain limit 100 still lets a 28-capacity pack reach 49",
+            walk(28, 85, 0.1, { { 28, 85 }, { 35, 90 }, { 42, 95 }, { 49, 100 } }))
+        o.FullCapacityGainLimit = 50
+        local lim = newBag(3, 80, 0.1); MDB.applyTier(lim, 3)
+        check("applyTier: gain limit rounds to the nearest whole number (3 + 1.5 -> 5)", lim.cap == 5)
+        o.FullCapacityPercent, o.FullCapacityGainLimit = 50, 100
+        local small, big28 = newBag(3, 80, 0.1), newBag(28, 85, 0.1)
+        MDB.applyTier(small, 3); MDB.applyTier(big28, 3)
+        check("applyTier: the smaller of FullCapacityPercent and the gain limit wins (50%: 3 -> 6 by the limit, 28 -> 39 by the percent)",
+            small.cap == 6 and big28.cap == 39)
+        o.FullCapacityPercent, o.FullCapacityGainLimit = 100, 0
+    end
     -- 液體：BUP 水袋 5 升
     local function fluidSteps(base)
         local b, got = newBag(20, 75, 0.8), {}
@@ -1107,6 +1145,40 @@ local function suite()
     local halfFluid = fluidSteps(2.0)
     check("applyTier: FullCapacityPercent 50 -> fluid 3.5 at full", near(halfFluid[3], 3.5))
     o.FullCapacityPercent = 100
+    do
+        o.FullCapacityGainLimit = 50
+        local limFluid = fluidSteps(2.0)
+        check("applyTier: gain limit 50 -> water bag 2.0 L reaches 3.0 L at full", near(limFluid[3], 3.0))
+        o.FullCapacityGainLimit = 0
+        -- 同一階重套（重算、換型、換穿）：MaxTier 改過時取升得比較滿的那個，調高或設 0 不變小、調低照新的算
+        o.MaxTier = 1
+        local fullAt1 = newBag(3, 80, 0.1); MDB.applyTier(fullAt1, 1)
+        o.MaxTier = 3
+        MDB.applyTier(fullAt1, 1)
+        check("reapply: tier 1 filled under MaxTier 1 stays 49/100 after MaxTier is raised to 3",
+            fullAt1.cap == 49 and fullAt1.wr == 100 and fullAt1.md.MDB_max == 1)
+        o.MaxTier = 0
+        MDB.applyTier(fullAt1, 1)
+        check("reapply: it also stays 49/100 when upgrading is turned off (MaxTier 0)", fullAt1.cap == 49 and fullAt1.wr == 100)
+        o.MaxTier = 3
+        local third = newBag(3, 80, 0.1); MDB.applyTier(third, 1)
+        local thirdCap = third.cap
+        o.MaxTier = 1
+        MDB.applyTier(third, 1)
+        check("reapply: tier 1 of 3 (18) fills to 49 once MaxTier is lowered to 1", thirdCap == 18 and third.cap == 49 and third.md.MDB_max == 1)
+        o.MaxTier = 3
+        -- 照公式裝不下現有的水：容量留在原值、水不倒掉；空的照公式
+        local wet, dryW = newBag(12, 85, 0.1), newBag(12, 85, 0.1)
+        wet.fc, dryW.fc = newFluid(3.0), newFluid(3.0)
+        MDB.applyTier(wet, 3); MDB.applyTier(dryW, 3)
+        wet.fc.amount = 5.0
+        o.FullCapacityPercent = 50
+        MDB.applyTier(wet, 3); MDB.applyTier(dryW, 3)
+        check("reapply: a full 5 L water bag keeps 5 L capacity and all its water when the formula drops to 4 L",
+            near(wet.fc.capacity, 5.0) and near(wet.fc.amount, 5.0))
+        check("reapply: an empty water bag follows the formula (5 -> 4 L)", near(dryW.fc.capacity, 4.0))
+        o.FullCapacityPercent = 100
+    end
     local dry = newBag(20, 75, 0.8)
     check("applyTier: bag without fluid container does not error", pcall(MDB.applyTier, dry, 1) and dry.md.MDB_fluid == nil)
     env.sent = {}
@@ -1375,6 +1447,23 @@ local function suite()
     new = CONTAINER.items[1]
     check("swap theme: tier-3 water bag keeps 5.0 L capacity and all the water",
         new.fullType == "MinidoracatBags.Bag_HydrationBackpack_Navy_Reinforced" and near(new.fc.capacity, 5.0) and near(new.fc.amount, 5.0))
+    -- 沙盒調低後換型：照公式裝不下的水留著、容量不變，這次不記設定，水用掉後進場再照公式算
+    old = stocked("MinidoracatBags.Bag_HydrationBackpack_Olive_Reinforced")
+    MDB.applyTier(old, 3)
+    old.fc.amount = 5.0
+    SandboxVars.MinidoracatBags.FullCapacityPercent = 50
+    MDB.onSwapTheme(keepData(old), PLAYER)
+    new = CONTAINER.items[1]
+    check("swap theme after lowering the sandbox: the water bag keeps 5.0 L and is not marked up to date",
+        near(new.fc.capacity, 5.0) and near(new.fc.amount, 5.0) and new.md.MDB_cfg == nil)
+    SandboxVars.MinidoracatBags.FullCapacityPercent = 100
+    -- 這版之前升級、沒記階數上限的背包換主題：照舊背包的數值推回上限，MaxTier 1 升滿的在 MaxTier 3 下仍是 49/100
+    old = stocked("MinidoracatBags.Bag_ALICEpack_Olive_Reinforced")
+    old.md.MDB_tier, old.md.MDB_cap, old.md.MDB_wr, old.cap, old.wr = 1, 28, 85, 49, 100
+    MDB.onSwapTheme(keepData(old), PLAYER)
+    new = CONTAINER.items[1]
+    check("swap theme: a full tier-1 bag from before this version (no recorded max) stays 49/100 under MaxTier 3",
+        new.fullType == "MinidoracatBags.Bag_ALICEpack_Navy_Reinforced" and new.cap == 49 and new.wr == 100 and new.md.MDB_max == 1)
     local untouched = true
     for _, full in ipairs({ "MinidoracatBags.DayPack_Navy_Reinforced", "MinidoracatBags.DayPack_Navy", A }) do
         old = stocked(full)
@@ -1660,6 +1749,209 @@ local function suite()
         old, sq, oldWi = tierOnFloor(RA, 1)
         MDB.onUpgrade(keepData(old), PLAYER)
         check("floor (SP): in-place upgrade on the ground sends nothing", old.md.MDB_tier == 2 and #env.cmds == 0 and #env.sent == 0)
+    end
+    -- 改過沙盒後進場重算（MDB.refreshBag）：單機直接算；MP 客戶端在第一個 tick 請伺服器算，伺服器只送 bagTier 給那位玩家
+    do
+        local o, keepItems = SandboxVars.MinidoracatBags, CONTAINER.items
+        check("events: refreshBags handled once on OnClientCommand, refresh hooked once on OnGameStart and OnCreatePlayer",
+            #Events.OnClientCommand.handlers == 1 and Events.OnClientCommand.handlers[1] == MDB.onClientCommand
+            and #Events.OnGameStart.handlers == 1 and Events.OnGameStart.handlers[1] == MDB.onGameStart
+            and #Events.OnCreatePlayer.handlers == 1 and Events.OnCreatePlayer.handlers[1] == MDB.onCreatePlayer)
+        CONTAINER.items = {}
+        env.server, env.client, env.sent, env.replaced, env.cmds = false, false, {}, {}, {}
+        local worn, inner, plain, zero = newBag(3, 80, 0.1, "worn"), newBag(28, 85, 0.1, "inner"), newBag(10, 50, 1.0, "plain"), newBag(6, 85, 0.1, "zero")
+        MDB.applyTier(worn, 3); MDB.applyTier(inner, 2); MDB.applyTier(zero, 0)
+        CONTAINER:AddItem(worn); CONTAINER:AddItem(plain); CONTAINER:AddItem(zero)
+        worn.contents = { "nail", inner }
+        -- 原版 getModData() 在物品沒有 modData 時會建一份新表（InventoryItem.java:433-439）：沒升級過的背包只用 hasModData() 看
+        function plain:getModData() self.modDataCreated = true; return self.md end
+        check("refresh: nothing to do while the sandbox is unchanged", MDB.refreshBag(worn) == nil and MDB.refreshBag(inner) == nil and worn.cap == 49)
+        o.FullCapacityPercent, o.FullCapacityGainLimit = 50, 100
+        getNumActivePlayers = function() return 1 end
+        getSpecificPlayer = function(i) return i == 0 and PLAYER or nil end
+        MDB.onGameStart()
+        check("refresh (SP): game start recalculates the bag on the player and the one inside it (3 -> 6 by the limit, 28 tier 2 -> 35), nothing sent",
+            worn.cap == 6 and worn.wr == 100 and inner.cap == 35 and inner.md.MDB_tier == 2 and #env.sent == 0 and #env.cmds == 0)
+        check("refresh (SP): a bag never upgraded gets no modData, a tier-0 bag stays as is",
+            not plain.modDataCreated and not plain:hasModData() and plain.cap == 10 and zero.cap == 6)
+        check("refresh: a bag already recalculated is left alone", MDB.refreshBag(worn) == nil)
+        for _, k in ipairs({ "MaxTier", "FullCapacityPercent", "FullCapacityGainLimit", "FullWeightReduction" }) do
+            local b = newBag(3, 80, 0.1); MDB.applyTier(b, 1)
+            local keep = o[k]; o[k] = keep - 1
+            local changed = MDB.refreshBag(b) ~= nil
+            o[k] = keep
+            check("refresh: changing only " .. k .. " marks upgraded bags for recalculation", changed)
+        end
+        -- MaxTier 調高照樣重算，但升滿的不變小；調低時照新的算（升滿時的容量、增加上限回到預設）
+        o.FullCapacityPercent, o.FullCapacityGainLimit, o.MaxTier = 100, 0, 1
+        local mt = newBag(3, 80, 0.1); MDB.applyTier(mt, 1)
+        o.MaxTier = 3
+        check("refresh: raising MaxTier recalculates, a bag full at tier 1 of 1 stays 49", MDB.refreshBag(mt) ~= nil and mt.cap == 49)
+        local part = newBag(3, 80, 0.1); MDB.applyTier(part, 1)
+        o.MaxTier = 1
+        check("refresh: lowering MaxTier to 1 fills a tier-1 bag (18 -> 49)", MDB.refreshBag(part) ~= nil and part.cap == 49)
+        -- 這版之前升級的（沒記 MaxTier）：關了升級時不知道原本升到幾分之幾，不動；打開後照現在的 MaxTier 算
+        local legacy = newBag(3, 80, 0.1); legacy.md = { MDB_tier = 2, MDB_cap = 3, MDB_wr = 80 }; legacy.cap = 34
+        o.MaxTier = 0
+        check("refresh: a bag upgraded before this version is left alone while upgrading is off", MDB.refreshBag(legacy) == nil and legacy.cap == 34)
+        o.MaxTier = 3
+        check("refresh: it is recalculated with the current MaxTier once upgrading is back on", MDB.refreshBag(legacy) ~= nil and legacy.md.MDB_max == 3)
+        -- 這版之前升級的（沒記 MaxTier）先推回當初的上限：MaxTier 1 升滿（3 → 49/100），之後 MaxTier 調成 3，進場不變小
+        local wasFull = newBag(3, 80, 0.1); wasFull.md = { MDB_tier = 1, MDB_cap = 3, MDB_wr = 80 }; wasFull.cap, wasFull.wr = 49, 100
+        check("refresh: a bag full at tier 1 of 1 before this version stays 49/100 after MaxTier was raised to 3",
+            MDB.refreshBag(wasFull) ~= nil and wasFull.cap == 49 and wasFull.wr == 100 and wasFull.md.MDB_max == 1)
+        -- 當時的升滿時的容量、負重減輕是預設 100，現在改成 50%、增加上限 100、負重減輕 90：照樣推得回第 1 階就升滿，再照新設定算
+        o.FullCapacityPercent, o.FullCapacityGainLimit, o.FullWeightReduction = 50, 100, 90
+        local wasFull2 = newBag(3, 80, 0.1); wasFull2.md = { MDB_tier = 1, MDB_cap = 3, MDB_wr = 80 }; wasFull2.cap, wasFull2.wr = 49, 100
+        check("refresh: the old ceiling is found with the default 100 values too, then the new settings apply (full = 6/90)",
+            MDB.refreshBag(wasFull2) ~= nil and wasFull2.md.MDB_max == 1 and wasFull2.cap == 6 and wasFull2.wr == 90)
+        o.FullCapacityPercent, o.FullCapacityGainLimit, o.FullWeightReduction = 100, 0, 100
+        -- 推得回上限時，關了升級（MaxTier 0）也照記錄算，維持原數值
+        local offFull = newBag(3, 80, 0.1); offFull.md = { MDB_tier = 1, MDB_cap = 3, MDB_wr = 80 }; offFull.cap, offFull.wr = 49, 100
+        o.MaxTier = 0
+        check("refresh: with upgrading off, a bag whose old ceiling is found keeps 49/100", MDB.refreshBag(offFull) ~= nil and offFull.cap == 49 and offFull.md.MDB_max == 1)
+        -- 不同上限都算得出現在的數值時取最滿的：3/80 在 2 階裡的第 1 階（預設 100）是 26/90，50%、負重減輕 90 時 1 階升滿也是 26/90。
+        -- 當成升滿：數值維持 26/90（就是現在設定下的升滿值），擋第 2 階不會少東西；取最不滿的會變成 2 階裡的第 1 階（15/85）
+        o.MaxTier, o.FullCapacityPercent, o.FullWeightReduction = 3, 50, 90
+        local twoStep = newBag(3, 80, 0.1); twoStep.md = { MDB_tier = 1, MDB_cap = 3, MDB_wr = 80 }; twoStep.cap, twoStep.wr = 26, 90
+        local offered = MDB.onTestTier2(twoStep)
+        check("refresh: when several old ceilings fit, the fullest is taken: stays 26/90, max 1, tier 2 not offered",
+            not offered and MDB.refreshBag(twoStep) ~= nil and twoStep.md.MDB_max == 1 and twoStep.cap == 26 and twoStep.wr == 90)
+        o.MaxTier, o.FullCapacityPercent, o.FullWeightReduction = 3, 100, 100
+        -- 留住水的那次不記設定：水沒用掉就每次進場再看一次；用掉後照公式算
+        local wetBag = newBag(12, 85, 0.1); wetBag.fc = newFluid(3.0)
+        MDB.applyTier(wetBag, 3); wetBag.fc.amount = 5.0
+        o.FullCapacityPercent = 50
+        local firstWet = MDB.refreshBag(wetBag)
+        check("refresh: a full water bag keeps 5 L and is not marked up to date", firstWet ~= nil and near(wetBag.fc.capacity, 5.0)
+            and near(wetBag.fc.amount, 5.0) and wetBag.md.MDB_cfg == nil and firstWet.cfg == nil)
+        check("refresh: it is checked again while the water still does not fit", MDB.refreshBag(wetBag) ~= nil and near(wetBag.fc.capacity, 5.0))
+        wetBag.fc.amount = 0
+        check("refresh: once the water is gone it follows the formula (4 L) and is up to date", MDB.refreshBag(wetBag) ~= nil
+            and near(wetBag.fc.capacity, 4.0) and MDB.refreshBag(wetBag) == nil)
+        o.FullCapacityPercent = 100
+        -- MP 伺服器：只動送出者的物品欄，每件過期的背包送一則 bagTier 給那位玩家；不用容器 replace（客戶端穿著的會變成舊物件）
+        o.FullCapacityPercent, o.FullCapacityGainLimit = 100, 0
+        env.server = true
+        local clock = 0
+        getTimestampMs = function() return clock end
+        PLAYER.getUsername, PLAYER.getOnlineID = function() return "tester" end, function() return 1 end
+        MDB.onClientCommand("SomeOtherMod", "refreshBags", PLAYER, {})
+        check("server: another module's refreshBags is ignored", worn.cap == 6 and #env.cmds == 0)
+        MDB.onClientCommand("MinidoracatBags", "refreshBags", PLAYER, nil)   -- 空表到伺服器是 nil（pitfalls「空表到另一端是 nil」）
+        local byId = {}
+        for _, c in ipairs(env.cmds) do byId[c.args.id] = c end
+        local cw, ci = byId[worn.id] or { args = {} }, byId[inner.id] or { args = {} }
+        check("server: refreshBags recalculates the sender's bags back to 49 / 42 and sends one bagTier per bag to that player only, no container packets",
+            worn.cap == 49 and inner.cap == 42 and #env.cmds == 2 and cw.player == PLAYER and cw.module == "MinidoracatBags"
+            and cw.command == "bagTier" and cw.args.cap == 49 and cw.args.wr == 100 and cw.args.tier == 3 and cw.args.max == 3
+            and cw.args.cfg == worn.md.MDB_cfg and cw.args.baseCap == 3 and ci.player == PLAYER and ci.args.cap == 42
+            and #env.sent == 0 and #env.replaced == 0)
+        -- 同一個帳號 5 秒內只受理一次：每次請求都要走完整個物品欄
+        env.cmds = {}
+        o.FullCapacityPercent = 60
+        clock = 4999
+        MDB.onClientCommand("MinidoracatBags", "refreshBags", PLAYER, nil)
+        check("server: a repeated request within 5 s is ignored even if bags are out of date", #env.cmds == 0 and worn.cap == 49)
+        clock = 5000
+        MDB.onClientCommand("MinidoracatBags", "refreshBags", PLAYER, nil)
+        check("server: after 5 s the request is handled again (60%: 3 -> 31)", #env.cmds == 2 and worn.cap == 31)
+        -- 時鐘往回調（getTimestampMs 是牆上時鐘）：照常受理
+        o.FullCapacityPercent, env.cmds = 100, {}
+        clock = 1000
+        MDB.onClientCommand("MinidoracatBags", "refreshBags", PLAYER, nil)
+        check("server: a request after the clock went back is handled (31 -> 49)", #env.cmds == 2 and worn.cap == 49)
+        -- 同名的另一位玩家（Steam 主持模式不擋同名）照樣受理；同一位玩家 5 秒內仍擋
+        local TWININV = newContainer()
+        local TWIN = { getInventory = function() return TWININV end, getUsername = function() return "tester" end, getOnlineID = function() return 2 end }
+        local twinBag = newBag(3, 80, 0.1); MDB.applyTier(twinBag, 3); TWININV:AddItem(twinBag)
+        o.FullCapacityPercent, env.cmds = 60, {}
+        clock = 1001
+        MDB.onClientCommand("MinidoracatBags", "refreshBags", TWIN, nil)
+        MDB.onClientCommand("MinidoracatBags", "refreshBags", PLAYER, nil)
+        check("server: another player with the same name is handled within 5 s, the first player is still throttled",
+            twinBag.cap == 31 and worn.cap == 49 and #env.cmds == 1 and env.cmds[1].player == TWIN)
+        o.FullCapacityPercent, env.cmds = 100, {}
+        -- 客戶端：照 ID 在本機玩家的物品欄找（含背包裡），套數值、階級、基準與設定；晚到的低階不套
+        env.server, env.client = false, true
+        local CINV = newContainer()
+        local cWorn, cInner = newBag(3, 80, 0.1, "worn"), newBag(28, 85, 0.1, "inner")
+        cWorn.id, cInner.id, cWorn.cap, cInner.cap = worn.id, inner.id, 6, 35
+        CINV:AddItem(cWorn); cWorn.contents = { cInner }
+        getSpecificPlayer = function(i) return i == 0 and { getInventory = function() return CINV end } or nil end
+        MDB.onServerCommand("SomeOtherMod", "bagTier", cw.args)
+        check("client: another module's bagTier is ignored", cWorn.cap == 6)
+        MDB.onServerCommand("MinidoracatBags", "bagTier", cw.args)
+        MDB.onServerCommand("MinidoracatBags", "bagTier", ci.args)
+        check("client: bagTier finds the worn bag and the one inside it by ID and applies values, tier, bases and settings key",
+            cWorn.cap == 49 and cWorn.wr == 100 and cWorn.md.MDB_tier == 3 and cWorn.md.MDB_cap == 3 and cWorn.md.MDB_wr == 80
+            and cWorn.md.MDB_max == 3 and cWorn.md.MDB_cfg == cw.args.cfg and cw.args.cfg ~= nil and cInner.cap == 42 and cInner.md.MDB_tier == 2)
+        local late = {}
+        for k, v in pairs(cw.args) do late[k] = v end
+        late.tier, late.cap = 2, 1
+        MDB.onServerCommand("MinidoracatBags", "bagTier", late)
+        check("client: a bagTier for a lower tier is ignored", cWorn.cap == 49)
+        check("client: bagTier for an ID not in the inventory does nothing",
+            pcall(MDB.onServerCommand, "MinidoracatBags", "bagTier", { id = -5, tier = 1, cap = 1, wr = 1 }))
+        -- MP 客戶端進場：這時還不能送指令，只掛一次 OnTick；第一個 tick 送出請求就拿掉，自己不算
+        local requests = {}
+        sendClientCommand = function(p, module, command) requests[#requests + 1] = { p = p, module = module, command = command } end
+        getPlayer = function() return PLAYER end
+        o.FullCapacityPercent = 50   -- 客戶端那件現在過期了，自己算的話會變小
+        MDB.onGameStart()
+        local ticks = Events.OnTick.handlers
+        check("client (MP): game start hooks one tick, sends nothing yet and recalculates nothing locally",
+            #ticks == 1 and #requests == 0 and cWorn.cap == 49)
+        if ticks[1] then ticks[1]() end
+        check("client (MP): the first tick sends refreshBags once for the local player and unhooks itself",
+            #requests == 1 and requests[1].p == PLAYER and requests[1].module == "MinidoracatBags"
+            and requests[1].command == "refreshBags" and #Events.OnTick.handlers == 0 and cWorn.cap == 49)
+        -- 開局後才加入的分割畫面玩家（OnCreatePlayer 第 1 位以上）：單機直接算；MP 這時可以直接送請求。主玩家（第 0 位）交給 OnGameStart
+        local P2INV = newContainer()
+        local P2 = { getInventory = function() return P2INV end }
+        o.FullCapacityPercent = 100
+        local coopBag = newBag(3, 80, 0.1); MDB.applyTier(coopBag, 3)
+        P2INV:AddItem(coopBag)
+        o.FullCapacityGainLimit = 100
+        requests = {}
+        MDB.onCreatePlayer(1, P2)
+        check("client (MP): a split-screen player who joins later sends its own refreshBags right away, nothing recalculated locally",
+            #requests == 1 and requests[1].p == P2 and requests[1].command == "refreshBags" and coopBag.cap == 49)
+        MDB.onCreatePlayer(0, PLAYER)
+        check("client (MP): the main player's OnCreatePlayer sends nothing (too early, OnGameStart handles it)", #requests == 1)
+        env.client = false
+        MDB.onCreatePlayer(0, P2)
+        check("refresh (SP): the main player's OnCreatePlayer recalculates nothing", coopBag.cap == 49)
+        MDB.onCreatePlayer(1, P2)
+        check("refresh (SP): a split-screen player who joins later gets the bags on them recalculated (49 -> 6)", coopBag.cap == 6 and #requests == 1)
+        o.FullCapacityGainLimit = 0
+        -- 照記下的階數上限已經升滿的，MaxTier 調高後也不放行下一階（升了會照新的階數算、反而變小）
+        local fullOne = newBag(3, 80, 0.1); fullOne.md = { MDB_tier = 1, MDB_max = 1 }
+        local partOne = newBag(3, 80, 0.1); partOne.md = { MDB_tier = 1, MDB_max = 3 }
+        check("OnTest: a bag full under its recorded MaxTier (tier 1 of 1) is not offered tier 2 after MaxTier is raised to 3",
+            not MDB.onTestTier2(fullOne) and MDB.onTestTier2(partOne))
+        -- MaxTier 0 時做出來的第 0 階（直接製作的強化布吊帶包、改裝的舊 Plus）記的上限是 0，MaxTier 調回來後照樣能升第 1 階
+        local zeroMax = newBag(3, 80, 0.1); zeroMax.md = { MDB_tier = 0, MDB_max = 0 }
+        check("OnTest: a tier-0 bag made while upgrading was off (max 0) is offered tier 1", MDB.onTestTier1(zeroMax))
+        -- 這版之前升級、還沒重算過的（沒記上限）照數值推：49/100 是第 1 階就升滿，18/87 是 3 階裡的第 1 階；OnTest 不寫回
+        local oldFull = newBag(3, 80, 0.1); oldFull.md = { MDB_tier = 1, MDB_cap = 3, MDB_wr = 80 }; oldFull.cap, oldFull.wr = 49, 100
+        local oldPart = newBag(3, 80, 0.1); oldPart.md = { MDB_tier = 1, MDB_cap = 3, MDB_wr = 80 }; oldPart.cap, oldPart.wr = 18, 87
+        check("OnTest: a bag upgraded before this version and full at tier 1 is not offered tier 2, one at tier 1 of 3 is; neither gets a max written",
+            not MDB.onTestTier2(oldFull) and MDB.onTestTier2(oldPart) and oldFull.md.MDB_max == nil and oldPart.md.MDB_max == nil)
+        -- 重算途中出錯：旗標要復原，之後伺服器上的升級照樣重送
+        env.server, env.client, env.sent = true, false, {}
+        local broken = newBag(3, 80, 0.1); MDB.applyTier(broken, 1)
+        o.FullCapacityPercent = 40
+        env.sent = {}
+        broken.getScriptItem = function() error("broken script") end
+        check("refresh: an error while recalculating is raised", not pcall(MDB.refreshBag, broken))
+        local after = newBag(3, 80, 0.1); MDB.applyTier(after, 1)
+        check("refresh error: later applyTier on the server still resends", #env.sent == 1)
+        o.FullCapacityPercent, o.MaxTier = 100, 3
+        env.server, env.client, env.sent, env.cmds = false, false, {}, {}
+        getNumActivePlayers, getSpecificPlayer, getPlayer, sendClientCommand, getTimestampMs = nil, nil, nil, nil, nil
+        PLAYER.getUsername, PLAYER.getOnlineID = nil, nil
+        CONTAINER.items = keepItems
     end
     old = instanceItem(A)
     old.contents = { "nail" }
@@ -1988,28 +2280,75 @@ if arg and arg[1] == "--mutants" then
         { name = "上限用實例自重", file = "UPG", from = "bag:getScriptItem():getActualWeight()", to = "bag:getActualWeight()" },
         { name = "容量不乘 FullCapacityPercent", file = "UPG", from = "* pct + 50) / 100)", to = "* 100 + 50) / 100)" },
         { name = "階內不四捨五入", file = "UPG", from = "* t * 2 + m) / (2 * m))", to = "* t * 2) / (2 * m))" },
-        { name = "階數沒夾在 MaxTier", file = "UPG", from = "math.min(tier, maxTier)", to = "tier" },
+        { name = "階數沒夾在 MaxTier", file = "UPG", from = "local t = maxTier > 0 and math.min(tier, maxTier) or 0", to = "local t = maxTier > 0 and tier or 0" },
         { name = "分母寫死 3", file = "UPG", from = "local m = math.max(maxTier, 1)", to = "local m = 3" },
-        { name = "負重減輕被調低", file = "UPG", from = 'math.max(md.MDB_wr, MDB.opt("FullWeightReduction"))', to = 'MDB.opt("FullWeightReduction")' },
+        { name = "負重減輕被調低", file = "UPG", from = "math.max(baseWr, fullWr)", to = "fullWr" },
         { name = "液體目標錯", file = "UPG", from = "local FULL_FLUID = 5.0", to = "local FULL_FLUID = 4.0" },
         { name = "液體不乘 FullCapacityPercent", file = "UPG", from = "* pct / 100", to = "" },
         { name = "液體每次重讀 base", file = "UPG", from = "if md.MDB_fluid == nil then", to = "if true then" },
         { name = "每次重讀 base", file = "UPG", from = "if md.MDB_cap == nil then", to = "if true then" },
-        { name = "不記階級", file = "UPG", from = "md.MDB_tier = tier", to = "" },
+        { name = "不記階級", file = "UPG", from = "md.MDB_tier, md.MDB_max, md.MDB_cfg = tier, maxTier,", to = "md.MDB_max, md.MDB_cfg = maxTier," },
+        { name = "不記升級時的 MaxTier", file = "UPG", from = "md.MDB_tier, md.MDB_max, md.MDB_cfg = tier, maxTier,", to = "md.MDB_tier, md.MDB_cfg = tier," },
+        { name = "不記設定", file = "UPG", from = "(not keptWater) and settingsKey() or nil", to = "nil" },
+        { name = "留水仍記設定", file = "UPG", from = "(not keptWater) and settingsKey() or nil", to = "settingsKey()" },
+        { name = "增加上限沒套用", file = "UPG", from = "if limit > 0 then fullCap = ", to = "if false then fullCap = " },
+        { name = "增加上限不四捨五入", file = "UPG", from = "(base * limit + 50) / 100)", to = "(base * limit) / 100)" },
+        { name = "液體不套增加上限", file = "UPG", from = "if limit > 0 then full = math.min", to = "if false then full = math.min" },
+        { name = "重套用照現在的 MaxTier", file = "UPG", from = "tier == md.MDB_tier and md.MDB_max", to = "tier == md.MDB_tier and nil" },
+        { name = "關了升級時重套用歸零", file = "UPG", from = "(maxTier <= 0 or ", to = "(" },
+        { name = "調低 MaxTier 不會變滿", file = "UPG", from = "math.min(tier, old) * maxTier > math.min(tier, maxTier) * old", to = "true" },
+        { name = "液體裝不下照截", file = "UPG", from = "        if fc:getAmount() > fluid then fluid, keptWater = fc:getCapacity(), true end\n", to = "" },
+        { name = "簽章少了 MaxTier", file = "UPG", from = 'math.floor(MDB.opt("MaxTier"))', to = "0" },
+        { name = "簽章少了升滿時的容量", file = "UPG", from = 'math.floor(MDB.opt("FullCapacityPercent"))', to = "0" },
+        { name = "簽章少了增加上限", file = "UPG", from = 'math.floor(MDB.opt("FullCapacityGainLimit"))', to = "0" },
+        { name = "簽章少了負重減輕", file = "UPG", from = 'math.floor(MDB.opt("FullWeightReduction"))', to = "0" },
+        { name = "重算不看簽章", file = "UPG", from = "or md.MDB_cfg == settingsKey() then", to = "then" },
+        { name = "重算第 0 階", file = "UPG", from = "if (md.MDB_tier or 0) < 1 or", to = "if md.MDB_tier == nil or" },
+        { name = "沒記上限又關升級也重算", file = "UPG", from = '        if md.MDB_max == nil and MDB.opt("MaxTier") <= 0 then return nil end\n', to = "" },
+        { name = "推不回上限", file = "UPG", from = "        md.MDB_max = inferMax(bag, md)\n", to = "" },
+        { name = "推上限不試預設容量 100", file = "UPG", from = 'ipairs({ MDB.opt("FullCapacityPercent"), 100 })', to = 'ipairs({ MDB.opt("FullCapacityPercent") })' },
+        { name = "推上限不試預設負重減輕 100", file = "UPG", from = 'ipairs({ MDB.opt("FullWeightReduction"), 100 })', to = 'ipairs({ MDB.opt("FullWeightReduction") })' },
+        { name = "推上限套了增加上限", file = "UPG", from = "md.MDB_tier, m, pct, 0, fullWr)", to = 'md.MDB_tier, m, pct, MDB.opt("FullCapacityGainLimit"), fullWr)' },
+        { name = "推上限只比容量", file = "UPG", from = "if c == cap and w == wr then", to = "if c == cap then" },
+        { name = "推上限取最不滿的", file = "UPG", from = "for m = md.MDB_tier, 3 do", to = "for m = 3, md.MDB_tier, -1 do" },
+        { name = "換穿沒推上限", file = "UPG", from = '        if md.MDB_max == nil and tier >= 1 and instanceof(item, "InventoryContainer") then md.MDB_max = inferMax(item, md) end\n', to = "" },
+        { name = "換型留水仍記設定", file = "UPG", from = "                new:getModData().MDB_cfg = nil\n", to = "" },
+        { name = "節流沒擋", file = "UPG", from = "    if last and now >= last and now - last < REFRESH_COOLDOWN_MS then return end\n", to = "" },
+        { name = "時鐘倒退仍擋", file = "UPG", from = "if last and now >= last and now - last", to = "if last and now - last" },
+        { name = "節流只看名稱", file = "UPG", from = 'player:getUsername() .. "#" .. player:getOnlineID()', to = "player:getUsername()" },
+        { name = "節流沒記時間", file = "UPG", from = "    lastRefresh[who] = now\n", to = "" },
+        { name = "分割畫面沒掛事件", file = "UPG", from = "Events.OnCreatePlayer.Add(MDB.onCreatePlayer)", to = "" },
+        { name = "主玩家也在 OnCreatePlayer 處理", file = "UPG", from = "    if index == 0 then return end\n", to = "" },
+        { name = "分割畫面 MP 在客戶端自己算", file = "UPG", from = "    if isClient() then\n        sendClientCommand(player", to = "    if false then\n        sendClientCommand(player" },
+        { name = "已升滿仍放行升級", file = "UPG", from = " and not (max and max > 0 and tier - 1 >= max)", to = "" },
+        { name = "升滿判斷沒排除上限 0", file = "UPG", from = "max and max > 0 and tier - 1 >= max", to = "max and tier - 1 >= max" },
+        { name = "重算沒看 modData 就建", file = "UPG", from = "    if not bag:hasModData() then return nil end\n", to = "" },
+        { name = "重算照送", file = "UPG", from = "    holdSend = true\n    local ok, args = pcall", to = "    local ok, args = pcall" },
+        { name = "重算出錯沒復原旗標", file = "UPG", from = "    holdSend = false\n    if not ok then error(args) end", to = "    if not ok then error(args) end" },
+        { name = "重算不往下層找", file = "UPG", from = "            refreshAll(item:getItemContainer(), player)\n", to = "" },
+        { name = "重算沒通知客戶端", file = "UPG", from = 'if args and player then sendServerCommand(player, "MinidoracatBags", "bagTier", args) end', to = "" },
+        { name = "重算通知全部玩家", file = "UPG", from = 'sendServerCommand(player, "MinidoracatBags", "bagTier", args)', to = 'sendServerCommand("MinidoracatBags", "bagTier", args)' },
+        { name = "伺服器不看模組", file = "UPG", from = 'if module ~= "MinidoracatBags" or command ~= "refreshBags" then return end', to = 'if command ~= "refreshBags" then return end' },
+        { name = "伺服器沒掛事件", file = "UPG", from = "Events.OnClientCommand.Add(MDB.onClientCommand)", to = "" },
+        { name = "進場沒掛事件", file = "UPG", from = "Events.OnGameStart.Add(MDB.onGameStart)", to = "" },
+        { name = "MP 進場在客戶端自己算", file = "UPG", from = "    if isClient() then\n        Events.OnTick.Add(requestRefresh)\n        return\n    end\n", to = "" },
+        { name = "MP 進場立刻送請求", file = "UPG", from = "        Events.OnTick.Add(requestRefresh)\n", to = "        requestRefresh()\n" },
+        { name = "請求沒拿掉 OnTick", file = "UPG", from = "    Events.OnTick.Remove(requestRefresh)\n", to = "" },
+        { name = "客戶端不處理 bagTier", file = "UPG", from = 'elseif command == "bagTier" then', to = "elseif false then" },
         { name = "伺服器不重送", file = "UPG", from = "sendReplaceItemInContainer(container, bag, bag)", to = "" },
-        { name = "單機也重送", file = "UPG", from = "if isServer() and not swapping then", to = "if not swapping then" },
-        { name = "地上升階不重送", file = "UPG", from = 'sendServerCommand("MinidoracatBags", "floorTier", {', to = 'type("MinidoracatBags", "floorTier", {' },
+        { name = "單機也重送", file = "UPG", from = "if isServer() and not holdSend then", to = "if not holdSend then" },
+        { name = "地上升階不重送", file = "UPG", from = 'sendServerCommand("MinidoracatBags", "floorTier", args)', to = 'type("MinidoracatBags", "floorTier", args)' },
         { name = "地上升階送出時階級沒更新", file = "UPG", from = "id = bag:getID(), tier = tier,", to = "id = bag:getID(), tier = tier - 1," },
         { name = "地上升階走容器重送", file = "UPG", from = "local wi, container = bag:getWorldItem(), bag:getContainer()", to = "local wi, container = nil, bag:getContainer()" },
         { name = "地上升階沒送液體容量", file = "UPG", from = "cap = cap, wr = wr, fluid = fluid,", to = "cap = cap, wr = wr," },
-        { name = "客戶端不看模組", file = "UPG", from = 'if module ~= "MinidoracatBags" or command ~= "floorTier" then return end', to = 'if command ~= "floorTier" then return end' },
+        { name = "客戶端不看模組", file = "UPG", from = 'if module ~= "MinidoracatBags" then return end', to = "" },
         { name = "客戶端不比 ID", file = "UPG", from = "if bag and bag:getID() == args.id then", to = "if bag then" },
-        { name = "客戶端沒寫階級與基準", file = "UPG", from = "            md.MDB_tier, md.MDB_cap, md.MDB_wr, md.MDB_fluid = args.tier, args.baseCap, args.baseWr, args.baseFluid\n", to = "" },
-        { name = "客戶端沒套容量", file = "UPG", from = "            bag:setCapacity(args.cap)\n", to = "" },
-        { name = "客戶端套用晚到的舊指令", file = "UPG", from = "            if (md.MDB_tier or 0) > args.tier then return end\n", to = "" },
-        { name = "客戶端只寫階級不寫基準", file = "UPG", from = "md.MDB_tier, md.MDB_cap, md.MDB_wr, md.MDB_fluid = args.tier, args.baseCap, args.baseWr, args.baseFluid", to = "md.MDB_tier = args.tier" },
-        { name = "客戶端沒套負重減輕", file = "UPG", from = "            bag:setWeightReduction(args.wr)\n", to = "" },
-        { name = "客戶端沒套液體容量", file = "UPG", from = "            if fc then fc:setCapacity(args.fluid) end\n", to = "" },
+        { name = "客戶端沒寫階級與設定", file = "UPG", from = "    md.MDB_tier, md.MDB_max, md.MDB_cfg = args.tier, args.max, args.cfg\n", to = "" },
+        { name = "客戶端沒套容量", file = "UPG", from = "    bag:setCapacity(args.cap)\n", to = "" },
+        { name = "客戶端套用晚到的舊指令", file = "UPG", from = "    if (md.MDB_tier or 0) > args.tier then return end\n", to = "" },
+        { name = "客戶端只寫階級不寫基準", file = "UPG", from = "    md.MDB_cap, md.MDB_wr, md.MDB_fluid = args.baseCap, args.baseWr, args.baseFluid\n", to = "" },
+        { name = "客戶端沒套負重減輕", file = "UPG", from = "    bag:setWeightReduction(args.wr)\n", to = "" },
+        { name = "客戶端沒套液體容量", file = "UPG", from = "    if fc then fc:setCapacity(args.fluid) end\n", to = "" },
         { name = "客戶端只看物品本身的液體", file = "UPG", from = "args.fluid and bag:getFluidContainerFromSelfOrWorldItem()", to = "args.fluid and bag:getFluidContainer()" },
         { name = "客戶端沒掛事件", file = "UPG", from = "Events.OnServerCommand.Add(MDB.onServerCommand)", to = "" },
         { name = "非背包輸入被擋", file = "UPG", from = 'if not instanceof(item, "InventoryContainer") then return true end', to = 'if not instanceof(item, "InventoryContainer") then return false end' },
@@ -2018,12 +2357,12 @@ if arg and arg[1] == "--mutants" then
         { name = "onUpgrade 不看 MaxTier", file = "UPG", from = 'if tier > MDB.opt("MaxTier") then return end', to = "" },
         { name = "換穿法沒包裝", file = "UPG", from = "function ISClothingExtraAction:createItemNew(item, newItem)", to = "function MDB:unusedCreateItemNew(item, newItem)" },
         { name = "升級不換型", file = "UPG", from = "    if MDB.reinforcedOf(ft) then\n", to = "    if false then\n" },
-        { name = "換型途中照送", file = "UPG", from = "if isServer() and not swapping then", to = "if isServer() then" },
+        { name = "換型途中照送", file = "UPG", from = "if isServer() and not holdSend then", to = "if isServer() then" },
         { name = "換型最後不送", file = "UPG", from = "        sendReplaceItemInContainer(cont, old, new)\n", to = "" },
         { name = "單機不換動作佇列", file = "UPG", from = "        replaceItemInContainer(cont, old, new)", to = "" },
         { name = "舊背包沒移除", file = "UPG", from = "    cont:Remove(old)", to = "" },
         { name = "液體沒在容量設好後重搬", file = "UPG", from = "            nfc:copyFluidsFrom(ofc)\n", to = "" },
-        { name = "出錯沒復原旗標", file = "UPG", from = "    swapping = false\n    if not ok", to = "    if not ok" },
+        { name = "出錯沒復原旗標", file = "UPG", from = "    end)\n    holdSend = false\n", to = "    end)\n" },
         { name = "新背包沒先放進容器", file = "UPG", from = "    cont:AddItem(new)\n", to = "" },
         { name = "地上沒帶 X 旋轉", file = "UPG", from = "        new:setWorldXRotation(old:getWorldXRotation())\n", to = "" },
         { name = "地上沒帶 Y 旋轉", file = "UPG", from = "        new:setWorldYRotation(old:getWorldYRotation())\n", to = "" },
@@ -2042,7 +2381,8 @@ if arg and arg[1] == "--mutants" then
         { name = "沒容器也沒在地上照做", file = "UPG", from = "if not wi and not cont then error(", to = "if false then error(" },
         { name = "地上背包走容器分支", file = "UPG", from = "    local wi = old:getWorldItem()\n", to = "    local wi = nil\n" },
         { name = "地上液體只看物品本身", file = "UPG", from = "local ofc = old:getFluidContainerFromSelfOrWorldItem()", to = "local ofc = old:getFluidContainer()" },
-        { name = "套階級不看地上的液體", file = "UPG", from = "local fc, fluid = bag:getFluidContainerFromSelfOrWorldItem(), nil", to = "local fc, fluid = bag:getFluidContainer(), nil" },
+        { name = "套階級不看地上的液體", file = "UPG", from = "local fc, fluid, keptWater = bag:getFluidContainerFromSelfOrWorldItem(), nil, false", to = "local fc, fluid, keptWater = bag:getFluidContainer(), nil, false" },
+        { name = "升級擋不推上限", file = "UPG", from = "md.MDB_max or ((md.MDB_tier or 0) >= 1 and inferMax(item, md))", to = "md.MDB_max" },
         { name = "出錯沒搬回內容物", file = "UPG", from = "            old:getItemContainer():takeItemsFrom(new:getItemContainer())\n", to = "" },
         { name = "出錯沒撤掉新背包", file = "UPG", from = "            wi:getSquare():removeWorldObject(nwi)\n", to = "" },
         { name = "換穿沒搬改名旗標", file = "UPG", from = "        newItem:setCustomName(true)\n", to = "" },
@@ -2104,7 +2444,7 @@ if arg and arg[1] == "--mutants" then
         { name = "換型沿用舊基準", file = "UPG", from = "        md.MDB_cap, md.MDB_wr, md.MDB_fluid = cap, wr, fluid\n", to = "" },
         { name = "換主題沒換", file = "UPG", from = 't.theme == "Navy" and "Olive" or "Navy"', to = "t.theme" },
         { name = "換主題掉級", file = "UPG", from = '"Olive" or "Navy"), tierOf(bag), character)', to = '"Olive" or "Navy"), 0, character)' },
-        { name = "換型截掉液體", file = "UPG", from = "            if ofc:getAmount() > nfc:getCapacity() then nfc:setCapacity(ofc:getCapacity()) end\n", to = "" },
+        { name = "換型截掉液體", file = "UPG", from = "                nfc:setCapacity(ofc:getCapacity())\n", to = "" },
         { name = "還原沒走換穿對應", file = "UPG", from = "s.shape ~= t.shape and s.pair and", to = "false and" },
         { name = "主題表少換穿對應", file = "UPG", from = ', pair = "Base.Bag_FannyPackBack_Hide" },', to = " }," },
         { name = "換主題配方漏一款", file = "REIN", from = "inputs\n        {\n            item 1 [MinidoracatBags.Bag_DuffelBag_Navy_Reinforced;MinidoracatBags.Bag_DuffelBag_Olive_Reinforced;MinidoracatBags.Bag_ClothSatchel_Cotton_Navy_Reinforced;", to = "inputs\n        {\n            item 1 [MinidoracatBags.Bag_DuffelBag_Navy_Reinforced;MinidoracatBags.Bag_ClothSatchel_Cotton_Navy_Reinforced;" },

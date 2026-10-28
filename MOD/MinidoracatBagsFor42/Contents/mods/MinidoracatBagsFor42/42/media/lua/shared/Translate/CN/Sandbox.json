@@ -3,11 +3,13 @@
     "Sandbox_MinidoracatBagsLockLegacyBags": "锁住旧 Bag Upgrade Plus 背包",
     "Sandbox_MinidoracatBagsLockLegacyBags_tooltip": "默认开启。开启时，Bag Upgrade Plus 留下的旧背包只能取出物品，不能再放入。玩家可以用缝纫配方把旧背包改成新背包。\n关闭后旧背包恢复成普通背包。",
     "Sandbox_MinidoracatBagsMaxTier": "最高升级阶级",
-    "Sandbox_MinidoracatBagsMaxTier_tooltip": "要强化几次才算完全强化，最高阶就是完全强化。设成 0 就不能强化。\n旧背包改装后直接是此阶。",
+    "Sandbox_MinidoracatBagsMaxTier_tooltip": "要强化几次才算完全强化，最高阶就是完全强化。设成 0 就不能强化。\n旧背包改装后直接是此阶。\n之后调低时，已强化的背包在携带它的玩家下次进入游戏时按新的阶数重新计算；调高或设成 0 时保持原数值。",
     "Sandbox_MinidoracatBagsFullCapacityPercent": "完全强化的容量（到上限差距的百分比）",
-    "Sandbox_MinidoracatBagsFullCapacityPercent_tooltip": "完全强化后，补上原本容量到容量上限之间差距的此百分比，四舍五入取整。中间各阶平均分配。容量上限是 50 减背包本身的重量（大部分背包是 49）。水袋背包的液体容量也按同样方式增加，最多到 5 升。\n改了之后，只影响之后强化的背包。",
+    "Sandbox_MinidoracatBagsFullCapacityPercent_tooltip": "完全强化后，补上原本容量到容量上限之间差距的此百分比，四舍五入取整。中间各阶平均分配。容量上限是 50 减背包本身的重量（大部分背包是 49）。水袋背包的液体容量也按同样方式增加，最多到 5 升。\n改了之后，已强化的背包在携带它的玩家下次进入游戏时重新计算。",
+    "Sandbox_MinidoracatBagsFullCapacityGainLimit": "完全强化时最多增加的容量（原容量的百分比）",
+    "Sandbox_MinidoracatBagsFullCapacityGainLimit_tooltip": "完全强化后，背包最多增加原本容量的此百分比，四舍五入取整。设成 0 就不限制。实际取此值和上一个选项算出的较小者，所以小包保持小，大包照样能强化到上限。例：设为 100 时，容量 3 的背包最多到 6，容量 28 的照样到 49。水袋背包的液体容量也按同样方式限制。\n改了之后，已强化的背包在携带它的玩家下次进入游戏时重新计算。",
     "Sandbox_MinidoracatBagsFullWeightReduction": "完全强化的减重率",
-    "Sandbox_MinidoracatBagsFullWeightReduction_tooltip": "完全强化后背包的减重率，中间各阶平均分配。原本就比此值高的背包保持原值。\n改了之后，只影响之后强化的背包。",
+    "Sandbox_MinidoracatBagsFullWeightReduction_tooltip": "完全强化后背包的减重率，中间各阶平均分配。原本就比此值高的背包保持原值。\n改了之后，已强化的背包在携带它的玩家下次进入游戏时重新计算。",
     "Sandbox_MinidoracatBagsLootMultiplier": "战利品与僵尸掉落倍率",
     "Sandbox_MinidoracatBagsLootMultiplier_tooltip": "调整新背包出现在警局、军事与医疗地点容器的概率，以及警察、军人、医护僵尸掉落新背包的概率。设成 0 两者都关闭。\n容器战利品在加载世界时读取这个值。"
 }

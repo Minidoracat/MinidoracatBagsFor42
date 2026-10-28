@@ -3,11 +3,13 @@
     "Sandbox_MinidoracatBagsLockLegacyBags": "鎖住舊 Bag Upgrade Plus 背包",
     "Sandbox_MinidoracatBagsLockLegacyBags_tooltip": "預設開啟。開啟時，Bag Upgrade Plus 留下的舊背包只能取出物品，不能再放入。玩家可以用縫紉配方把舊背包改成新背包。\n關閉後舊背包恢復成一般背包。",
     "Sandbox_MinidoracatBagsMaxTier": "最高升級階級",
-    "Sandbox_MinidoracatBagsMaxTier_tooltip": "升級要做幾次才升滿，最高階就是升滿。設成 0 就不能升級。\n舊背包改裝後直接是這一階。",
+    "Sandbox_MinidoracatBagsMaxTier_tooltip": "升級要做幾次才升滿，最高階就是升滿。設成 0 就不能升級。\n舊背包改裝後直接是這一階。\n之後調低時，已升級的背包在帶著它的玩家下次進入遊戲時照新的階數重算；調高或設成 0 時維持原數值。",
     "Sandbox_MinidoracatBagsFullCapacityPercent": "升滿時的容量（到上限差距的百分比）",
-    "Sandbox_MinidoracatBagsFullCapacityPercent_tooltip": "升到最高階時，補上原本容量到容量上限之間差距的這個百分比，四捨五入到整數。中間各階平均分配。容量上限是 50 減背包本身的重量（大部分背包是 49）。水袋揹包的液體容量也照同樣方式增加，最多到 5 公升。\n改了之後，只影響之後升級的背包。",
+    "Sandbox_MinidoracatBagsFullCapacityPercent_tooltip": "升到最高階時，補上原本容量到容量上限之間差距的這個百分比，四捨五入到整數。中間各階平均分配。容量上限是 50 減背包本身的重量（大部分背包是 49）。水袋揹包的液體容量也照同樣方式增加，最多到 5 公升。\n改了之後，已升級的背包在帶著它的玩家下次進入遊戲時重算。",
+    "Sandbox_MinidoracatBagsFullCapacityGainLimit": "升滿時最多增加的容量（原容量的百分比）",
+    "Sandbox_MinidoracatBagsFullCapacityGainLimit_tooltip": "升到最高階時，背包最多增加原本容量的這個百分比，四捨五入到整數。設成 0 就不限制。實際取這個值和上一個選項算出來的比較小的那個，所以小包維持小，大包照樣升得到上限。例：設 100 時，容量 3 的背包最多到 6，容量 28 的照樣到 49。水袋揹包的液體容量也照同樣方式限制。\n改了之後，已升級的背包在帶著它的玩家下次進入遊戲時重算。",
     "Sandbox_MinidoracatBagsFullWeightReduction": "升滿時的負重減輕",
-    "Sandbox_MinidoracatBagsFullWeightReduction_tooltip": "升到最高階時背包的負重減輕，中間各階平均分配。原本就比這個值高的背包維持原值。\n改了之後，只影響之後升級的背包。",
+    "Sandbox_MinidoracatBagsFullWeightReduction_tooltip": "升到最高階時背包的負重減輕，中間各階平均分配。原本就比這個值高的背包維持原值。\n改了之後，已升級的背包在帶著它的玩家下次進入遊戲時重算。",
     "Sandbox_MinidoracatBagsLootMultiplier": "戰利品與殭屍掉落倍率",
     "Sandbox_MinidoracatBagsLootMultiplier_tooltip": "調整新背包出現在警局、軍事與醫療地點容器的機率，以及警察、軍人、醫護殭屍掉落新背包的機率。設成 0 兩者都關閉。\n容器戰利品在載入世界時讀取這個值。"
 }

@@ -144,7 +144,7 @@ Thread is used by amount; a whole spool is not consumed. Sewn bags start at tier
 [*] [b]Examples[/b]: a vanilla Small Backpack goes 15/70 → 26/80 → 38/90 → 49/100; a vanilla Fanny Pack goes 1/85 → 17/90 → 33/95 → 49/100 (capacity / Encumbrance Reduction).
 [*] [b]Hydration Packs[/b]: water capacity rises the same way up to 5 L. Both Hydration Packs upgrade into the same reinforced bag, which starts from the group's highest value of 3 L: 3 → 3.7 → 4.3 → 5 L (the vanilla Hydration Pack itself holds 2 L, the camo one 3 L).
 [*] [b]Already higher[/b]: a bag whose Encumbrance Reduction is already above the full value keeps its own.
-[*] [b]Server settings[/b]: the highest tier (0–3) and the full capacity and Encumbrance Reduction are sandbox options; see "Sandbox Options and Defaults".
+[*] [b]Server settings[/b]: the highest tier (0–3), the full capacity, the maximum capacity gain and Encumbrance Reduction are sandbox options; see "Sandbox Options and Defaults".
 [/list]
 === 🧰 Reinforced Bags
 Every upgraded bag is a "Reinforced" bag: this mod's own item with "(Reinforced)" after its name. Reinforced vanilla bags keep their vanilla shape but switch to this mod's S.T.A.R.S. (navy) or Umbrella (olive) look, with the theme in front of the name, such as "S.T.A.R.S. Hiking Backpack (Reinforced)" or "Umbrella Duffel Bag (Reinforced)". This mod's seven bags keep their own look, such as "S.T.A.R.S. Day Pack (Reinforced)".
@@ -316,12 +316,15 @@ On the "Tactical Bags" page of the sandbox settings.
 [tr][td]Lock old Bag Upgrade Plus bags[/td][td]On[/td][td]On / Off[/td][td]On: old bags are take-out only. Off: they work as normal bags again[/td][/tr]
 [tr][td]Highest upgrade tier[/td][td]3[/td][td]0–3[/td][td]How many upgrades it takes to fully upgrade a bag; the highest tier is full. 0 turns upgrading off. Converted old bags and the crafted reinforced Sheet Sling Bag start at this tier[/td][/tr]
 [tr][td]Capacity at full upgrade (percent of gap to cap)[/td][td]100[/td][td]0–100[/td][td]At the highest tier, a bag fills this percentage of the gap between its original capacity and the cap (49). Hydration Pack water capacity follows the same percentage, up to 5 L[/td][/tr]
+[tr][td]Max capacity gain at full upgrade (percent of original capacity)[/td][td]0[/td][td]0–1000[/td][td]At the highest tier, a bag gains at most this percentage of its original capacity; 0 means no limit. The smaller of this and the row above is used, so small bags stay small while large bags still reach 49. Example: at 100, a Tool Belt Pouch (3) reaches at most 6 and a Military Backpack (28) still reaches 49. Hydration Pack water capacity is limited the same way[/td][/tr]
 [tr][td]Encumbrance Reduction at full upgrade[/td][td]100[/td][td]0–100[/td][td]Encumbrance Reduction at the highest tier; bags that already have more keep their own value[/td][/tr]
 [tr][td]Loot and zombie drop multiplier[/td][td]1.0[/td][td]0–10[/td][td]Scales container loot and zombie drops together; 0 turns both off[/td][/tr]
 [/table]
 [list]
 [*] [b]Tiers in between[/b]: an even share of the full values. With a highest tier of 1, one upgrade fills the bag; with 2, tier 1 is halfway.
-[*] [b]After changing them[/b]: only bags upgraded or converted afterwards are affected. Bags already upgraded keep their values.
+[*] [b]After changing them[/b]: after a change to the highest tier, full capacity, maximum capacity gain or full Encumbrance Reduction, upgraded bags are recalculated with the new settings when a player carrying them next enters the game (or, for a split-screen player who joins later, when they join): worn, held, or inside another bag on the player. Bags on the ground, in containers or in vehicles are recalculated once a player carries them into the game, or when they are next upgraded, switch themes, swap sides or are reverted.
+[*] [b]When a bag gets smaller[/b]: items over the new capacity stay inside and can be taken out; you just cannot put more in. A Hydration Pack that can no longer hold its water keeps its water capacity, so no water is lost; once the water is used up, it follows the new settings the next time you enter the game.
+[*] [b]Changing the highest tier[/b]: lowering it recalculates with the new tier count; for example, going from 3 to 1 fills tier 1 and 2 bags. Raising it or setting 0 keeps the values of bags already upgraded. A bag that is already full (for example upgraded once when the highest tier was 1) cannot be upgraded again after the highest tier is raised, because the result would follow the new tier count and lose capacity.
 [*] [b]Unlocking old bags[/b]: they keep BUP's capacity and Encumbrance Reduction (49/100 for the main version) and accept items again.
 [*] [b]Loot multiplier[/b]: read when the world loads. Restart the server or reload the save after changing it. Containers that already generated loot are not affected.
 [*] [b]Worlds started on version 0.1.0[/b]: the 0.1.0 options "Capacity gain per tier (percent)", "Encumbrance Reduction gain per tier" and "Maximum Encumbrance Reduction" are gone, and the world uses the defaults of the two new options above. Servers that had changed the old options need to set the new ones. Old single-player saves print one unknown SandboxOption line in the console when loaded; the save loads normally and the line is gone after the next save.
@@ -331,7 +334,6 @@ On the "Tactical Bags" page of the sandbox settings.
 [*] [b]Living zombies never show the new bags[/b]: zombie bags come from their outfits, and a mod can only replace a whole outfit. So the bag is put into the corpse when the zombie dies instead.
 [*] [b]No tier display[/b]: to see a bag's tier, check which "Reinforce Bag" recipe accepts it. Only the next tier's recipe does.
 [*] [b]Old bags show capacity 49 or 48[/b]: the engine caps a bag's capacity at 50 minus its own weight. BUP bags weighed 0.1, so the save stored 49. After the switch they use the vanilla weight, so an ALICE pack (2.0) shows 48. Items packed up to 49 are all still there and can be taken out, and converting the bag brings it back to 49.
-[*] [b]Changed upgrade sandbox options can cost Hydration Pack water when a reinforced one is upgraded again[/b]: upgrading a reinforced Hydration Pack to the next tier recalculates its water capacity from the current sandbox values, so after lowering the full capacity, water that no longer fits is lost. Turning it into another bag (converting an old BUP Hydration Pack, the first upgrade, reverting, switching themes) never loses water: if the water does not fit, it keeps the capacity it had before. Unchanged sandbox values never lose water.
 [*] [b]Renamed fanny packs swapped earlier[/b]: if a renamed fanny pack was swapped front or back on version 0.1.0 or without this mod, its first upgrade or conversion resets the name to the default. The vanilla swap copies the name but does not mark it as custom, so this mod cannot tell it is yours. Rename it again before upgrading to keep the name.
 [*] [b]One reinforced satchel at a time[/b]: two reinforced satchels both need the second satchel slot.
 [*] [b]Satchel straps cross over[/b]: on female characters, a reinforced cloth satchel worn with a vanilla satchel has straps that clip into each other a little where they cross on the chest and back when seen up close.
@@ -367,7 +369,8 @@ On the "Tactical Bags" page of the sandbox settings.
 [/list]
 [h3]What about bags I upgraded in version 0.1.0?[/h3]
 [list]
-[*] Use "Convert Upgraded Bag to Reinforced": no materials used, the tier stays, and capacity and Encumbrance Reduction are recalculated with the new rules (tier 3 becomes 49/100).
+[*] After updating, bags you carry into the game are recalculated with the new rules automatically (a tier 3 vanilla Military Backpack becomes 48/100; the cap follows the original bag's weight).
+[*] To make them reinforced (weight 0.1, no speed penalty, 49/100 at tier 3), use "Convert Upgraded Bag to Reinforced": no materials used and the tier stays.
 [*] Tier 1 and 2 bags can also just use the next upgrade recipe, which turns them reinforced as well.
 [/list]
 [h3]Can I wear two satchels at once?[/h3]
