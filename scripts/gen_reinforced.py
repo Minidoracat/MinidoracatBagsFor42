@@ -480,7 +480,7 @@ def build(mirror_path):
         "module MinidoracatBags", "{", "    imports", "    {", "        Base", "    }", "",
         "\n\n".join(items), "",
         recipe("MDB_RestoreReinforced", rein, ["item 1 tags[base:scissors] mode:keep flags[IsNotDull;MayDegradeLight]"],
-               [("OnCreate", "MDB.onSwapKeepTier")]), "",
+               [("Tooltip", "Tooltip_MDB_RestoreReinforced"), ("OnCreate", "MDB.onSwapKeepTier")]), "",
         recipe("MDB_ReinforceUpgradedBag", vanilla + own, ["item 1 tags[base:sewingneedle] mode:keep"],
                [("OnTest", "MDB.onTestUpgraded"), ("OnCreate", "MDB.onSwapKeepTier")]), "",
         recipe("MDB_SwapReinforcedTheme", themed_ids, ["item 1 tags[base:sewingneedle] mode:keep", "item 1 tags[base:thread]"],

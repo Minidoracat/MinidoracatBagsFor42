@@ -2,5 +2,6 @@
     "Tooltip_MDB_UpgradeBagTier1": "Die Tasche muss auf Stufe 0 sein und darf nicht getragen werden. Gegenstände darin können drinbleiben. Die höchste Stufe legt der Server fest.",
     "Tooltip_MDB_UpgradeBagTier2": "Die Tasche muss auf Stufe 1 sein und darf nicht getragen werden. Gegenstände darin können drinbleiben. Die höchste Stufe legt der Server fest.",
     "Tooltip_MDB_UpgradeBagTier3": "Die Tasche muss auf Stufe 2 sein und darf nicht getragen werden. Gegenstände darin können drinbleiben. Die höchste Stufe legt der Server fest.",
+    "Tooltip_MDB_RestoreReinforced": "Die Stufe bleibt erhalten, mit den Werten des Originals auf dieser Stufe (Fassungsvermögen, Gewicht, Renngeschwindigkeit usw.). Die Tasche darf nicht getragen werden. Gegenstände darin können drinbleiben.",
     "Tooltip_MDB_LegacyBag": "Alte Plus-Tasche: Bau sie in die verstärkte Version um, um sie weiter zu nutzen.\nBis dahin kannst du nur Gegenstände herausnehmen, nichts hineinlegen.\nUmbau: Tasche abnehmen, mit Nadel und Faden an einen Tisch gehen, Rechtsklick auf die Tasche:\n„Alte Plus-Tasche in verstärkte Version umbauen“.\nDu bekommst dieselbe Tasche verstärkt auf höchster Stufe; Gegenstände darin können drinbleiben."
 }

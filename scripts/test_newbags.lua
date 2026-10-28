@@ -30,6 +30,7 @@ local F = {
     I18N_RECIPES = TRANSLATE .. "EN/Recipes.json",
     I18N_ITEMS = TRANSLATE .. "EN/ItemName.json",
     I18N_FLUIDS = TRANSLATE .. "EN/Fluids.json",
+    I18N_TOOLTIP = TRANSLATE .. "EN/Tooltip.json",
     REIN = MEDIA .. "scripts/MDB_Reinforced.txt",
     CONVERT = MEDIA .. "scripts/MDB_Convert.txt",
     REIN_XML = MEDIA .. "clothing/clothingItems/MDB_Bag_Satchel_Navy_Reinforced.xml",
@@ -780,9 +781,10 @@ local function suite()
     for _ in pairs(reinRecipes) do recipeCount = recipeCount + 1 end
     check("restore / reinforce-upgraded / swap-theme recipes: exactly these 3; bags = all " .. reinCount .. " reinforced / all "
         .. #REIN_SPEC .. " sources / the " .. nThemed .. " themed ones", recipeCount == 3 and covered == true)
-    check("MDB_RestoreReinforced: scissors kept, no other input, no outputs, MDB.onSwapKeepTier, no OnTest",
+    check("MDB_RestoreReinforced: scissors kept, no other input, no outputs, MDB.onSwapKeepTier, no OnTest, tooltip says the tier is kept",
         rr ~= nil and #rr.lines == 2 and hasLine(rr, "item 1 tags[base:scissors] mode:keep flags[IsNotDull;MayDegradeLight]")
-        and noOutputs(rr) and rr.fields.OnCreate == "MDB.onSwapKeepTier" and rr.fields.OnTest == nil)
+        and noOutputs(rr) and rr.fields.OnCreate == "MDB.onSwapKeepTier" and rr.fields.OnTest == nil
+        and rr.fields.Tooltip == "Tooltip_MDB_RestoreReinforced")
     check("MDB_ReinforceUpgradedBag: needle kept, no outputs, OnTest MDB.onTestUpgraded, MDB.onSwapKeepTier",
         mr ~= nil and #mr.lines == 2 and hasLine(mr, "item 1 tags[base:sewingneedle] mode:keep") and noOutputs(mr)
         and mr.fields.OnTest == "MDB.onTestUpgraded" and mr.fields.OnCreate == "MDB.onSwapKeepTier")
@@ -949,7 +951,9 @@ local function suite()
     for full in pairs(rein) do want.ItemName[#want.ItemName + 1] = full end
     for n in pairs(expectNames) do want.Recipes[#want.Recipes + 1] = n end
     for n in pairs(reinRecipes) do want.Recipes[#want.Recipes + 1] = n end
-    for _, r in pairs(recipes) do if r.fields.Tooltip then want.Tooltip[#want.Tooltip + 1] = r.fields.Tooltip end end
+    for _, list in ipairs({ recipes, reinRecipes }) do
+        for _, r in pairs(list) do if r.fields.Tooltip then want.Tooltip[#want.Tooltip + 1] = r.fields.Tooltip end end
+    end
     local i18nOk = true
     for _, lang in ipairs(LANGS) do
         for file, keys in pairs(want) do
@@ -2427,6 +2431,8 @@ if arg and arg[1] == "--mutants" then
         { name = "液體容器名稱沒有主題詞", file = "I18N_FLUIDS", from = '"Umbrella Reinforced Hydration Pack"', to = '"Reinforced Hydration Pack"' },
         { name = "還原配方漏一款", file = "REIN", from = "MinidoracatBags.Bag_GolfBag_Olive_Reinforced;", to = "" },
         { name = "還原配方可用穿著中的背包", file = "REIN", from = "_Reinforced] mode:keep flags[IsNotWorn],", to = "_Reinforced] mode:keep," },
+        { name = "還原配方沒說明", file = "REIN", from = "Tooltip = Tooltip_MDB_RestoreReinforced,", to = "" },
+        { name = "還原配方說明缺翻譯", file = "I18N_TOOLTIP", from = '"Tooltip_MDB_RestoreReinforced"', to = '"Tooltip_MDB_RestoreReinforcedX"' },
         { name = "改強化版配方沒 OnTest", file = "REIN", from = "OnTest = MDB.onTestUpgraded,", to = "" },
         { name = "強化版 XML 換了模型", file = "REIN_XML", from = "<m_MaleModel>", to = "<m_MaleModel>x" },
         { name = "升級清單漏強化版", file = "RECIPES", from = "MinidoracatBags.Bag_GolfBag_Olive_Reinforced;", to = "" },

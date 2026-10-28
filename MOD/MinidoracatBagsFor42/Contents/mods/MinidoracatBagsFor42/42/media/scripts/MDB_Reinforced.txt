@@ -1538,6 +1538,7 @@ module MinidoracatBags
         AllowBatchCraft = false,
         Tags = AnySurfaceCraft,
         category = Tailoring,
+        Tooltip = Tooltip_MDB_RestoreReinforced,
         OnCreate = MDB.onSwapKeepTier,
         inputs
         {
