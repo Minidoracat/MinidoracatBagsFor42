@@ -161,6 +161,18 @@ local function settingsKey()
         .. ":" .. math.floor(MDB.opt("FullCapacityGainLimit")) .. ":" .. math.floor(MDB.opt("FullWeightReduction"))
 end
 
+-- 第 t 階（共 m 階）的容量與負重減輕：base + round((full - base) * t / m)，round(x) = floor(x + 0.5)；全用整數算，免浮點誤差。
+-- 上限＝50 減背包自重：腳本載入與 tooltip 都壓在這裡（Item.java:2493-2499、InventoryContainer.java:125-131），
+-- 原本的 Plus 背包就是 49。自重取腳本值（Item.java:533）：伺服器上 getActualWeight() 會回 0（顯示名稱等於全名時，InventoryItem.java:2740-2742）
+local function tierValues(bag, base, baseWr, t, m, pct, limit, fullWr)
+    local function step(b, full) return b + math.floor(((full - b) * t * 2 + m) / (2 * m)) end
+    local top = math.floor(50 - bag:getScriptItem():getActualWeight())
+    local fullCap = base + math.floor((math.max(top - base, 0) * pct + 50) / 100)
+    -- 每個背包最多增加原容量的 limit%（0＝不限）：小包維持小，大包照樣到得了上限
+    if limit > 0 then fullCap = math.min(fullCap, base + math.floor((base * limit + 50) / 100)) end
+    return step(base, fullCap), step(baseWr, math.max(baseWr, fullWr))
+end
+
 -- 最高階（MaxTier）升滿，中間各階平均分配；MaxTier 0 維持原值。傳回新數值（bagTier／floorTier 指令的內容）。
 -- 同一階重套（重算、換型、換穿）時，MaxTier 改過就取升得比較滿的那個：調低照新的算，調高或設成 0 不會讓已升級的背包變小
 function MDB.applyTier(bag, tier)
@@ -174,20 +186,12 @@ function MDB.applyTier(bag, tier)
     local t = maxTier > 0 and math.min(tier, maxTier) or 0
     local m = math.max(maxTier, 1)
     local pct, limit = MDB.opt("FullCapacityPercent"), MDB.opt("FullCapacityGainLimit")
-    -- base + round((full - base) * t / m)，round(x) = floor(x + 0.5)；全用整數算，免浮點誤差
-    local function step(base, full) return base + math.floor(((full - base) * t * 2 + m) / (2 * m)) end
-    -- 上限＝50 減背包自重：腳本載入與 tooltip 都壓在這裡（Item.java:2493-2499、InventoryContainer.java:125-131），
-    -- 原本的 Plus 背包就是 49。自重取腳本值（Item.java:533）：伺服器上 getActualWeight() 會回 0（顯示名稱等於全名時，InventoryItem.java:2740-2742）
-    local top = math.floor(50 - bag:getScriptItem():getActualWeight())
-    local fullCap = md.MDB_cap + math.floor((math.max(top - md.MDB_cap, 0) * pct + 50) / 100)
-    -- 每個背包最多增加原容量的 limit%（0＝不限）：小包維持小，大包照樣到得了上限
-    if limit > 0 then fullCap = math.min(fullCap, md.MDB_cap + math.floor((md.MDB_cap * limit + 50) / 100)) end
-    local cap, wr = step(md.MDB_cap, fullCap), step(md.MDB_wr, math.max(md.MDB_wr, MDB.opt("FullWeightReduction")))
+    local cap, wr = tierValues(bag, md.MDB_cap, md.MDB_wr, t, m, pct, limit, MDB.opt("FullWeightReduction"))
     bag:setCapacity(cap)
     bag:setWeightReduction(wr)
     -- 液體容量存在 FluidContainer 元件（GameEntity.java:183、FluidContainer.java:683、存檔 :1202-1205）；
     -- 放在地上時元件搬到世界物品上（IsoWorldInventoryObject.java:103-105，撿起時搬回 :650-653）
-    local fc, fluid = bag:getFluidContainerFromSelfOrWorldItem(), nil
+    local fc, fluid, keptWater = bag:getFluidContainerFromSelfOrWorldItem(), nil, false
     if fc then
         if md.MDB_fluid == nil then md.MDB_fluid = fc:getCapacity() end
         local base = md.MDB_fluid
@@ -195,10 +199,11 @@ function MDB.applyTier(bag, tier)
         if limit > 0 then full = math.min(full, base + base * limit / 100) end
         fluid = base + (full - base) * t / m
         -- 照公式裝不下現有的水（調低沙盒後重算或再升級）：容量留在原值，水不倒掉；setCapacity 變小會截水（FluidContainer.java:683-696）
-        if fc:getAmount() > fluid then fluid = fc:getCapacity() end
+        if fc:getAmount() > fluid then fluid, keptWater = fc:getCapacity(), true end
         fc:setCapacity(fluid)
     end
-    md.MDB_tier, md.MDB_max, md.MDB_cfg = tier, maxTier, settingsKey()
+    -- 留住水的那次不記設定：水用掉後，下次進場再照公式算
+    md.MDB_tier, md.MDB_max, md.MDB_cfg = tier, maxTier, (not keptWater) and settingsKey() or nil
     local args = { id = bag:getID(), tier = tier, max = maxTier, cfg = md.MDB_cfg, cap = cap, wr = wr, fluid = fluid,
         baseCap = md.MDB_cap, baseWr = md.MDB_wr, baseFluid = md.MDB_fluid }
     -- 客戶端的容量與負重減輕要整件重送才會更新；單機無作用（LuaManager.java:12404-12412、RecipeCodeOnCreate.java:892-894）。
@@ -219,14 +224,35 @@ function MDB.applyTier(bag, tier)
     return args
 end
 
+-- 這版之前升級的背包沒記階數上限：找當初哪個上限算得出現在的容量與負重減輕。0.2.x 的公式沒有增加上限；升滿時的容量與
+-- 負重減輕當時可能是現在的值或預設 100。找到就當作 MDB_max，之後調高 MaxTier 或設 0 都不會讓它變小；
+-- 找不到（0.1.0 的公式，或當時沙盒是別的值）傳回 nil，照現在的 MaxTier 算
+local function inferMax(bag, md)
+    if md.MDB_cap == nil or md.MDB_wr == nil then return nil end
+    local cap, wr = bag:getCapacity(), bag:getWeightReduction()
+    for m = md.MDB_tier, 3 do
+        for _, pct in ipairs({ MDB.opt("FullCapacityPercent"), 100 }) do
+            for _, fullWr in ipairs({ MDB.opt("FullWeightReduction"), 100 }) do
+                local c, w = tierValues(bag, md.MDB_cap, md.MDB_wr, md.MDB_tier, m, pct, 0, fullWr)
+                if c == cap and w == wr then return m end
+            end
+        end
+    end
+    return nil
+end
+
 -- 改過沙盒（最高階、升滿時的容量、增加上限、負重減輕）或公式後，已升級的背包照現在的值重算，傳回新數值；沒改就傳回 nil。
 -- 不重送：容器的 replace 在客戶端是移除舊物件、加入新物件，不動穿著與手上的參照（ReplaceInventoryItemInContainerPacket.java:67-73），
 -- 穿著的背包會對不上，所以 MP 由呼叫端送 bagTier、客戶端寫在原本的物件上。
--- 沒記階數上限（這版之前升級的）又關了升級時不動：不知道原本升到幾分之幾
+-- 沒記階數上限又推不回來時，關了升級（MaxTier 0）就不動：不知道原本升到幾分之幾
 function MDB.refreshBag(bag)
     if not bag:hasModData() then return nil end
     local md = bag:getModData()
-    if (md.MDB_tier or 0) < 1 or md.MDB_cfg == settingsKey() or (md.MDB_max == nil and MDB.opt("MaxTier") <= 0) then return nil end
+    if (md.MDB_tier or 0) < 1 or md.MDB_cfg == settingsKey() then return nil end
+    if md.MDB_max == nil then
+        md.MDB_max = inferMax(bag, md)
+        if md.MDB_max == nil and MDB.opt("MaxTier") <= 0 then return nil end
+    end
     holdSend = true
     local ok, args = pcall(MDB.applyTier, bag, md.MDB_tier)
     holdSend = false
@@ -248,9 +274,14 @@ local function refreshAll(container, player)
 end
 
 -- 伺服器（OnClientCommand，GameServer.java:2313；player 由連線決定，:2285）：客戶端進場後要求重算自己身上的背包。
--- 只看送出者自己的物品欄，數值照伺服器的沙盒算，沒過期的不動
+-- 只看送出者自己的物品欄，數值照伺服器的沙盒算，沒過期的不動。每次請求都要走完整個物品欄，同一個帳號 5 秒內只受理一次
+local REFRESH_COOLDOWN_MS = 5000
+local lastRefresh = {}
 function MDB.onClientCommand(module, command, player, args)
     if module ~= "MinidoracatBags" or command ~= "refreshBags" then return end
+    local who, now = player:getUsername(), getTimestampMs()
+    if lastRefresh[who] and now - lastRefresh[who] < REFRESH_COOLDOWN_MS then return end
+    lastRefresh[who] = now
     refreshAll(player:getInventory(), player)
 end
 Events.OnClientCommand.Add(MDB.onClientCommand)
@@ -274,6 +305,18 @@ function MDB.onGameStart()
     end
 end
 Events.OnGameStart.Add(MDB.onGameStart)
+
+-- 開局後才加入的分割畫面玩家（OnCreatePlayer，AddCoopPlayer.java:162）：MP 這時已完成加入握手（:140-162），可以直接送。
+-- 主玩家（第 0 位）的 OnCreatePlayer 太早（GameLoadingState.java:429，MP 還送不出指令），交給 OnGameStart
+function MDB.onCreatePlayer(index, player)
+    if index == 0 then return end
+    if isClient() then
+        sendClientCommand(player, "MinidoracatBags", "refreshBags", {})
+    else
+        refreshAll(player:getInventory())
+    end
+end
+Events.OnCreatePlayer.Add(MDB.onCreatePlayer)
 
 -- 客戶端：套用伺服器算好的數值。階級與基準也寫進 modData：OnTest 在客戶端用 MDB_tier 判斷下一階。
 -- 伺服器指令走 RELIABLE、不保證順序（GameServer.java:3497-3522 的 ClientCommand 封包，PacketTypes.java:510），比現在低的是晚到的舊指令，不套
@@ -464,10 +507,14 @@ function MDB.onTestUpgraded(item, character)
     return not instanceof(item, "InventoryContainer") or tierOf(item) >= 1
 end
 
--- OnTest（item, character）：每個候選輸入都會呼叫（CraftRecipe.java:1010-1030），工具與材料一律放行
+-- OnTest（item, character）：每個候選輸入都會呼叫（CraftRecipe.java:1010-1030），工具與材料一律放行。
+-- 照階數上限已經升滿的不再放行：MaxTier 之後調高時，升下一階會照新的階數算、反而變小。
+-- 這版之前升級、還沒重算過的沒有記錄，照 inferMax 推（不寫回）
 local function gate(item, tier)
     if not instanceof(item, "InventoryContainer") then return true end
-    return tier <= MDB.opt("MaxTier") and tierOf(item) == tier - 1
+    local md = item:getModData()
+    local max = md.MDB_max or ((md.MDB_tier or 0) >= 1 and inferMax(item, md))
+    return tier <= MDB.opt("MaxTier") and tierOf(item) == tier - 1 and not (max and max > 0 and tier - 1 >= max)
 end
 
 function MDB.onTestTier1(item, character) return gate(item, 1) end

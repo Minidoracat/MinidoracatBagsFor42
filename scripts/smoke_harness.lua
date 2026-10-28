@@ -111,9 +111,10 @@ end
 check(loadedCount >= 6, "載入 " .. loadedCount .. " 個 Lua 檔（列目錄失敗時會是 0）")
 
 -- OnServerCommand／OnClientCommand：只在收到指令時跑（地上背包原地升階後的 floorTier、進場重算的 refreshBags／bagTier），第一行比對模組名稱，不是每幀。
--- OnGameStart：每次進場一次；MP 客戶端在裡面掛一次 OnTick，第一個 tick 送出重算請求就拿掉（那時才送得出指令）
+-- OnGameStart：每次進場一次；MP 客戶端在裡面掛一次 OnTick，第一個 tick 送出重算請求就拿掉（那時才送得出指令）。
+-- OnCreatePlayer：只處理開局後才加入的分割畫面玩家（第 1 位以上），每位加入時一次
 local ALLOWED = { "OnGameBoot", "OnPreDistributionMerge", "OnInitGlobalModData", "OnZombieDead", "OnFillInventoryObjectContextMenu",
-                  "OnServerCommand", "OnClientCommand", "OnGameStart" }
+                  "OnServerCommand", "OnClientCommand", "OnGameStart", "OnCreatePlayer" }
 local allowed, seen = {}, {}
 for _, name in ipairs(ALLOWED) do allowed[name] = true end
 for _, r in ipairs(registered) do
@@ -125,7 +126,7 @@ for _, name in ipairs(ALLOWED) do check(seen[name] == 1, name .. " 剛好掛一�
 for _, fn in ipairs({ "acceptLegacy", "acceptFirstAid", "acceptAmmo", "applyTier", "swapBag", "keepBag", "onConvertLegacy",
                       "onMakeReinforcedSling", "onSwapKeepTier", "onSwapTheme", "toReinforced", "reinforcedOf", "themedId",
                       "onTestUpgraded", "onUpgrade", "onTestTier1", "onTestTier2", "onTestTier3", "onServerCommand",
-                      "refreshBag", "onClientCommand", "onGameStart",
+                      "refreshBag", "onClientCommand", "onGameStart", "onCreatePlayer",
                       "addLoot", "reapplyLoot", "onZombieDead", "warnDuplicates", "opt",
                       "canWearFromFloor", "needsFloorWear", "onFillFloorWearMenu", "addSatchel2Location",
                       "installAttach", "installAttachClient", "attachTransform", "eachAttachPose" }) do
