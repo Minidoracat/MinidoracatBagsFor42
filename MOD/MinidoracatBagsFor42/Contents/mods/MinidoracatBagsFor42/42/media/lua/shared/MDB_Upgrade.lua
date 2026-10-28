@@ -226,7 +226,9 @@ end
 
 -- 這版之前升級的背包沒記階數上限：找當初哪個上限算得出現在的容量與負重減輕。0.2.x 的公式沒有增加上限；升滿時的容量與
 -- 負重減輕當時可能是現在的值或預設 100。找到就當作 MDB_max，之後調高 MaxTier 或設 0 都不會讓它變小；
--- 找不到（0.1.0 的公式，或當時沙盒是別的值）傳回 nil，照現在的 MaxTier 算
+-- 找不到（0.1.0 的公式，或當時沙盒是別的值）傳回 nil，照現在的 MaxTier 算。
+-- 不同上限都算得出來時取最滿的（m 由小到大，第一個吻合的）：背包只會維持或變大。代價是部分升級的偶爾被當成升滿
+-- （例：3/80 在 2 階裡的第 1 階是 26/90，50%、負重減輕 90 時 1 階升滿也是 26/90），這時它已經是現在設定下的升滿值，擋下一階不會少東西
 local function inferMax(bag, md)
     if md.MDB_cap == nil or md.MDB_wr == nil then return nil end
     local cap, wr = bag:getCapacity(), bag:getWeightReduction()
@@ -274,13 +276,16 @@ local function refreshAll(container, player)
 end
 
 -- 伺服器（OnClientCommand，GameServer.java:2313；player 由連線決定，:2285）：客戶端進場後要求重算自己身上的背包。
--- 只看送出者自己的物品欄，數值照伺服器的沙盒算，沒過期的不動。每次請求都要走完整個物品欄，同一個帳號 5 秒內只受理一次
+-- 只看送出者自己的物品欄，數值照伺服器的沙盒算，沒過期的不動。每次請求都要走完整個物品欄，同一位玩家 5 秒內只受理一次。
+-- 鍵用名稱加 onlineID：Steam 主持模式只擋同一個 SteamID、不擋同名（LoginPacket.java:78-91）。
+-- getTimestampMs 是牆上時鐘（LuaManager.java:9292-9295），時間往回調時照常受理
 local REFRESH_COOLDOWN_MS = 5000
 local lastRefresh = {}
 function MDB.onClientCommand(module, command, player, args)
     if module ~= "MinidoracatBags" or command ~= "refreshBags" then return end
-    local who, now = player:getUsername(), getTimestampMs()
-    if lastRefresh[who] and now - lastRefresh[who] < REFRESH_COOLDOWN_MS then return end
+    local who, now = player:getUsername() .. "#" .. player:getOnlineID(), getTimestampMs()
+    local last = lastRefresh[who]
+    if last and now >= last and now - last < REFRESH_COOLDOWN_MS then return end
     lastRefresh[who] = now
     refreshAll(player:getInventory(), player)
 end
@@ -407,7 +412,11 @@ function MDB.swapBag(old, newType, tier, character)
         -- 照公式裝不下時（主題水袋從組內最高的 3 升起算，還原成 2 升的一般水袋；或沙盒調低後換型），容量留在換型前的值，水不倒掉
         local ofc = old:getFluidContainerFromSelfOrWorldItem()
         if ofc and nfc then
-            if ofc:getAmount() > nfc:getCapacity() then nfc:setCapacity(ofc:getCapacity()) end
+            -- 留住水的不記設定：水用掉後下次進場照公式算（同 applyTier）
+            if ofc:getAmount() > nfc:getCapacity() then
+                nfc:setCapacity(ofc:getCapacity())
+                new:getModData().MDB_cfg = nil
+            end
             nfc:copyFluidsFrom(ofc)
         end
     end)
@@ -555,6 +564,9 @@ function ISClothingExtraAction:createItemNew(item, newItem)
     end
     local tier = newItem:hasModData() and newItem:getModData().MDB_tier
     if tier and instanceof(newItem, "InventoryContainer") then
+        -- 這版之前升級、還沒重算過的沒有階數上限：照舊物品的數值推（舊物品還是升級後的容量），換型、換穿不會變小
+        local md = newItem:getModData()
+        if md.MDB_max == nil and tier >= 1 and instanceof(item, "InventoryContainer") then md.MDB_max = inferMax(item, md) end
         MDB.applyTier(newItem, tier)
     end
     return result
