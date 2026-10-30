@@ -262,12 +262,59 @@ function MDB.refreshBag(bag)
     return args
 end
 
--- 物品欄（含穿著、拿在手上的）與裡面一層層的背包；player 有值時（伺服器）把新數值送給那位玩家
+-- 原版換穿寫進存檔的名字（ISClothingExtraAction.lua:76-79 把舊物品的 getName() 當成改名寫進新物品；檔尾的包裝不再留下）：
+-- 這件或換穿對象（ClothingItemExtra）的顯示名稱或物品全名（專用伺服器上本 MOD 物品的顯示名稱就是全名），外面包零到多層
+-- getName() 的染血、壞掉、磨損字樣（IGUI_ClothingNaming，InventoryItem.java:2448-2480；每換穿一次包一層）。字樣與顯示名稱照這台的語言比。
+-- 玩家打的名字（含舊版換穿弄丟旗標的）不是這個樣子，留著
+local NAME_MARK = "\1"
+local function isVanillaSwapName(bag, name)
+    local s = bag:getScriptItem()
+    local bases = { [s:getDisplayName()] = true, [bag:getFullType()] = true }
+    local extra = s:getClothingItemExtra()
+    for i = 0, (extra and extra:size() or 0) - 1 do
+        local ft = moduleDotType(bag:getModule(), extra:get(i))
+        local x = getScriptManager():getItem(ft)
+        bases[ft] = true
+        if x then bases[x:getDisplayName()] = true end
+    end
+    local bloody, broken, worn = getText("IGUI_ClothingName_Bloody"), getText("Tooltip_broken"), getText("IGUI_Name_Worn")
+    local wraps = {}
+    for _, p in ipairs({ bloody, broken, worn, bloody .. ", " .. broken, bloody .. ", " .. worn }) do
+        local full = getText("IGUI_ClothingNaming", p, NAME_MARK)
+        local at = full:find(NAME_MARK, 1, true)
+        if at then wraps[#wraps + 1] = { full:sub(1, at - 1), full:sub(at + 1) } end
+    end
+    while name do
+        if bases[name] then return true end
+        local inner
+        for _, w in ipairs(wraps) do
+            local pre, post = w[1], w[2]
+            if #name > #pre + #post and name:sub(1, #pre) == pre and name:sub(#name - #post + 1) == post then
+                inner = name:sub(#pre + 1, #name - #post)
+                break
+            end
+        end
+        name = inner
+    end
+    return false
+end
+
+-- 沒改過名、名字是原版換穿寫進的背包設回原名（和原名相同就不存不送，InventoryItem.java:1711-1714）；改了傳回 true
+local function fixSwapName(bag)
+    local orig, name = bag:getScriptItem():getDisplayName(), bag:getDisplayName()
+    if bag:isCustomName() or name == orig or not isVanillaSwapName(bag, name) then return false end
+    bag:setName(orig)
+    return true
+end
+
+-- 物品欄（含穿著、拿在手上的）與裡面一層層的背包：修原版換穿寫進的名字（沒升級的也修）、照現在的沙盒重算。
+-- player 有值時（伺服器）通知那位玩家：名字送 bagName（客戶端用自己的語言設回原名），數值送 bagTier
 local function refreshAll(container, player)
     local items = container:getItems()
     for i = 0, items:size() - 1 do
         local item = items:get(i)
         if instanceof(item, "InventoryContainer") then
+            if fixSwapName(item) and player then sendServerCommand(player, "MinidoracatBags", "bagName", { id = item:getID() }) end
             local args = MDB.refreshBag(item)
             if args and player then sendServerCommand(player, "MinidoracatBags", "bagTier", args) end
             refreshAll(item:getItemContainer(), player)
@@ -338,7 +385,7 @@ end
 
 -- 客戶端（OnServerCommand，GameClient.java:1071）：floorTier＝伺服器在地上原地升階，照 ID 找那一格的世界物品，寫在同一個物件上，
 -- 排好的動作與開著的背包面板照舊指著它；那一格沒載入就不管，區塊載入時拿到的是伺服器存的那份。
--- bagTier＝進場重算，照 ID 在本機玩家的物品欄（含背包裡）找（ItemContainer.java:3094-3108），穿著的也在主物品欄裡
+-- bagTier／bagName＝進場重算，照 ID 在本機玩家的物品欄（含背包裡）找（ItemContainer.java:3094-3108），穿著的也在主物品欄裡
 function MDB.onServerCommand(module, command, args)
     if module ~= "MinidoracatBags" then return end
     if command == "floorTier" then
@@ -348,10 +395,11 @@ function MDB.onServerCommand(module, command, args)
             local bag = wos:get(i):getItem()
             if bag and bag:getID() == args.id then return setTier(bag, args) end
         end
-    elseif command == "bagTier" then
+    elseif command == "bagTier" or command == "bagName" then
         for i = 0, getNumActivePlayers() - 1 do
             local p = getSpecificPlayer(i)
             local bag = p and p:getInventory():getItemWithIDRecursiv(args.id)
+            if bag and command == "bagName" then return bag:setName(bag:getScriptItem():getDisplayName()) end
             if bag then return setTier(bag, args) end
         end
     end
@@ -399,12 +447,6 @@ function MDB.swapBag(old, newType, tier, character)
             v:setTextureChoice(md.MDB_originTex or -1)
             if md.MDB_originTint then v:setTint(ImmutableColor.decode(md.MDB_originTint)) end
             new:synchWithVisual()
-        end
-        -- copyClothingItem 拿 getName() 比對腳本名稱，染血、磨損的前綴或水袋的液體名稱也會被當成改名寫進新背包
-        -- （InventoryItem.java:2435-2480），名稱不同就跟著存檔（:1711）。玩家改過名的（ISInventoryPaneContextMenu.lua:2741-2750）
-        -- 由檔尾的換穿包裝帶著旗標沿用原名，其餘換回新背包的腳本名稱。
-        if not old:isCustomName() then
-            new:setName(new:getScriptItem():getDisplayName())
         end
         MDB.applyTier(new, tier)
         -- copyClothingItem 搬液體時新背包還是腳本容量，多的被截掉（FluidContainer.java:179-194、:929-932）；容量設好後再搬一次。
@@ -547,20 +589,25 @@ end
 
 -- 換穿法（腰包前背↔後背）換成另一個物品：原版 createItemNew 搬了 modData，沒搬容量與負重減輕
 -- （ISClothingExtraAction.lua:66-112），換完回到腳本預設、MDB_tier 卻還在，就升不回來了。這裡依 MDB_tier 重算。
--- 同一個函式也是 copyClothingItem（:62-64，InventoryItem.java:5029-5036）與背負噴霧器換物（ISEquipWeaponAction.lua:152）的路徑。
+-- 同一個函式也是 copyClothingItem（:62-64 呼叫時才查 ISClothingExtraAction.createItemNew，所以 MDB.swapBag 也走這個包裝；
+-- InventoryItem.java:5029-5036）與背負噴霧器換物（ISEquipWeaponAction.lua:152）的路徑。
 -- MP 的 complete() 在伺服器跑（NetTimedAction.java:132-139；客戶端不跑，LuaTimedActionNew.java:164-170）。
 -- 新物品這時還沒放進容器也沒放上地面，applyTier 不重送；接著 sendAddItemToContainer 整件送出，負重減輕與容量都在裡面
 -- （AddInventoryItemToContainerPacket.java:54-58、InventoryContainer.java:57-58、ItemContainer.java:2439）。
 -- MDB.swapBag 呼叫 copyClothingItem 時新背包已在容器裡或地上，由 holdSend 擋下這次重送。
--- 原版只搬改過的名字（:76-79），沒搬改名旗標；swapBag 看旗標決定沿不沿用舊名，換穿過的改名腰包一升級就變回預設名。
--- 原版拿 getName() 比對、寫入，染血、磨損前綴也會寫進名字（InventoryItem.java:2435-2480），改過名的這裡換回原始名稱。
+-- 名字：原版拿舊物品的 getName()（帶磨損、染血字樣）和腳本名稱比，不同就寫進新物品（:76-79），沒搬改名旗標；名字和原名不同就存檔、
+-- 照原樣送給每個客戶端（InventoryItem.java:1711-1714）。背包在這裡重設：改過名的帶原始名稱與旗標，其餘設回原名（不存不送，各自的語言）。
 require "TimedActions/ISClothingExtraAction"
 local createItemNew = ISClothingExtraAction.createItemNew
 function ISClothingExtraAction:createItemNew(item, newItem)
     local result = createItemNew(self, item, newItem)
-    if item:isCustomName() and instanceof(newItem, "InventoryContainer") then
-        newItem:setName(item:getDisplayName())
-        newItem:setCustomName(true)
+    if instanceof(newItem, "InventoryContainer") then
+        if item:isCustomName() then
+            newItem:setName(item:getDisplayName())
+            newItem:setCustomName(true)
+        else
+            newItem:setName(newItem:getScriptItem():getDisplayName())
+        end
     end
     local tier = newItem:hasModData() and newItem:getModData().MDB_tier
     if tier and instanceof(newItem, "InventoryContainer") then

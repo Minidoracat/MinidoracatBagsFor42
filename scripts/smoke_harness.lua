@@ -110,7 +110,7 @@ for _, dir in ipairs({ "shared", "server", "client" }) do   -- 遊戲也是 shar
 end
 check(loadedCount >= 6, "載入 " .. loadedCount .. " 個 Lua 檔（列目錄失敗時會是 0）")
 
--- OnServerCommand／OnClientCommand：只在收到指令時跑（地上背包原地升階後的 floorTier、進場重算的 refreshBags／bagTier），第一行比對模組名稱，不是每幀。
+-- OnServerCommand／OnClientCommand：只在收到指令時跑（地上背包原地升階後的 floorTier、進場重算的 refreshBags／bagTier／bagName），第一行比對模組名稱，不是每幀。
 -- OnGameStart：每次進場一次；MP 客戶端在裡面掛一次 OnTick，第一個 tick 送出重算請求就拿掉（那時才送得出指令）。
 -- OnCreatePlayer：只處理開局後才加入的分割畫面玩家（第 1 位以上），每位加入時一次
 local ALLOWED = { "OnGameBoot", "OnPreDistributionMerge", "OnInitGlobalModData", "OnZombieDead", "OnFillInventoryObjectContextMenu",

@@ -274,6 +274,13 @@ end
 function replaceItemInContainer(c, a, b) env.replaced[#env.replaced + 1] = { c, a, b } end
 function copyClothingItem(item, newItem) ISClothingExtraAction:createItemNew(item, newItem) end
 function instanceof(o, cls) return type(o) == "table" and rawget(o, "__class") == cls end
+-- 原版換穿寫進名字的字樣：英文伺服器（EN IG_UI.json、Tooltip.json）；Translator 照 %1、%2 代入（Translator.java:509-516）
+local TEXT = { IGUI_ClothingNaming = "%2 (%1)", IGUI_ClothingName_Bloody = "Bloody", Tooltip_broken = "Broken", IGUI_Name_Worn = "Worn" }
+function getText(k, ...)
+    local args = { ... }
+    return (assert(TEXT[k], "getText stub: " .. tostring(k)):gsub("%%(%d)", function(n) return args[tonumber(n)] end))
+end
+function moduleDotType(m, t) return t:find(".", 1, true) and t or m .. "." .. t end   -- StringUtils.moduleDotType
 function ZombRand(n)
     env.randCalls = env.randCalls + 1
     local v = table.remove(env.rand, 1) or 0
@@ -365,6 +372,8 @@ local function newBag(cap, wr, weight, fullType)
     local script = {}
     function script:getActualWeight() return weight end
     function script:getDisplayName() return "name of " .. tostring(fullType) end
+    function script:getClothingItemExtra() return b.extra and javaList({ b.extra }) or nil end
+    function b:getModule() return tostring(fullType):match("^([^.]+)%.") end
     function b:getDisplayName() return self.name end
     function b:setName(n) self.name = n end
     function b:isCustomName() return self.custom end
@@ -422,12 +431,15 @@ function instanceItem(full)
     assert(s, "instanceItem: unknown item " .. tostring(full))
     -- 腳本沒寫 Weight 時引擎預設 1.0（Item.java:83）
     local b = newBag(tonumber(s.fields.Capacity), tonumber(s.fields.WeightReduction), tonumber(s.fields.Weight) or 1.0, full)
-    b.container = nil
+    b.container, b.extra = nil, s.fields.ClothingItemExtra
     for _, l in ipairs(s.lines) do
         local c = l.text:match("^Capacity = ([%d.]+)$")   -- 第一層以下只有 FluidContainer 元件寫 Capacity
         if c then b.fc = newFluid(tonumber(c)) end
     end
     return b
+end
+function getScriptManager()
+    return { getItem = function(_, ft) return (SCRIPT_BLOCKS[ft] or VAN.items[ft]) and instanceItem(ft):getScriptItem() or nil end }
 end
 local function vanillaItem(fullType)
     local b = VAN.items[fullType]
@@ -1523,6 +1535,13 @@ local function suite()
     check("renamed fanny pack swapped to the back, then upgraded: reinforced back tier 1 keeps the name",
         new.fullType == "MinidoracatBags.Bag_FannyPackBack_Navy_Reinforced" and new.md.MDB_tier == 1
         and new.name == "My Bag" and new.custom == true)
+    -- 沒改過名的腰包磨損時換穿：原版把帶磨損字樣的 getName() 寫進新物品，包裝設回原名（bags-names-1030b F）
+    old = stocked("Base.Bag_FannyPackFront")
+    old.name, old.custom = "name of Base.Bag_FannyPackFront", false
+    function old:getName() return self.name .. " (Worn)" end
+    new = ISClothingExtraAction:createItemNew(old, instanceItem("Base.Bag_FannyPackBack"))
+    check("un-renamed worn fanny pack front -> back gets its own script name, not the worn front name, not marked custom",
+        new.name == "name of Base.Bag_FannyPackBack" and new.custom == false)
 
     -- 本 MOD 的背包也是來源：第一次升級換成自己的強化版（日行背包 20／75，自重 0.1 → 第 1 階 30／83）
     local D, RD = "MinidoracatBags.DayPack_Navy", "MinidoracatBags.DayPack_Navy_Reinforced"
@@ -1957,6 +1976,66 @@ local function suite()
         PLAYER.getUsername, PLAYER.getOnlineID = nil, nil
         CONTAINER.items = keepItems
     end
+    -- 進場修原版換穿寫進存檔的名字（refreshAll）：沒改過名、是這件或換穿對象的顯示名稱或物品全名外面包磨損、染血、壞掉字樣的設回原名；
+    -- 玩家打的名字（含弄丟旗標的）留著；沒升級的也修；MP 伺服器送 bagName 給那位玩家，客戶端用自己的語言設回原名
+    do
+        local keepItems = CONTAINER.items
+        CONTAINER.items = {}
+        env.server, env.client, env.sent, env.replaced, env.cmds = false, false, {}, {}, {}
+        local function named(ft, name, custom)
+            local b = CONTAINER:AddItem(instanceItem(ft))
+            b.name, b.custom = name, custom or false
+            return b
+        end
+        local VF, VB = "Base.Bag_FannyPackFront", "Base.Bag_FannyPackBack"
+        local NF, NB = "MinidoracatBags.Bag_FannyPackFront_Navy_Reinforced", "MinidoracatBags.Bag_FannyPackBack_Navy_Reinforced"
+        local vWorn = named(VB, "name of " .. VF .. " (Worn)")                     -- 換穿對象的顯示名稱＋磨損（bags-names-1030b F），沒升級
+        local nFull = named(NB, NF .. " (Worn)")                                   -- 換穿對象的物品全名＋磨損（G）
+        local twice = named(VF, "name of " .. VF .. " (Worn) (Bloody, Worn)")      -- 換穿兩次包兩層
+        local own = named(NB, NB)                                                  -- 自己的物品全名
+        local lost = named(VF, "My Pouch (Worn)")                                  -- 舊版換穿弄丟旗標的改名（reinforced.md）
+        local kept = named(VF, "name of " .. VF .. " (Worn)", true)                -- 有旗標的改名，剛好長得像
+        local other = named(VF, "name of Base.Bag_ALICEpack (Worn)")               -- 不是這件也不是換穿對象
+        local inner = instanceItem(VB)
+        inner.name = "name of " .. VF .. " (Broken)"
+        lost.contents = { inner }
+        getNumActivePlayers = function() return 1 end
+        getSpecificPlayer = function(i) return i == 0 and PLAYER or nil end
+        MDB.onGameStart()
+        check("names (SP): worn display name, the pair's full type, two layers, own full type and a bag inside a bag go back to the script name",
+            vWorn.name == "name of " .. VB and nFull.name == "name of " .. NB and twice.name == "name of " .. VF and own.name == "name of " .. NB
+            and inner.name == "name of " .. VB and not vWorn.custom and not nFull.custom and not vWorn:hasModData())
+        check("names (SP): a typed name that lost its flag, a flagged name and another bag's name are left alone",
+            lost.name == "My Pouch (Worn)" and lost.custom == false and kept.name == "name of " .. VF .. " (Worn)" and kept.custom == true
+            and other.name == "name of Base.Bag_ALICEpack (Worn)")
+        -- MP 伺服器：只送給送出者，修了幾件送幾則；名字已經對的不送
+        vWorn.name, inner.name = "name of " .. VF .. " (Worn)", "name of " .. VF .. " (Broken)"
+        env.server = true
+        getTimestampMs = function() return 0 end
+        PLAYER.getUsername, PLAYER.getOnlineID = function() return "namer" end, function() return 7 end
+        MDB.onClientCommand("MinidoracatBags", "refreshBags", PLAYER, nil)
+        local ids = {}
+        for _, c in ipairs(env.cmds) do
+            if c.player == PLAYER and c.module == "MinidoracatBags" and c.command == "bagName" then ids[c.args.id] = true end
+        end
+        check("names (server): refreshBags fixes them and sends one bagName per fixed bag to that player only",
+            vWorn.name == "name of " .. VB and inner.name == "name of " .. VB and #env.cmds == 2 and ids[vWorn.id] and ids[inner.id])
+        -- 客戶端：照 ID 找（含背包裡），設回這台的腳本名稱
+        env.server, env.client = false, true
+        local CINV = newContainer()
+        local cWorn, cBag, cInner = instanceItem(VB), instanceItem(VF), instanceItem(VB)
+        cWorn.id, cInner.id = vWorn.id, inner.id
+        cWorn.name, cInner.name = "name of " .. VF .. " (Worn)", "name of " .. VF .. " (Broken)"
+        CINV:AddItem(cWorn); CINV:AddItem(cBag); cBag.contents = { cInner }
+        getSpecificPlayer = function(i) return i == 0 and { getInventory = function() return CINV end } or nil end
+        for _, c in ipairs(env.cmds) do MDB.onServerCommand(c.module, c.command, c.args) end
+        check("client: bagName sets the bags found by ID (also inside a bag) back to this client's script name",
+            cWorn.name == "name of " .. VB and cInner.name == "name of " .. VB and cWorn.cap == instanceItem(VB).cap)
+        env.server, env.client, env.cmds = false, false, {}
+        getNumActivePlayers, getSpecificPlayer, getTimestampMs = nil, nil, nil
+        PLAYER.getUsername, PLAYER.getOnlineID = nil, nil
+        CONTAINER.items = keepItems
+    end
     old = instanceItem(A)
     old.contents = { "nail" }
     local okNowhere, errNowhere = pcall(MDB.swapBag, old, RA, 1, PLAYER)
@@ -2338,7 +2417,7 @@ if arg and arg[1] == "--mutants" then
         { name = "MP 進場在客戶端自己算", file = "UPG", from = "    if isClient() then\n        Events.OnTick.Add(requestRefresh)\n        return\n    end\n", to = "" },
         { name = "MP 進場立刻送請求", file = "UPG", from = "        Events.OnTick.Add(requestRefresh)\n", to = "        requestRefresh()\n" },
         { name = "請求沒拿掉 OnTick", file = "UPG", from = "    Events.OnTick.Remove(requestRefresh)\n", to = "" },
-        { name = "客戶端不處理 bagTier", file = "UPG", from = 'elseif command == "bagTier" then', to = "elseif false then" },
+        { name = "客戶端不處理 bagTier", file = "UPG", from = 'elseif command == "bagTier" or command == "bagName" then', to = 'elseif command == "bagName" then' },
         { name = "伺服器不重送", file = "UPG", from = "sendReplaceItemInContainer(container, bag, bag)", to = "" },
         { name = "單機也重送", file = "UPG", from = "if isServer() and not holdSend then", to = "if not holdSend then" },
         { name = "地上升階不重送", file = "UPG", from = 'sendServerCommand("MinidoracatBags", "floorTier", args)', to = 'type("MinidoracatBags", "floorTier", args)' },
@@ -2391,7 +2470,16 @@ if arg and arg[1] == "--mutants" then
         { name = "出錯沒撤掉新背包", file = "UPG", from = "            wi:getSquare():removeWorldObject(nwi)\n", to = "" },
         { name = "換穿沒搬改名旗標", file = "UPG", from = "        newItem:setCustomName(true)\n", to = "" },
         { name = "換穿沿用帶前綴的名字", file = "UPG", from = "        newItem:setName(item:getDisplayName())\n", to = "" },
-        { name = "沒改名也沿用舊名", file = "UPG", from = "            new:setName(new:getScriptItem():getDisplayName())\n", to = "" },
+        { name = "沒改名也沿用舊名", file = "UPG", from = "            newItem:setName(newItem:getScriptItem():getDisplayName())\n", to = "" },
+        { name = "修復沒做", file = "UPG", from = "            if fixSwapName(item) and player then", to = "            if false and player then" },
+        { name = "修復沒通知客戶端", file = "UPG", from = 'sendServerCommand(player, "MinidoracatBags", "bagName", { id = item:getID() })', to = "" },
+        { name = "客戶端不處理 bagName", file = "UPG", from = 'elseif command == "bagTier" or command == "bagName" then', to = 'elseif command == "bagTier" then' },
+        { name = "修復不看改名旗標", file = "UPG", from = "if bag:isCustomName() or name == orig", to = "if name == orig" },
+        { name = "修復洗掉弄丟旗標的改名", file = "UPG", from = " or not isVanillaSwapName(bag, name) then", to = " then" },
+        { name = "修復不認自己的物品全名", file = "UPG", from = ", [bag:getFullType()] = true }", to = " }" },
+        { name = "修復不認換穿對象的物品全名", file = "UPG", from = "        bases[ft] = true\n", to = "" },
+        { name = "修復不認磨損字樣", file = "UPG", from = "if at then wraps[#wraps + 1]", to = "if false then wraps[#wraps + 1]" },
+        { name = "修復只認一層字樣", file = "UPG", from = "        name = inner\n", to = "        name = inner and bases[inner] and inner\n" },
         { name = "還原掉級", file = "UPG", from = "MDB.swapBag(bag, back, tierOf(bag), character)", to = "MDB.swapBag(bag, back, 0, character)" },
         { name = "第 0 階也能改強化版", file = "UPG", from = "tierOf(item) >= 1", to = "tierOf(item) >= 0" },
         { name = "主題表少一款", file = "UPG", from = '    ["Base.Bag_SWAT"] = { shape = "Bag_DuffelBag", themes = { "Navy" } },\n', to = "" },

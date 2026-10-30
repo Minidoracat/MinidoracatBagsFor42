@@ -1,0 +1,5 @@
+# verify_mod.py 豁免清單：每行一個子字串，finding 含這串就不計 WARN／FAIL（_unwaived()）。
+# 第 18 項 setName：shared/MDB_Upgrade.lua 換穿包裝的改名分支 newItem:setName(item:getDisplayName())，名字是玩家打的，
+# 和語言無關，照存檔、照送是對的。finding 是「setName in <檔>:<行>」，寫到冒號不寫行號，行號變了照樣有效；
+# 代價是同一檔以後新增的顯示名稱 setName 也被豁免（這檔其他的 setName 都是設回原名，本來就不列）。
+setName in shared/MDB_Upgrade.lua:
