@@ -269,6 +269,7 @@ end
 local NAME_MARK = "\1"
 local function isVanillaSwapName(bag, name)
     local s = bag:getScriptItem()
+    if name == s:getDisplayName() then return true end   -- 預設名（換穿時最常見），不用組清單
     local bases = { [s:getDisplayName()] = true, [bag:getFullType()] = true }
     local extra = s:getClothingItemExtra()
     for i = 0, (extra and extra:size() or 0) - 1 do
@@ -449,6 +450,11 @@ function MDB.swapBag(old, newType, tier, character)
             if md.MDB_originTint then v:setTint(ImmutableColor.decode(md.MDB_originTint)) end
             new:synchWithVisual()
         end
+        -- 升級、改裝、換主題、還原：沒改過名的一律換回新背包的腳本名稱（設回原名，不存不送）。和換穿不同，這裡照 0.3.0 連
+        -- 弄丟旗標的舊改名也清掉（已知限制）：換型前的名字可能是 BUP 或別的語言時期寫下的、認不出來的錯名字
+        if not old:isCustomName() then
+            new:setName(new:getScriptItem():getDisplayName())
+        end
         MDB.applyTier(new, tier)
         -- copyClothingItem 搬液體時新背包還是腳本容量，多的被截掉（FluidContainer.java:179-194、:929-932）；容量設好後再搬一次。
         -- 地上的背包液體在世界物品上，原版 copyClothingItem 搬不到，只靠這一次（nfc 是同一個元件，放上地面只是換了主人）。
@@ -597,7 +603,9 @@ end
 -- （AddInventoryItemToContainerPacket.java:54-58、InventoryContainer.java:57-58、ItemContainer.java:2439）。
 -- MDB.swapBag 呼叫 copyClothingItem 時新背包已在容器裡或地上，由 holdSend 擋下這次重送。
 -- 名字：原版拿舊物品的 getName()（帶磨損、染血字樣）和腳本名稱比，不同就寫進新物品（:76-79），沒搬改名旗標；名字和原名不同就存檔、
--- 照原樣送給每個客戶端（InventoryItem.java:1711-1714）。背包在這裡重設：改過名的帶原始名稱與旗標，其餘設回原名（不存不送，各自的語言）。
+-- 照原樣送給每個客戶端（InventoryItem.java:1711-1714）。背包在這裡重設：改過名的帶原始名稱與旗標；沒改過名的，原始名稱認得出是
+-- 預設名或原版換穿寫的（isVanillaSwapName）就設回原名（不存不送，各自的語言），認不出的（舊版換穿弄丟旗標的改名、換過語言前寫的）
+-- 照原始名稱留著，不帶這次加上的字樣、不設旗標：換穿不新增掉名的路徑。MDB.swapBag 之後自己再清（見那裡）。
 require "TimedActions/ISClothingExtraAction"
 local createItemNew = ISClothingExtraAction.createItemNew
 function ISClothingExtraAction:createItemNew(item, newItem)
@@ -606,8 +614,10 @@ function ISClothingExtraAction:createItemNew(item, newItem)
         if item:isCustomName() then
             newItem:setName(item:getDisplayName())
             newItem:setCustomName(true)
-        else
+        elseif isVanillaSwapName(item, item:getDisplayName()) then
             newItem:setName(newItem:getScriptItem():getDisplayName())
+        else
+            newItem:setName(item:getDisplayName())
         end
     end
     local tier = newItem:hasModData() and newItem:getModData().MDB_tier

@@ -1542,6 +1542,25 @@ local function suite()
     new = ISClothingExtraAction:createItemNew(old, instanceItem("Base.Bag_FannyPackBack"))
     check("un-renamed worn fanny pack front -> back gets its own script name, not the worn front name, not marked custom",
         new.name == "name of Base.Bag_FannyPackBack" and new.custom == false)
+    -- 存著原版換穿寫的錯名字（換穿對象的顯示名稱＋磨損）再換穿：認得，設回原名
+    old = stocked("Base.Bag_FannyPackFront")
+    old.name, old.custom = "name of Base.Bag_FannyPackBack (Worn)", false
+    new = ISClothingExtraAction:createItemNew(old, instanceItem("Base.Bag_FannyPackBack"))
+    check("fanny pack holding a vanilla swap name (the pair's name + Worn) swapped again gets its own script name",
+        new.name == "name of Base.Bag_FannyPackBack" and new.custom == false)
+    -- 舊版換穿弄丟旗標的改名再換穿（磨損）：名字照留、不多一層字樣、不補旗標；之後升級照 0.3.0 清掉（已知限制）
+    old = stocked("Base.Bag_FannyPackFront")
+    old.name, old.custom = "My Pouch", false
+    function old:getName() return self.name .. " (Worn)" end
+    new = ISClothingExtraAction:createItemNew(old, instanceItem("Base.Bag_FannyPackBack"))
+    check("a typed name that lost its flag survives a worn swap without the worn word and without a flag",
+        new.name == "My Pouch" and new.custom == false)
+    CONTAINER.items = {}
+    CONTAINER:AddItem(new)
+    MDB.onUpgrade(keepData(new), PLAYER)
+    new = CONTAINER.items[1]
+    check("upgrading that bag still resets the name to the reinforced script name (known limitation, same as 0.3.0)",
+        new.fullType == "MinidoracatBags.Bag_FannyPackBack_Navy_Reinforced" and new.name == "name of " .. new.fullType)
 
     -- 本 MOD 的背包也是來源：第一次升級換成自己的強化版（日行背包 20／75，自重 0.1 → 第 1 階 30／83）
     local D, RD = "MinidoracatBags.DayPack_Navy", "MinidoracatBags.DayPack_Navy_Reinforced"
@@ -2481,7 +2500,10 @@ if arg and arg[1] == "--mutants" then
         { name = "出錯沒撤掉新背包", file = "UPG", from = "            wi:getSquare():removeWorldObject(nwi)\n", to = "" },
         { name = "換穿沒搬改名旗標", file = "UPG", from = "        newItem:setCustomName(true)\n", to = "" },
         { name = "換穿沿用帶前綴的名字", file = "UPG", from = "        newItem:setName(item:getDisplayName())\n", to = "" },
-        { name = "沒改名也沿用舊名", file = "UPG", from = "            newItem:setName(newItem:getScriptItem():getDisplayName())\n", to = "" },
+        { name = "沒改名也沿用舊名", file = "UPG", from = "            new:setName(new:getScriptItem():getDisplayName())\n", to = "" },
+        { name = "換穿留下原版寫的名字", file = "UPG", from = "            newItem:setName(newItem:getScriptItem():getDisplayName())\n", to = "" },
+        { name = "換穿洗掉弄丟旗標的改名", file = "UPG", from = "        elseif isVanillaSwapName(item, item:getDisplayName()) then", to = "        elseif true then" },
+        { name = "換穿留著認不出的名字時沿用原版寫的字樣", file = "UPG", from = "        else\n            newItem:setName(item:getDisplayName())\n        end", to = "        end" },
         { name = "修復沒做", file = "UPG", from = "            if fixSwapName(item) and player then", to = "            if false and player then" },
         { name = "修復沒通知客戶端", file = "UPG", from = 'sendServerCommand(player, "MinidoracatBags", "bagName", { id = item:getID() })', to = "" },
         { name = "客戶端不處理 bagName", file = "UPG", from = 'elseif command == "bagTier" or command == "bagName" then', to = 'elseif command == "bagTier" then' },
