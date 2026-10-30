@@ -282,7 +282,8 @@ local function isVanillaSwapName(bag, name)
     for _, p in ipairs({ bloody, broken, worn, bloody .. ", " .. broken, bloody .. ", " .. worn }) do
         local full = getText("IGUI_ClothingNaming", p, NAME_MARK)
         local at = full:find(NAME_MARK, 1, true)
-        if at then wraps[#wraps + 1] = { full:sub(1, at - 1), full:sub(at + 1) } end
+        -- 翻譯只剩 "%2"（字樣是空的）時包不出東西，不收：每層都要真的剝掉字，迴圈才會結束
+        if at and #full > #NAME_MARK then wraps[#wraps + 1] = { full:sub(1, at - 1), full:sub(at + 1) } end
     end
     while name do
         if bases[name] then return true end

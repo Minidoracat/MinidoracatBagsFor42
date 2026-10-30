@@ -2008,6 +2008,17 @@ local function suite()
         check("names (SP): a typed name that lost its flag, a flagged name and another bag's name are left alone",
             lost.name == "My Pouch (Worn)" and lost.custom == false and kept.name == "name of " .. VF .. " (Worn)" and kept.custom == true
             and other.name == "name of Base.Bag_ALICEpack (Worn)")
+        -- 別的字樣格式：日文的 "%2(%1)" 沒有空格照樣認得；翻譯只剩 "%2" 時包不出字樣，不收（迴圈照樣結束），弄丟旗標的照舊
+        TEXT.IGUI_ClothingNaming = "%2(%1)"
+        vWorn.name = "name of " .. VF .. "(Worn)"
+        MDB.onGameStart()
+        local noSpace = vWorn.name == "name of " .. VB
+        TEXT.IGUI_ClothingNaming = "%2"
+        vWorn.name = "name of " .. VF .. " (Worn)"
+        MDB.onGameStart()
+        TEXT.IGUI_ClothingNaming = "%2 (%1)"
+        check("names (SP): the no-space format is recognised; a format without the words leaves wrapped names alone and still ends",
+            noSpace and vWorn.name == "name of " .. VF .. " (Worn)" and lost.name == "My Pouch (Worn)")
         -- MP 伺服器：只送給送出者，修了幾件送幾則；名字已經對的不送
         vWorn.name, inner.name = "name of " .. VF .. " (Worn)", "name of " .. VF .. " (Broken)"
         env.server = true
@@ -2478,7 +2489,7 @@ if arg and arg[1] == "--mutants" then
         { name = "修復洗掉弄丟旗標的改名", file = "UPG", from = " or not isVanillaSwapName(bag, name) then", to = " then" },
         { name = "修復不認自己的物品全名", file = "UPG", from = ", [bag:getFullType()] = true }", to = " }" },
         { name = "修復不認換穿對象的物品全名", file = "UPG", from = "        bases[ft] = true\n", to = "" },
-        { name = "修復不認磨損字樣", file = "UPG", from = "if at then wraps[#wraps + 1]", to = "if false then wraps[#wraps + 1]" },
+        { name = "修復不認磨損字樣", file = "UPG", from = "if at and #full > #NAME_MARK then wraps[#wraps + 1]", to = "if false then wraps[#wraps + 1]" },
         { name = "修復只認一層字樣", file = "UPG", from = "        name = inner\n", to = "        name = inner and bases[inner] and inner\n" },
         { name = "還原掉級", file = "UPG", from = "MDB.swapBag(bag, back, tierOf(bag), character)", to = "MDB.swapBag(bag, back, 0, character)" },
         { name = "第 0 階也能改強化版", file = "UPG", from = "tierOf(item) >= 1", to = "tierOf(item) >= 0" },
