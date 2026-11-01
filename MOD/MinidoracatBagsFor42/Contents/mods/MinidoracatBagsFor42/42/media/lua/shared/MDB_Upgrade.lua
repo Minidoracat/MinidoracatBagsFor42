@@ -442,6 +442,10 @@ function MDB.swapBag(old, newType, tier, character)
         copyClothingItem(old, new)
         local md = new:getModData()
         md.MDB_cap, md.MDB_wr, md.MDB_fluid = cap, wr, fluid
+        -- 說明照新背包的腳本：getTooltip() 先讀 modData 的 Tooltip（InventoryItem.java:3134-3136），新生成的物品會把腳本的說明寫進去
+        -- （Item.java:1845），copyClothingItem 又把整份 modData 換成舊背包的（InventoryItem.java:3003-3011）。不拿掉的話，舊背包的說明
+        -- （例：新生成的舊 Plus 外殼）會蓋掉新背包的；拿掉後照新背包腳本的欄位顯示，存檔也不帶這一欄
+        md.Tooltip = nil
         -- 換回記下的原款（MDB.toReinforced 記的）：顏色也換回去。主題強化版只有一張貼圖、不能隨機染色，搬過來的 textureChoice
         -- 一畫就被改成 0、染色變白（ItemVisual.java:153-166、:185-196），不能靠 copyClothingItem 帶回來
         local v = newType == md.MDB_origin and new:getVisual()

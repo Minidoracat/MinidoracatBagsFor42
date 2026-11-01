@@ -23,8 +23,9 @@ local LIGHTS = {
     Flashlight = "Flashlight", MilitaryFlashlight = "Flashlight", OldFlashlight = "Flashlight", TorchSmall = "Flashlight",
     HandTorchSmall = "Flashlight", HandTorchBig = "Flashlight", Torch = "Torch", FlashlightBig = "Torch", Torchb = "Torch",
 }
+-- 玩偶扣環有上下兩個（Plushie 在包頂、Plushie2 在包面下緣正中；第二個是使用者 2026-11-01 裁定加的，位置也是使用者選的）
 MDB.ATTACH_ACCEPTS = {
-    Slot1 = TOOLS, Slot2 = TOOLS, Slot3 = TOOLS, BottleR = BOTTLES, BottleL = BOTTLES, Plushie = PLUSH,
+    Slot1 = TOOLS, Slot2 = TOOLS, Slot3 = TOOLS, BottleR = BOTTLES, BottleL = BOTTLES, Plushie = PLUSH, Plushie2 = PLUSH,
     UmbrellaR = STRAP, UmbrellaL = STRAP, Flashlight = LIGHTS,
 }
 
@@ -35,23 +36,33 @@ MDB.ATTACH_ACCEPTS = {
 -- （Item.java:2410-2411），原版有的要接回去；書包原版沒有，照 Bag Upgrade Plus 的書包加上（它只多這一個、沒有額外掛點）。
 -- replacement＝穿著時背後欄位的長槍、大刀、鏟子等改用「with Bag」位置（ISHotbarAttachDefinition.lua:96-113）。原版行李袋沒有這欄，
 -- 背後的長槍會埋進包裡；Bag Upgrade Plus 的行李袋 Plus 都加了，照做。代價和原版背包一樣：穿著時吉他不能背（對到 "null"）。
+-- 本 MOD 的日行背包、遠征框架背包是自己的網格（使用者 2026-11-01 裁定加掛點，只加強化版）：組合照它們沿用欄位的登山包、大登山包，
+-- 座標照自己的網格算，床捲掛點照原款。
 MDB.ATTACH_FAMILIES = {
     { name = "Alice", base = "BedrollBottomALICE",
       bags = { "Bag_ALICEpack_Navy", "Bag_ALICEpack_Olive" },
-      slots = { "Slot1", "Slot2", "Slot3", "BottleR", "BottleL", "Plushie", "UmbrellaR", "Flashlight" } },
+      slots = { "Slot1", "Slot2", "Slot3", "BottleR", "BottleL", "Plushie", "Plushie2", "UmbrellaR", "Flashlight" } },
     { name = "Duffel", replacement = "Bag",
       bags = { "Bag_DuffelBag_Navy", "Bag_DuffelBag_Olive" },
-      slots = { "Slot1", "Slot2", "Slot3", "BottleR", "Plushie", "UmbrellaR", "Flashlight" } },
+      slots = { "Slot1", "Slot2", "Slot3", "BottleR", "Plushie", "Plushie2", "UmbrellaR", "Flashlight" } },
     { name = "Hiking", base = "BedrollBottom",
       bags = { "Bag_NormalHikingBag_Navy", "Bag_NormalHikingBag_Olive" },
-      slots = { "Slot1", "Slot2", "Slot3", "BottleR", "BottleL", "Plushie", "UmbrellaL", "Flashlight" } },
+      slots = { "Slot1", "Slot2", "Slot3", "BottleR", "BottleL", "Plushie", "Plushie2", "UmbrellaL", "Flashlight" } },
     { name = "BigHiking", base = "BedrollBottomBig",
       bags = { "Bag_BigHikingBag_Navy", "Bag_BigHikingBag_Olive" },
-      slots = { "Slot1", "Slot2", "Slot3", "BottleR", "BottleL", "Plushie", "UmbrellaL", "Flashlight" } },
+      slots = { "Slot1", "Slot2", "Slot3", "BottleR", "BottleL", "Plushie", "Plushie2", "UmbrellaL", "Flashlight" } },
     { name = "School", base = "BedrollBottom",
       bags = { "Bag_Schoolbag_Navy", "Bag_Schoolbag_Olive" },
       slots = {} },
+    { name = "DayPack", base = "BedrollBottom",
+      bags = { "DayPack_Navy", "DayPack_Olive" },
+      slots = { "Slot1", "Slot2", "Slot3", "BottleR", "BottleL", "Plushie", "Plushie2", "UmbrellaL", "Flashlight" } },
+    { name = "Expedition", base = "BedrollBottomBig",
+      bags = { "ExpeditionPack_Navy", "ExpeditionPack_Olive" },
+      slots = { "Slot1", "Slot2", "Slot3", "BottleR", "BottleL", "Plushie", "Plushie2", "UmbrellaL", "Flashlight" } },
 }
+-- 有額外掛點的強化版在提示框多一行說明（原版提示框不列掛點，ISHotbar.lua:472-477 是唯一讀 AttachmentsProvided 的地方）
+MDB.ATTACH_TOOLTIP = "Tooltip_MDB_AttachSlots"
 
 -- 原版物品掛得上去要有 AttachmentType（實例建立時從腳本複製，存檔不記，讀檔重新取：Item.java:1892、InventoryItem.java:1663-1873），
 -- 掛上去畫的是 StaticModel（ModelManager.java:601-607），沒有就看不到。腳本沒有讀 AttachmentType 的 getter，所以清單只收原版沒有
@@ -83,6 +94,10 @@ MDB.ATTACH_ITEMS = {
     ["Base.FluffyfootBunny"] = "SpiffoPlushie", ["Base.FreddyFox"] = "SpiffoPlushie", ["Base.FurbertSquirrel"] = "SpiffoPlushie",
     ["Base.JacquesBeaver"] = "SpiffoPlushie", ["Base.MoleyMole"] = "SpiffoPlushie", ["Base.PancakeHedgehog"] = "SpiffoPlushie",
     ["Base.PanchoDog"] = "SpiffoPlushie", ["Base.Plushabug"] = "SpiffoPlushie", ["Base.Doll"] = "Doll",
+    ["Base.ToyBear"] = "TeddyBear", ["Base.ToyBear_Crafted_Cotton"] = "TeddyBear", ["Base.ToyBear_Crafted_Burlap"] = "TeddyBear",
+    ["Base.Rubberducky"] = "RubberDuck",
+    -- 其他 MOD 的玩偶（模組也是 Base；沒裝那個 MOD 時 getItem 是 nil，不做事）
+    ["Base.69miniRupertBear"] = "TeddyBear", ["Base.69miniTeddy"] = "TeddyBear",
     -- 側邊束帶：收合的傘、鋸子、噴燈
     ["Base.ClosedUmbrellaBlack"] = "Umbrella", ["Base.ClosedUmbrellaBlue"] = "Umbrella", ["Base.ClosedUmbrellaRed"] = "Umbrella",
     ["Base.ClosedUmbrellaTINTED"] = "Umbrella", ["Base.ClosedUmbrellaWhite"] = "Umbrella",
@@ -104,8 +119,14 @@ MDB.ATTACH_STATIC = {
     ["Base.JacquesBeaver"] = "Base.PlushieBeaver_Ground", ["Base.MoleyMole"] = "Base.PlushieMole_Ground",
     ["Base.PancakeHedgehog"] = "Base.PlushieHedgehog_Ground", ["Base.PanchoDog"] = "Base.Pancho",
     ["Base.Plushabug"] = "MinidoracatBags.MDB_Plushabug", ["Base.Doll"] = "Base.Doll",
+    ["Base.ToyBear"] = "Base.ToyBear", ["Base.ToyBear_Crafted_Cotton"] = "Base.ToyBear_Crafted_Cotton",
+    -- 橡皮鴨生成時隨機上色（OnCreate onCreateRandomColor），要借灰階的 TINTED 模型才是它的顏色；黃色貼圖乘上色會變綠、變黑
+    ["Base.ToyBear_Crafted_Burlap"] = "Base.ToyBear_Crafted_Denim", ["Base.Rubberducky"] = "Base.RubberduckyTINTED",
+    ["Base.69miniRupertBear"] = "Base.69miniRupertBearWI", ["Base.69miniTeddy"] = "Base.69miniTeddyWI",
     ["Base.Rope"] = "Base.Rope_Looped", ["Base.SheetRope"] = "MinidoracatBags.MDB_SheetRope",
 }
+-- ATTACH_ITEMS 裡不是原版的物品 → 提供它的 MOD（test_attach 的原版核對略過，改對本機 Workshop 副本核對）
+MDB.ATTACH_OTHER_MODS = { ["Base.69miniRupertBear"] = "69mini", ["Base.69miniTeddy"] = "69mini" }
 -- 本 MOD 照抄的模型的原版來源：物品的 StaticModel 正好是來源時也換成照抄的（只多手骨掛點，掛在包上一樣）。
 -- 收錄 Bag Upgrade Plus 的 ServerPatch 把扭扭蟲的 StaticModel 寫成原版 Plushabug，不換的話拿在手上照舊包住手、背包上的校正也對不上
 MDB.ATTACH_STATIC_SOURCE = { ["Base.SheetRope"] = "Base.SheetRope", ["Base.Plushabug"] = "Base.Plushabug" }
@@ -144,6 +165,7 @@ function MDB.installAttach()
             if s then
                 s:DoParam(provided)
                 if f.replacement then s:DoParam("AttachmentReplacement = " .. f.replacement) end
+                if #f.slots > 0 then s:DoParam("Tooltip = " .. MDB.ATTACH_TOOLTIP) end
             end
         end
     end

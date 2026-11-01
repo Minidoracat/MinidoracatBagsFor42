@@ -1,8 +1,8 @@
--- 離線測試：強化版背包的額外快捷列掛點（shared/MDB_Attach.lua、client/MDB_AttachClient.lua、IG_UI 翻譯）。
---   lua scripts/test_attach.lua             四層定義互相對得上、伺服器有 AttachedLocations、DoParam 清單、座標換算、翻譯鍵
+-- 離線測試：強化版背包的額外快捷列掛點與說明（shared/MDB_Attach.lua、client/MDB_AttachClient.lua、IG_UI 與 Tooltip 翻譯）。
+--   lua scripts/test_attach.lua             四層定義互相對得上、伺服器有 AttachedLocations、DoParam 清單、座標換算、穿戴網格、翻譯鍵
 --   lua scripts/test_attach.lua --mutants   另對 MOD 檔案植入錯誤，確認測試抓得到
 -- 有遊戲本體時（PZ_PATH，預設 D:/SteamLibrary/steamapps/common/ProjectZomboid）另對原版腳本核對：
--- 加 AttachmentType 的物品原本沒有這欄、借來的模型存在、每款背包的穿戴網格和家族相同。沒有就略過那幾項。
+-- 加 AttachmentType 的物品原本沒有這欄、借來的模型存在。沒有就略過那幾項。
 -- 執行目錄：repo 根。
 
 local MEDIA = "MOD/MinidoracatBagsFor42/Contents/mods/MinidoracatBagsFor42/42/media/"
@@ -11,13 +11,16 @@ local F = {
     SHARED = MEDIA .. "lua/shared/MDB_Attach.lua",
     CLIENT = MEDIA .. "lua/client/MDB_AttachClient.lua",
     REINF = MEDIA .. "scripts/MDB_Reinforced.txt",
+    ITEMS = MEDIA .. "scripts/MDB_Items.txt",
     MODELS = MEDIA .. "scripts/MDB_AttachModels.txt",
     EN = TRANSLATE .. "EN/IG_UI.json",
     CH = TRANSLATE .. "CH/IG_UI.json",
+    CHTIP = TRANSLATE .. "CH/Tooltip.json",
     UPG = MEDIA .. "lua/shared/MDB_Upgrade.lua",
 }
 local LANGS = { "AR", "CH", "CN", "DE", "EN", "ES", "ES_CL", "ES_MX", "FR", "JP", "KO", "PL", "PT", "PTBR", "RU", "TR" }
 local PZ = (os.getenv("PZ_PATH") or "D:/SteamLibrary/steamapps/common/ProjectZomboid"):gsub("\\", "/")
+local WORKSHOP = (os.getenv("PZ_WORKSHOP") or "D:/SteamLibrary/steamapps/workshop/content/108600"):gsub("\\", "/")   -- 其他 MOD 的玩偶核對用
 
 local MUTATION
 local function readRaw(path)
@@ -99,11 +102,12 @@ local function newVec()
     return v
 end
 local function newAttachment(id)
-    local a = { id = id, offset = newVec(), rotate = newVec() }
+    local a = { id = id, offset = newVec(), rotate = newVec(), scale = 1 }
     function a:getId() return self.id end
     function a:setBone(b) self.bone = b end
     function a:getOffset() return self.offset end
     function a:getRotate() return self.rotate end
+    function a:setScale(s) self.scale = s end
     return a
 end
 local function newModelScript(name)
@@ -150,12 +154,14 @@ local function resetEnv()
 end
 function getText(key) return key end
 
--- 強化版物品：MDB_Reinforced.txt 裡的每一件；外加原版物品。Base.Doll 假裝已有 StaticModel（驗「有就不蓋」）；
+-- 強化版物品：MDB_Reinforced.txt 裡的每一件；本 MOD 的原款（MDB_Items.txt，驗「掛點只給強化版」）；外加原版物品。
+-- Base.Doll 假裝已有 StaticModel（驗「有就不蓋」）；
 -- Base.BorisBadger 假裝寫了不存在的模型、解析成「???.」（Bag Upgrade Plus 並存時的樣子），驗「畫不出來就改借」；
 -- Base.Plushabug 假裝寫了原版 Plushabug（同樣是 BUP 並存時的樣子），驗「是照抄來源就換成照抄的」
 local SEED_STATIC = { ["Base.Doll"] = "SomeoneElsesDoll", ["Base.BorisBadger"] = "???.PlushieBadger_Static", ["Base.Plushabug"] = "Base.Plushabug" }
-local function seedItems(reinforced, attachItems)
+local function seedItems(reinforced, own, attachItems)
     for name in pairs(reinforced) do env.items["MinidoracatBags." .. name] = newScriptItem("MinidoracatBags." .. name) end
+    for name in pairs(own) do env.items["MinidoracatBags." .. name] = newScriptItem("MinidoracatBags." .. name) end
     for ft in pairs(attachItems) do env.items[ft] = newScriptItem(ft, SEED_STATIC[ft]) end
 end
 
@@ -175,14 +181,15 @@ for _, b in ipairs({ "Bag_DuffelBag", "Bag_MedicalBag", "Bag_Military", "Bag_Pol
     "Bag_BurglarBag", "Bag_BaseballBag", "Bag_TennisBag", "Bag_WeaponBag", "Bag_InmateEscapedBag", "Bag_MoneyBag", "Bag_WorkerBag",
     "Bag_ShotgunBag", "Bag_ShotgunSawnoffBag", "Bag_ShotgunDblBag", "Bag_ShotgunDblSawnoffBag", "Bag_FoodCanned", "Bag_FoodSnacks",
     "Bag_ToolBag" }) do BUP_BAGS[b] = "D" end
--- 家族 → 原版穿戴網格（clothingItems/<ClothingItem>.xml 的 m_MaleModel）
-local MESH = { Alice = "m_alice_pack", Duffel = "m_duffelbag", Hiking = "m_hikingbag", BigHiking = "m_bighikingbag", School = "m_schoolbag" }
+-- 家族 → 穿戴網格（強化版 ClothingItem XML 的 m_MaleModel；主題款照代表款的原版網格產生，日行背包、遠征框架背包是本 MOD 自己的）
+local MESH = { Alice = "m_alice_pack", Duffel = "m_duffelbag", Hiking = "m_hikingbag", BigHiking = "m_bighikingbag", School = "m_schoolbag",
+    DayPack = "mdb_daypack_m", Expedition = "mdb_expeditionpack_m" }
 -- 拿在手上要校正的物品 → 照抄的原版模型（MDB_AttachModels.txt 的 MDB_SheetRope、MDB_Plushabug）
 local HELD_FIX = { ["Base.SheetRope"] = "SheetRope", ["Base.Plushabug"] = "Plushabug" }
 
 local function suite()
     resetEnv()
-    local reinforced = blocks(readFile(F.REINF), "item")
+    local reinforced, own = blocks(readFile(F.REINF), "item"), blocks(readFile(F.ITEMS), "item")
     -- 先單獨載入 shared，模擬伺服器（不跑 client Lua：GameServer.java:1469-1471）
     local shared = readFile(F.SHARED)
     MDB = nil
@@ -194,7 +201,7 @@ local function suite()
     end
     local attachItems = MDB.ATTACH_ITEMS
     resetEnv()
-    seedItems(reinforced, attachItems)
+    seedItems(reinforced, own, attachItems)
     assert(load(shared, "@MDB_Attach.lua"))()
 
     check("AttachedLocations 用 Human 群組", env.group == "Human")
@@ -226,16 +233,31 @@ local function suite()
     -- 原版來源 → 形狀（MDB_Upgrade.lua 由產生器寫的 MDB.THEME_SOURCES）：BUP 的每款都升級成它形狀的兩件主題強化版，兩件都在家族裡
     local shapeOf = {}
     for src, shape in readFile(F.UPG):gmatch('%["Base%.([%w_]+)"%] = { shape = "([%w_]+)"') do shapeOf[src] = shape end
+    -- 第二個玩偶扣環是本 MOD 多加的（使用者 2026-11-01），比對時拿掉：其餘照 BUP 的組合與順序
+    local function bupView(slots)
+        local out = {}
+        for _, s in ipairs(slots) do if s ~= "Plushie2" then out[#out + 1] = s end end
+        return table.concat(out, ",")
+    end
     for b, set in pairs(BUP_BAGS) do
         for _, th in ipairs({ "Navy", "Olive" }) do
             local f = shapeOf[b] and bagFam[shapeOf[b] .. "_" .. th]
-            if not f or table.concat(f.slots, ",") ~= table.concat(BUP_SETS[set], ",") then setOk = false end
+            if not f or bupView(f.slots) ~= table.concat(BUP_SETS[set], ",") then setOk = false end
         end
     end
-    check("Bag Upgrade Plus 的 28 款升級後的兩件主題強化版都歸一個家族，掛點組合照 BUP（ALICE、行李袋、登山包三種）", setOk)
+    check("Bag Upgrade Plus 的 28 款升級後的兩件主題強化版都歸一個家族，掛點組合照 BUP（ALICE、行李袋、登山包三種；另加包面下緣的第二個玩偶扣環）", setOk)
     local sf, sf2 = bagFam.Bag_Schoolbag_Navy, bagFam.Bag_Schoolbag_Olive
     check("書包照 Bag Upgrade Plus 只加床捲掛點（兩件都在 School 家族、BedrollBottom、沒有額外掛點）",
         sf ~= nil and sf == sf2 and sf.name == "School" and sf.base == "BedrollBottom" and #sf.slots == 0)
+    -- 本 MOD 的日行背包、遠征框架背包（使用者 2026-11-01 裁定加掛點、只加強化版）：兩種主題都在家族裡，
+    -- 組合照它們沿用欄位的登山包、大登山包，床捲照原款
+    local function sameSlots(a, b) return a ~= nil and b ~= nil and table.concat(a.slots, ",") == table.concat(b.slots, ",") end
+    local dp, ex = fams.DayPack, fams.Expedition
+    check("日行背包、遠征框架背包兩種主題的強化版都有掛點，組合照登山包、大登山包，床捲照原款",
+        dp ~= nil and ex ~= nil and bagFam.DayPack_Navy == dp and bagFam.DayPack_Olive == dp
+        and bagFam.ExpeditionPack_Navy == ex and bagFam.ExpeditionPack_Olive == ex
+        and sameSlots(dp, fams.Hiking) and sameSlots(ex, fams.BigHiking)
+        and dp.base == "BedrollBottom" and ex.base == "BedrollBottomBig")
 
     -- AttachmentsProvided：保留強化版原本的床捲掛點（書包原版沒有，照 BUP 加上），接上本 MOD 的掛點
     local apOk, missing = true, {}
@@ -254,6 +276,22 @@ local function suite()
     end
     check("強化版都存在（" .. table.concat(missing, ",") .. "）", #missing == 0)
     check("AttachmentsProvided 保留原本的床捲掛點（書包照 BUP 加上）、接上家族的全部掛點", apOk)
+    local baseOk = true
+    for name in pairs(own) do
+        local it = env.items["MinidoracatBags." .. name]
+        if not it or next(it.params) then baseOk = false end
+    end
+    check("本 MOD 的原款背包都沒被 DoParam（掛點與說明只給強化版）", baseOk)
+    -- 說明：有額外掛點的強化版都多一行說明（腳本原本沒有說明，不蓋掉別的），只有床捲的書包沒有
+    local tipOk = MDB.ATTACH_TOOLTIP == "Tooltip_MDB_AttachSlots"
+    for _, f in ipairs(MDB.ATTACH_FAMILIES) do
+        for _, b in ipairs(f.bags) do
+            local it = env.items["MinidoracatBags." .. b .. "_Reinforced"]
+            local want = #f.slots > 0 and MDB.ATTACH_TOOLTIP or nil
+            if not it or it.params.Tooltip ~= want or field(reinforced[b .. "_Reinforced"], "Tooltip") then tipOk = false end
+        end
+    end
+    check("有額外掛點的強化版都 DoParam 說明 Tooltip_MDB_AttachSlots，書包沒有", tipOk)
     -- AttachmentReplacement：穿著時背後欄位改用「with Bag」位置。原版行李袋沒有，Bag Upgrade Plus 的行李袋 Plus 都加了，強化版照做；
     -- 其他家族的原版腳本本來就有
     local repOk = true
@@ -307,13 +345,46 @@ local function suite()
     local onlyTwo = true
     for _, it in pairs(env.items) do
         for k in pairs(it.params) do
-            if k ~= "AttachmentType" and k ~= "StaticModel" and k ~= "AttachmentsProvided" and k ~= "AttachmentReplacement" then onlyTwo = false end
+            if k ~= "AttachmentType" and k ~= "StaticModel" and k ~= "AttachmentsProvided" and k ~= "AttachmentReplacement" and k ~= "Tooltip" then onlyTwo = false end
         end
     end
-    check("DoParam 只動 AttachmentType、StaticModel、AttachmentsProvided、AttachmentReplacement", onlyTwo)
-    check("飲料與玩偶都有：瓶、罐、玩偶、娃娃",
+    check("DoParam 只動 AttachmentType、StaticModel、AttachmentsProvided、AttachmentReplacement、Tooltip", onlyTwo)
+    check("飲料與玩偶都有：瓶、罐、玩偶、娃娃、泰迪熊、橡皮鴨",
         MDB.ATTACH_ITEMS["Base.WaterBottle"] == "WaterBottle" and MDB.ATTACH_ITEMS["Base.Pop"] == "Sodacan"
-        and MDB.ATTACH_ITEMS["Base.Spiffo"] == "SpiffoPlushie" and MDB.ATTACH_ITEMS["Base.Doll"] == "Doll")
+        and MDB.ATTACH_ITEMS["Base.Spiffo"] == "SpiffoPlushie" and MDB.ATTACH_ITEMS["Base.Doll"] == "Doll"
+        and MDB.ATTACH_ITEMS["Base.ToyBear"] == "TeddyBear" and MDB.ATTACH_ITEMS["Base.Rubberducky"] == "RubberDuck")
+    -- 玩偶扣環上下兩個（使用者 2026-11-01）：有包頂扣環的家族都有包面下緣的，收的類型相同、緊接在後
+    local p2Ok = true
+    for _, f in ipairs(MDB.ATTACH_FAMILIES) do
+        local at = 0
+        for i, s in ipairs(f.slots) do if s == "Plushie" then at = i end end
+        if at > 0 and f.slots[at + 1] ~= "Plushie2" then p2Ok = false end
+    end
+    check("有包頂玩偶扣環的家族都有包面下緣的第二個，收的類型相同", p2Ok and MDB.ATTACH_ACCEPTS.Plushie2 == MDB.ATTACH_ACCEPTS.Plushie)
+
+    -- 穿戴網格：看強化版自己的 ClothingItem XML（主題款照代表款的原版網格產生；日行背包、遠征框架背包是本 MOD 自己的 .X）。
+    -- 座標照網格算：家族裡每款的網格要和家族相同；反過來，網格是某個家族的強化版都要在那個家族（座標照網格共用）
+    local function meshOf(name)
+        local ci = field(reinforced[name], "ClothingItem")
+        local xml = ci and readRaw(MEDIA .. "clothing/clothingItems/" .. ci .. ".xml") or ""
+        local mesh = xml:match("<m_MaleModel>[^<]-([%w_]+)%.[xX]</m_MaleModel>") or xml:match("<m_MaleModel>[^<]-([%w_]+)</m_MaleModel>")
+        return mesh and mesh:lower()
+    end
+    local badMesh = {}
+    for b, f in pairs(bagFam) do
+        local mesh = meshOf(b .. "_Reinforced")
+        if mesh ~= MESH[f.name] then badMesh[#badMesh + 1] = b .. "(" .. tostring(mesh) .. ")" end
+    end
+    check("每款背包的穿戴網格和家族相同（座標照網格算）" .. table.concat(badMesh, ","), #badMesh == 0)
+    badMesh = {}
+    local famOfMesh = {}
+    for name, f in pairs(fams) do famOfMesh[MESH[name]] = f end
+    for name in pairs(reinforced) do
+        local f = famOfMesh[meshOf(name) or ""]
+        local stem = name:gsub("_Reinforced$", "")
+        if f and bagFam[stem] ~= f then badMesh[#badMesh + 1] = stem .. "(" .. f.name .. ")" end
+    end
+    check("強化版只要穿戴網格是某個家族的，就在那個家族（座標照網格共用）" .. table.concat(badMesh, ","), #badMesh == 0)
 
     -- 原版核對
     local v = loadVanilla()
@@ -321,15 +392,19 @@ local function suite()
         local bad = {}
         for ft in pairs(MDB.ATTACH_ITEMS) do
             local body = v.items[ft:match("%.(.+)$")]
-            if not body then bad[#bad + 1] = ft .. "(沒有)"
+            if MDB.ATTACH_OTHER_MODS[ft] then
+                if body then bad[#bad + 1] = ft .. "(原版也有，不該列在其他 MOD)" end
+            elseif not body then bad[#bad + 1] = ft .. "(沒有；其他 MOD 的要列進 ATTACH_OTHER_MODS)"
             elseif field(body, "AttachmentType") then bad[#bad + 1] = ft .. "(已有 AttachmentType)" end
         end
         check("原版核對：加 AttachmentType 的物品都存在、原本沒有 AttachmentType " .. table.concat(bad, ","), #bad == 0)
         bad = {}
         for ft, m in pairs(MDB.ATTACH_STATIC) do
-            local body, name = v.items[ft:match("%.(.+)$")], m:match("%.(.+)$")
-            local exists = (m:match("^Base%.") and v.models[name]) or (m:match("^MinidoracatBags%.") and modModels[name])
-            if field(body, "StaticModel") or not exists then bad[#bad + 1] = ft end
+            if not MDB.ATTACH_OTHER_MODS[ft] then
+                local body, name = v.items[ft:match("%.(.+)$")], m:match("%.(.+)$")
+                local exists = (m:match("^Base%.") and v.models[name]) or (m:match("^MinidoracatBags%.") and modModels[name])
+                if field(body, "StaticModel") or not exists then bad[#bad + 1] = ft end
+            end
         end
         check("原版核對：借模型的物品原本沒有 StaticModel、借的模型存在 " .. table.concat(bad, ","), #bad == 0)
         bad = {}
@@ -344,31 +419,38 @@ local function suite()
             end
         end
         check("原版核對：照抄的模型網格、貼圖、縮放和原版 SheetRope、Plushabug 相同（掛在背包上的樣子不變） " .. table.concat(bad, ","), #bad == 0)
-        bad = {}
-        -- 主題強化版的名稱是「代表款_主題」，網格看代表款
-        local function repOf(stem) return (stem:gsub("_Navy$", ""):gsub("_Olive$", "")) end
-        for b, f in pairs(bagFam) do
-            local ci = field(v.items[repOf(b)], "ClothingItem")
-            local xml = ci and readRaw(PZ .. "/media/clothing/clothingItems/" .. ci .. ".xml") or ""
-            local mesh = xml:match("<m_MaleModel>[^<]-([%w_]+)</m_MaleModel>")
-            if not mesh or mesh:lower() ~= MESH[f.name] then bad[#bad + 1] = b .. "(" .. tostring(mesh) .. ")" end
-        end
-        check("原版核對：每款背包的穿戴網格和家族相同（座標照網格算）" .. table.concat(bad, ","), #bad == 0)
-        bad = {}
-        local famOfMesh = {}
-        for name, f in pairs(fams) do famOfMesh[MESH[name]] = f end
-        for name in pairs(reinforced) do
-            local stem = name:gsub("_Reinforced$", "")
-            local src = repOf(stem)
-            local ci = v.items[src] and field(v.items[src], "ClothingItem")
-            local xml = ci and readRaw(PZ .. "/media/clothing/clothingItems/" .. ci .. ".xml") or ""
-            local mesh = xml:match("<m_MaleModel>[^<]-([%w_]+)</m_MaleModel>")
-            local f = mesh and famOfMesh[mesh:lower()]
-            if f and bagFam[stem] ~= f then bad[#bad + 1] = stem .. "(" .. f.name .. ")" end
-        end
-        check("原版核對：強化版只要穿戴網格是某個家族的，就在那個家族（座標照網格共用）" .. table.concat(bad, ","), #bad == 0)
     else
         io.write("  SKIP  原版核對（找不到 " .. PZ .. "）\n")
+    end
+    -- 其他 MOD 的玩偶：本機有那個 MOD 的 Workshop 副本時，核對物品存在、原本沒有 AttachmentType／StaticModel、借的模型存在、模組是 Base
+    -- （MDB_Attach.lua 用 Base.<名稱> 找）。讀編號最大的版本資料夾（遊戲載入不超過遊戲版本的最新那個；這裡不比遊戲版本），69mini 另有 42.0、42.13
+    local function verKey(d)
+        local a, b, c = d:match("^(%d+)%.?(%d*)%.?(%d*)$")
+        return a and tonumber(a) * 1e6 + (tonumber(b) or 0) * 1e3 + (tonumber(c) or 0)
+    end
+    local OTHER = { ["69mini"] = { root = WORKSHOP .. "/2937786633/mods/69mini/", sub = "/media/scripts/vehicles/" } }
+    for mod, o in pairs(OTHER) do
+        local best
+        for _, d in ipairs(listDir(o.root, "^%d")) do
+            if verKey(d) and (not best or verKey(d) > verKey(best)) then best = d end
+        end
+        local dir = o.root .. (best or "?") .. o.sub
+        local items, models = readRaw(dir .. "69mini_vehiclesitems.txt"), readRaw(dir .. "69mini_models.txt")
+        if items and models then
+            local its, mds, bad = blocks(items, "item"), blocks(models, "model"), {}
+            if items:match("module%s+([%w_]+)") ~= "Base" or models:match("module%s+([%w_]+)") ~= "Base" then bad[#bad + 1] = "module" end
+            for ft, owner in pairs(MDB.ATTACH_OTHER_MODS) do
+                if owner == mod then
+                    local body, m = its[ft:match("%.(.+)$")], MDB.ATTACH_STATIC[ft]
+                    if not body or field(body, "AttachmentType") or field(body, "StaticModel") or not m or not mds[m:match("%.(.+)$")] then
+                        bad[#bad + 1] = ft
+                    end
+                end
+            end
+            check(mod .. " 核對（" .. best .. "）：模組 Base、物品存在、原本沒有 AttachmentType 與 StaticModel、借的模型存在 " .. table.concat(bad, ","), #bad == 0)
+        else
+            io.write("  SKIP  " .. mod .. " 核對（找不到 " .. dir .. "）\n")
+        end
     end
 
     -- client：快捷列定義與模型掛點
@@ -389,7 +471,7 @@ local function suite()
             end
         end
     end
-    check("每個家族的每個掛點都有快捷列定義，接受的類型對到伺服器也登記過的 AttachedLocation", defOk and #ISHotbarAttachDefinition == 31)
+    check("每個家族的每個掛點都有快捷列定義，接受的類型對到伺服器也登記過的 AttachedLocation", defOk and #ISHotbarAttachDefinition == 53)
 
     local maOk = true
     for sex, body in pairs({ M = "MaleBody", F = "FemaleBody" }) do
@@ -421,12 +503,35 @@ local function suite()
                 for i = 1, 3 do
                     if math.abs(a.rotate[i] - fix[i + 1]) > 1e-9 or math.abs(a.offset[i] - (fix[i + 4] or 0)) > 1e-9 then fixOk = false end
                 end
+                if math.abs(a.scale - (fix.s or 1)) > 1e-9 then fixOk = false end
             end)
-            if want == 0 or #ms.list ~= want then fixOk = false end
+            -- 有縮放的模型另有兩個手骨掛點
+            if want == 0 or #ms.list ~= want + (fix.s and 2 or 0) then fixOk = false end
             fixN = fixN + 1
         end
     end
-    check("模型自身校正（" .. fixN .. " 個模型）只加在指定擺法、同名、不綁骨頭，旋轉與位移照表，重載不重複", fixOk and fixN > 0)
+    check("模型自身校正（" .. fixN .. " 個模型）只加在指定擺法、同名、不綁骨頭，旋轉、位移與縮放照表，重載不重複", fixOk and fixN > 0)
+    -- 縮小的熊拿在手上也縮：左右手骨掛點縮放和掛在包上相同，不改位置方向。
+    -- 使用者 2026-11-01：泰迪熊掛上去縮到和 Spiffo 差不多，所以 TeddyBear 類型借的每個模型都要有縮放
+    local heldScaleOk, nTeddy = true, 0
+    for ft, at in pairs(MDB.ATTACH_ITEMS) do
+        if at == "TeddyBear" then
+            nTeddy = nTeddy + 1
+            local fix = MDB.ATTACH_FIX[MDB.ATTACH_STATIC[ft] or ""]
+            if not fix or not fix.s or fix.s >= 0.8 then heldScaleOk = false end
+        end
+    end
+    for model, fix in pairs(MDB.ATTACH_FIX) do
+        if fix.s then
+            local ms = env.models[model]
+            for _, hand in ipairs({ "Bip01_Prop1", "Bip01_Prop2" }) do
+                local a = ms and ms.byId[hand]
+                if not a or a.scale ~= fix.s or a.offset[1] ~= 0 or a.offset[2] ~= 0 or a.offset[3] ~= 0
+                    or a.rotate[1] ~= 0 or a.rotate[2] ~= 0 or a.rotate[3] ~= 0 then heldScaleOk = false end
+            end
+        end
+    end
+    check("泰迪熊（" .. nTeddy .. " 款）掛在包上縮小，拿在手上照同樣比例縮（左右手骨掛點只有縮放）", heldScaleOk and nTeddy == 5)
     local v = loadVanilla()
     if v then
         -- 每個校正的模型都存在，而且真的有物品用它、那個物品的類型會用到這個擺法（不然校正永遠不會生效）
@@ -442,9 +547,15 @@ local function suite()
         end
         local bad = {}
         for model, fix in pairs(MDB.ATTACH_FIX) do
-            local name = model:match("%.(.+)$")
-            local exists = (model:match("^Base%.") and v.models[name]) or (model:match("^MinidoracatBags%.") and modModels[name])
-            if not exists or not used[model .. "|" .. fix[1]] then bad[#bad + 1] = model end
+            local otherMod = false
+            for ft, m in pairs(MDB.ATTACH_STATIC) do
+                if m == model and MDB.ATTACH_OTHER_MODS[ft] then otherMod = true end
+            end
+            if not otherMod then   -- 其他 MOD 的模型由上面那個 MOD 的核對看
+                local name = model:match("%.(.+)$")
+                local exists = (model:match("^Base%.") and v.models[name]) or (model:match("^MinidoracatBags%.") and modModels[name])
+                if not exists or not used[model .. "|" .. fix[1]] then bad[#bad + 1] = model end
+            end
         end
         check("原版核對：校正的模型都存在、有物品會用這個擺法掛它 " .. table.concat(bad, ","), #bad == 0)
     end
@@ -518,6 +629,9 @@ local function suite()
         for _, k in ipairs(types) do if not text:find('"' .. k .. '"%s*:%s*"[^"]+"') then ok = false end end
         local other = readFile(TRANSLATE .. lang .. "/ItemName.json") .. readFile(TRANSLATE .. lang .. "/ContextMenu.json")
         check(lang .. "/IG_UI.json 有全部 " .. #types .. " 個掛點名稱，別的檔沒有", ok and not other:find("IGUI_HotbarAttachment_", 1, true))
+        -- 說明鍵要在 Tooltip.json（引擎依檔名分表，Translator.java:137-146）
+        local tip = readFile(TRANSLATE .. lang .. "/Tooltip.json")
+        check(lang .. "/Tooltip.json 有掛點說明 " .. MDB.ATTACH_TOOLTIP, tip:find('"' .. MDB.ATTACH_TOOLTIP .. '"%s*:%s*"[^"]+"') ~= nil)
     end
 end
 
@@ -533,7 +647,7 @@ if arg and arg[1] == "--mutants" then
         { name = "擺法沒去重", file = "SHARED", from = "if not seen[pose] then", to = "if true then" },
         { name = "床捲掛點被蓋掉", file = "SHARED", from = "local list = { f.base }", to = "local list = {}" },
         { name = "ALICE 床捲名稱錯", file = "SHARED", from = 'base = "BedrollBottomALICE"', to = 'base = "BedrollBottom"' },
-        { name = "少一個家族掛點", file = "SHARED", from = '"Plushie", "UmbrellaR", "Flashlight" } },\n    { name = "Duffel"', to = '"Plushie", "UmbrellaR" } },\n    { name = "Duffel"' },
+        { name = "少一個家族掛點", file = "SHARED", from = '"Plushie", "Plushie2", "UmbrellaR", "Flashlight" } },\n    { name = "Duffel"', to = '"Plushie", "Plushie2", "UmbrellaR" } },\n    { name = "Duffel"' },
         { name = "登山包漏保護傘款", file = "SHARED", from = 'bags = { "Bag_NormalHikingBag_Navy", "Bag_NormalHikingBag_Olive" }', to = 'bags = { "Bag_NormalHikingBag_Navy" }' },
         { name = "行李袋漏保護傘款", file = "SHARED", from = 'bags = { "Bag_DuffelBag_Navy", "Bag_DuffelBag_Olive" }', to = 'bags = { "Bag_DuffelBag_Navy" }' },
         { name = "強化版前綴錯", file = "SHARED", from = '"MinidoracatBags." .. bag .. "_Reinforced"', to = '"Base." .. bag' },
@@ -547,7 +661,7 @@ if arg and arg[1] == "--mutants" then
         { name = "加了已有 AttachmentType 的原版物品", file = "SHARED", from = '["Base.Flask"] = "WaterBottle",', to = '["Base.Flask"] = "WaterBottle", ["Base.Hammer"] = "Hammer",' },
         { name = "定義缺 animset", file = "CLIENT", from = 'animset = "back"', to = 'animset = "belt left"' },
         { name = "定義的位置名稱錯", file = "CLIENT", from = "attachments[itemType] = MDB.attachLocation(f.name, slot, pose)", to = "attachments[itemType] = pose" },
-        { name = "模型掛點換骨頭", file = "CLIENT", from = '"Bip01_BackPack", off, rot)', to = '"Bip01_Spine1", off, rot)' },
+        { name = "模型掛點換骨頭", file = "CLIENT", from = '"Bip01_BackPack", off, rot, 1)', to = '"Bip01_Spine1", off, rot, 1)' },
         { name = "模型掛點只加男生", file = "CLIENT", from = '{ M = "MaleBody", F = "FemaleBody" }', to = '{ M = "MaleBody" }' },
         { name = "重載時重複加", file = "CLIENT", from = "if not a then", to = "if true then" },
         { name = "面旋轉沒套到位移", file = "CLIENT", from = "anchor[i] + face[i][1] * d[1] + face[i][2] * d[2] + face[i][3] * d[3]", to = "anchor[i] + d[i]" },
@@ -566,7 +680,7 @@ if arg and arg[1] == "--mutants" then
         { name = "AttachmentReplacement 沒 DoParam", file = "SHARED", from = 'if f.replacement then s:DoParam("AttachmentReplacement = " .. f.replacement) end', to = "" },
         { name = "AttachmentReplacement 名稱錯", file = "SHARED", from = '{ name = "Duffel", replacement = "Bag",', to = '{ name = "Duffel", replacement = "Bags",' },
         { name = "掛得上也改提示", file = "CLIENT", from = "local tip = opt and opt.notAvailable and opt.toolTip", to = "local tip = opt and opt.toolTip" },
-        { name = "自身校正沒套位移", file = "CLIENT", from = "local off = { fix[5] or 0, fix[6] or 0, fix[7] or 0 }", to = "local off = { 0, 0, 0 }" },
+        { name = "自身校正沒套位移", file = "CLIENT", from = "local off, s = { fix[5] or 0, fix[6] or 0, fix[7] or 0 }, fix.s or 1", to = "local off, s = { 0, 0, 0 }, fix.s or 1" },
         { name = "自身校正加到每種擺法", file = "CLIENT", from = "if pose == fix[1] then upsert", to = "if true then upsert" },
         { name = "自身校正擺法打錯", file = "CLIENT", from = '["Base.Doll"] = { "Plushie", 90', to = '["Base.Doll"] = { "Plushy", 90' },
         { name = "自身校正寫成物品名", file = "CLIENT", from = '["Base.Pancho"] = {', to = '["Base.PanchoDog"] = {' },
@@ -580,6 +694,28 @@ if arg and arg[1] == "--mutants" then
         { name = "背包校正還掛在原版布繩上", file = "CLIENT", from = '["MinidoracatBags.MDB_SheetRope"] = {', to = '["Base.SheetRope"] = {' },
         { name = "翻譯缺鍵", file = "EN", from = '"IGUI_HotbarAttachment_MDB_DuffelBottleR"', to = '"IGUI_HotbarAttachment_MDB_DuffelBottleX"' },
         { name = "繁中缺鍵", file = "CH", from = '"IGUI_HotbarAttachment_MDB_AliceSlot1"', to = '"IGUI_HotbarAttachment_MDB_AliceSlotA"' },
+        { name = "日行背包漏保護傘款", file = "SHARED", from = 'bags = { "DayPack_Navy", "DayPack_Olive" }', to = 'bags = { "DayPack_Navy" }' },
+        { name = "遠征框架背包床捲名稱錯", file = "SHARED", from = '{ name = "Expedition", base = "BedrollBottomBig",', to = '{ name = "Expedition", base = "BedrollBottom",' },
+        { name = "日行背包少一個掛點", file = "SHARED",
+            from = 'bags = { "DayPack_Navy", "DayPack_Olive" },\n      slots = { "Slot1", "Slot2", "Slot3", "BottleR", "BottleL", "Plushie", "Plushie2", "UmbrellaL", "Flashlight" } }',
+            to = 'bags = { "DayPack_Navy", "DayPack_Olive" },\n      slots = { "Slot1", "Slot2", "Slot3", "BottleR", "BottleL", "Plushie", "Plushie2", "UmbrellaL" } }' },
+        { name = "行李袋漏包面下緣玩偶扣環", file = "SHARED",
+            from = '"BottleR", "Plushie", "Plushie2", "UmbrellaR", "Flashlight" } },', to = '"BottleR", "Plushie", "UmbrellaR", "Flashlight" } },' },
+        { name = "包面下緣玩偶扣環收的類型不同", file = "SHARED", from = "Plushie = PLUSH, Plushie2 = PLUSH,", to = "Plushie = PLUSH, Plushie2 = STRAP," },
+        { name = "泰迪熊沒有掛點收", file = "SHARED", from = 'TeddyBear = "Plushie",', to = 'TeddyBearX = "Plushie",' },
+        { name = "69mini 的熊沒列來源 MOD", file = "SHARED", from = '["Base.69miniTeddy"] = "69mini" }', to = "}" },
+        { name = "包面下緣玩偶扣環漏座標", file = "CLIENT", from = "Plushie2 = { 0.150, 0.000, -0.129, 0 }, ", to = "" },
+        { name = "掛在包上的熊沒縮", file = "CLIENT", from = '{ fix[2], fix[3], fix[4] }, s) end', to = '{ fix[2], fix[3], fix[4] }, 1) end' },
+        { name = "手上的熊沒縮", file = "CLIENT", from = 'if a then a:setScale(s) else upsert(ms, hand, nil, { 0, 0, 0 }, { 0, 0, 0 }, s) end',
+            to = 'if a then a:setScale(1) else upsert(ms, hand, nil, { 0, 0, 0 }, { 0, 0, 0 }, 1) end' },
+        { name = "玩具熊沒縮", file = "CLIENT", from = '["Base.ToyBear"] = { "Plushie", 0, 0, 0, s = 0.55 },', to = '["Base.ToyBear"] = { "Plushie", 0, 0, 0 },' },
+        { name = "掛點加到原款", file = "SHARED", from = 'sm:getItem("MinidoracatBags." .. bag .. "_Reinforced")', to = 'sm:getItem("MinidoracatBags." .. bag)' },
+        { name = "遠征框架背包用了登山包的網格家族", file = "SHARED", from = 'bags = { "ExpeditionPack_Navy", "ExpeditionPack_Olive" }', to = 'bags = { "Bag_NormalHikingBag_Navy", "Bag_NormalHikingBag_Olive" }' },
+        { name = "日行背包座標漏女生", file = "CLIENT", from = "F = { Slot1 = { 0.099, 0.055, -0.020, 0 }", to = "F = { SlotX = { 0.099, 0.055, -0.020, 0 }" },
+        { name = "沒加說明", file = "SHARED", from = '                if #f.slots > 0 then s:DoParam("Tooltip = " .. MDB.ATTACH_TOOLTIP) end\n', to = "" },
+        { name = "說明加到只有床捲的書包", file = "SHARED", from = 'if #f.slots > 0 then s:DoParam("Tooltip = "', to = 'if true then s:DoParam("Tooltip = "' },
+        { name = "說明鍵打錯", file = "SHARED", from = 'MDB.ATTACH_TOOLTIP = "Tooltip_MDB_AttachSlots"', to = 'MDB.ATTACH_TOOLTIP = "Tooltip_MDB_AttachSlot"' },
+        { name = "繁中缺說明", file = "CHTIP", from = '"Tooltip_MDB_AttachSlots"', to = '"Tooltip_MDB_AttachSlotsX"' },
     }
     io.write("== 突變（每個都應至少讓一項 FAIL）\n")
     local survived = 0

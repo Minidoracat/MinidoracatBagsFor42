@@ -10,10 +10,11 @@ local function vec()
     return v
 end
 ModelAttachment = { new = function(id)
-    local a = { id = id, off = vec(), rot = vec() }
+    local a = { id = id, off = vec(), rot = vec(), scale = 1 }
     function a:setBone(b) self.bone = b end
     function a:getOffset() return self.off end
     function a:getRotate() return self.rot end
+    function a:setScale(s) self.scale = s end
     return a
 end }
 function getScriptManager()
@@ -60,7 +61,9 @@ end
 local attach = {}
 for name, ms in pairs(models) do
     attach[name] = {}
-    for _, a in ipairs(ms.list) do attach[name][a.id] = { bone = a.bone or "", off = { a.off[1], a.off[2], a.off[3] }, rot = { a.rot[1], a.rot[2], a.rot[3] } } end
+    for _, a in ipairs(ms.list) do
+        attach[name][a.id] = { bone = a.bone or "", off = { a.off[1], a.off[2], a.off[3] }, rot = { a.rot[1], a.rot[2], a.rot[3] }, scale = a.scale }
+    end
 end
 local fams = {}
 for _, f in ipairs(MDB.ATTACH_FAMILIES) do fams[#fams + 1] = { name = f.name, slots = f.slots } end

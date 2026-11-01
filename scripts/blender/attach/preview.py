@@ -25,19 +25,24 @@ import xio  # noqa: E402
 PZ = os.environ.get("PZ_PATH", "D:/SteamLibrary/steamapps/common/ProjectZomboid").replace("\\", "/") + "/media/"
 MOD_SCRIPTS = "MOD/MinidoracatBagsFor42/Contents/mods/MinidoracatBagsFor42/42/media/scripts"   # 借給原版物品的本 MOD 模型（MDB_AttachModels.txt）
 BODY = {"M": "MaleBody", "F": "FemaleBody"}
+X = PZ + "models_X/Skinned/BackPacks/"
+MOD_X = "MOD/MinidoracatBagsFor42/Contents/mods/MinidoracatBagsFor42/42/media/models_X/Skinned/BackPacks/"   # 本 MOD 的日行、遠征框架背包
 BAG = {  # 家族 → (男, 女) 穿戴網格，和 anchors.py 相同
-    "Alice": ("M_ALICE_Pack.x", "F_ALICE_Pack.x"), "Duffel": ("M_Duffelbag.x", "F_DuffelBag.x"),
-    "Hiking": ("M_HikingBag.x", "F_HikingBag.x"), "BigHiking": ("M_BigHikingBag.x", "F_BigHikingBag.x"),
+    "Alice": (X + "M_ALICE_Pack.x", X + "F_ALICE_Pack.x"), "Duffel": (X + "M_Duffelbag.x", X + "F_DuffelBag.x"),
+    "Hiking": (X + "M_HikingBag.x", X + "F_HikingBag.x"), "BigHiking": (X + "M_BigHikingBag.x", X + "F_BigHikingBag.x"),
+    "DayPack": (MOD_X + "MDB_DayPack_M.X", MOD_X + "MDB_DayPack_F.X"),
+    "Expedition": (MOD_X + "MDB_ExpeditionPack_M.X", MOD_X + "MDB_ExpeditionPack_F.X"),
 }
 SETS = [  # 和 E2E attach-art-sp 的 full 三組相同
     {"Slot1": "Base.Hammer", "Slot2": "Base.Screwdriver", "Slot3": "Base.KitchenKnife", "BottleR": "Base.WaterBottle",
-     "BottleL": "Base.Pop", "Plushie": "Base.Spiffo", "UmbrellaR": "Base.ClosedUmbrellaBlack",
+     "BottleL": "Base.Pop", "Plushie": "Base.Spiffo", "Plushie2": "Base.FreddyFox", "UmbrellaR": "Base.ClosedUmbrellaBlack",
      "UmbrellaL": "Base.ClosedUmbrellaBlack", "Flashlight": "Base.HandTorch"},
     {"Slot1": "Base.Wrench", "Slot2": "Base.MeatCleaver", "Slot3": "Base.WalkieTalkie1", "BottleR": "Base.Wine2",
-     "BottleL": "Base.Pills", "Plushie": "Base.Doll", "UmbrellaR": "Base.Saw", "UmbrellaL": "Base.GardenSaw",
-     "Flashlight": "Base.Torch"},
+     "BottleL": "Base.Pills", "Plushie": "Base.Doll", "Plushie2": "Base.Rubberducky", "UmbrellaR": "Base.Saw",
+     "UmbrellaL": "Base.GardenSaw", "Flashlight": "Base.Torch"},
     {"Slot1": "Base.Pan", "Slot2": "Base.Saucepan", "Slot3": "Base.Rope", "BottleR": "Base.BeerCan", "BottleL": "Base.Whiskey",
-     "Plushie": "Base.BorisBadger", "UmbrellaR": "Base.BlowTorch", "UmbrellaL": "Base.BlowTorch", "Flashlight": "Base.PenLight"},
+     "Plushie": "Base.BorisBadger", "Plushie2": "Base.ToyBear", "UmbrellaR": "Base.BlowTorch", "UmbrellaL": "Base.BlowTorch",
+     "Flashlight": "Base.PenLight"},
 ]
 VIEWS = {"back": (0, 30), "back3q": (45, 30), "right": (90, 20), "left": (-90, 20)}   # 繞角色的方位（0＝正後方、90＝右邊）、仰角
 
@@ -96,9 +101,10 @@ def rot(rx, ry, rz):
 
 
 def att(a):
+    """掛點 → 4×4：位移·旋轉·縮放（ModelInstanceRenderData.java:106-111 makeAttachmentTransform）。"""
     t = np.eye(4)
     t[:3, 3] = a["off"]
-    return t @ rot(*a["rot"])
+    return t @ rot(*a["rot"]) @ np.diag([a.get("scale", 1.0)] * 3 + [1])
 
 
 def to_blender(P):
@@ -296,7 +302,7 @@ def body_and_bag(fam, sex):
     b = xio.read_x(PZ + "models_X/Skinned/" + BODY[sex] + ".X")
     add_mesh("body", to_blender(b["V"]), b["F"][:, ::-1], mat=image_mat("skin", color=(0.85, 0.7, 0.55, 1)))
     if fam:
-        g = xio.read_x(PZ + "models_X/Skinned/BackPacks/" + BAG[fam][0 if sex == "M" else 1])
+        g = xio.read_x(BAG[fam][0 if sex == "M" else 1])
         add_mesh("bag", to_blender(g["V"]), g["F"][:, ::-1], mat=image_mat("bag", color=(0.3, 0.35, 0.2, 1)))
     return np.linalg.inv(b["sw"]["Bip01_BackPack"][2]).T
 
@@ -404,7 +410,7 @@ def main():
             for view in ("back", "right"):
                 shoot(f"{outdir}/slot-{fam.lower()}-{sex.lower()}-{slot}-{it}-{view}.png", target(bone), *VIEWS[view])
         return
-    for fam in [f["name"] for f in data["families"] if not argv[3:] or f["name"] in argv[3:]]:
+    for fam in [f["name"] for f in data["families"] if f["slots"] and (not argv[3:] or f["name"] in argv[3:])]:
         slots = next(f["slots"] for f in data["families"] if f["name"] == fam)
         for sex in ("M", "F"):
             for si, s in enumerate(SETS):

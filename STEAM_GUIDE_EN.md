@@ -58,8 +58,8 @@ In each picture S.T.A.R.S. (navy) is on the left and Umbrella (olive khaki) on t
 
 [h3]Bedroll attachment[/h3]
 [list]
-[*] [b]Day Pack[/b]: a bedroll can hang under it, like the vanilla Hiking Backpack.
-[*] [b]Expedition Frame Pack[/b]: a bedroll can hang under it, like the vanilla Big Hiking Backpack.
+[*] [b]Day Pack[/b]: a bedroll can hang under it, like the vanilla Hiking Backpack. The reinforced version also gets the reinforced Hiking Backpack's hotbar attachment slots; see "Reinforced Bag Attachment Slots".
+[*] [b]Expedition Frame Pack[/b]: a bedroll can hang under it, like the vanilla Big Hiking Backpack. The reinforced version also gets the reinforced Big Hiking Backpack's hotbar attachment slots.
 [/list]
 === 🧰 Where to Find Them: Loot and Zombie Drops
 [h3]Container loot[/h3]
@@ -156,7 +156,7 @@ Every upgraded bag is a "Reinforced" bag: this mod's own item with "(Reinforced)
 [*] [b]No slowdown[/b]: wearing it does not reduce run or combat speed; only the weight of what is inside counts as usual.
 [*] [b]Hydration Packs[/b]: water capacity reaches 5 L when fully upgraded; with water inside, the name shows as "Water (S.T.A.R.S. Reinforced Hydration Pack)".
 [*] [b]Satchels[/b]: worn in a second satchel slot on the other side; see "Second Satchel Slot".
-[*] [b]Military Backpacks, Duffel Bags, Hiking and Big Hiking Backpacks[/b]: get extra hotbar attachment slots; see "Reinforced Bag Attachment Slots".
+[*] [b]Military Backpacks, Duffel Bags, Hiking and Big Hiking Backpacks, Day Packs, Expedition Frame Packs[/b]: get extra hotbar attachment slots; see "Reinforced Bag Attachment Slots".
 [*] [b]School bags[/b]: the reinforced "S.T.A.R.S. / Umbrella Small Backpack (Reinforced)" (what all five vanilla school bags upgrade into) can carry a bedroll underneath, like Bag Upgrade Plus's school bag; the originals cannot.
 [*] [b]Duffel bags[/b]: while you wear one, long guns, big blades and shovels on your back hang outside the bag instead of sinking into it, like Bag Upgrade Plus's duffel bags. As with vanilla backpacks, a guitar cannot go on your back then; one already there is taken off into your inventory when you put the bag on.
 [*] [b]Everything else stays[/b]: item restrictions, bedroll attachments and fanny pack swapping work like the original; capacity and Encumbrance Reduction follow the tier, with the starting values described under "Which bags have a reinforced version".
@@ -255,27 +255,29 @@ Each row has a S.T.A.R.S. and an Umbrella version: 44 in total. Every vanilla ba
 [*] [b]Fixed from 0.1.0[/b]: swapping an upgraded vanilla fanny pack used to drop its capacity and Encumbrance Reduction back to the original values. They are kept now, and a pouch that already lost them gets them back after one more swap.
 [/list]
 === 🧰 Reinforced Bag Attachment Slots
-The reinforced Military Backpacks, Duffel Bags, Hiking Backpacks and Big Hiking Backpacks get extra hotbar attachment slots. Wear one and the hotbar shows the new slots, so you can hang things on the outside of the bag.
+The reinforced Military Backpacks, Duffel Bags, Hiking Backpacks, Big Hiking Backpacks, Day Packs and Expedition Frame Packs get extra hotbar attachment slots. Wear one and the hotbar shows the new slots, so you can hang things on the outside of the bag. Hover over one of these reinforced bags and its tooltip says "Adds attachment slots when worn".
 {{img:attach-hotbar-en.jpg}}
 {{img:attach-back-en.jpg}}
 
 [table]
 [tr][th]Family[/th][th]Bags[/th][th]Slots[/th][/tr]
-[tr][td]Military Backpack[/td][td]Military Backpack (Reinforced) in both themes, upgraded from the 4 military backpacks[/td][td]Backpack Slot 1–3, Bottle Pocket (left and right), Plushie Clip, Side Strap (right), Flashlight Clip[/td][/tr]
-[tr][td]Duffel Bag[/td][td]Duffel Bag (Reinforced) in both themes, upgraded from the 22 duffel-style bags, including the Duffel Bag, Police and SWAT Duffel Bags and the Trauma Bag[/td][td]Backpack Slot 1–3, Bottle Pocket (right), Plushie Clip, Side Strap (right), Flashlight Clip[/td][/tr]
-[tr][td]Hiking Backpack[/td][td]Hiking Backpack (Reinforced) in both themes, upgraded from the 2 hiking backpacks[/td][td]Backpack Slot 1–3, Bottle Pocket (left and right), Plushie Clip, Side Strap (left), Flashlight Clip[/td][/tr]
-[tr][td]Big Hiking Backpack[/td][td]Big Hiking Backpack (Reinforced) in both themes, upgraded from the 2 big hiking backpacks[/td][td]Backpack Slot 1–3, Bottle Pocket (left and right), Plushie Clip, Side Strap (left), Flashlight Clip[/td][/tr]
+[tr][td]Military Backpack[/td][td]Military Backpack (Reinforced) in both themes, upgraded from the 4 military backpacks[/td][td]Backpack Slot 1–3, Bottle Pocket (left and right), Plushie Clip (top and bottom), Side Strap (right), Flashlight Clip[/td][/tr]
+[tr][td]Duffel Bag[/td][td]Duffel Bag (Reinforced) in both themes, upgraded from the 22 duffel-style bags, including the Duffel Bag, Police and SWAT Duffel Bags and the Trauma Bag[/td][td]Backpack Slot 1–3, Bottle Pocket (right), Plushie Clip (top and bottom), Side Strap (right), Flashlight Clip[/td][/tr]
+[tr][td]Hiking Backpack[/td][td]Hiking Backpack (Reinforced) in both themes, upgraded from the 2 hiking backpacks[/td][td]Backpack Slot 1–3, Bottle Pocket (left and right), Plushie Clip (top and bottom), Side Strap (left), Flashlight Clip[/td][/tr]
+[tr][td]Big Hiking Backpack[/td][td]Big Hiking Backpack (Reinforced) in both themes, upgraded from the 2 big hiking backpacks[/td][td]Backpack Slot 1–3, Bottle Pocket (left and right), Plushie Clip (top and bottom), Side Strap (left), Flashlight Clip[/td][/tr]
+[tr][td]Day Pack[/td][td]Day Pack (Reinforced) in both themes, upgraded from this mod's Day Pack[/td][td]Backpack Slot 1–3, Bottle Pocket (left and right), Plushie Clip (top and bottom), Side Strap (left), Flashlight Clip[/td][/tr]
+[tr][td]Expedition Frame Pack[/td][td]Expedition Frame Pack (Reinforced) in both themes, upgraded from this mod's Expedition Frame Pack[/td][td]Backpack Slot 1–3, Bottle Pocket (left and right), Plushie Clip (top and bottom), Side Strap (left), Flashlight Clip[/td][/tr]
 [/table]
 [list]
 [*] [b]Backpack slots[/b]: tools such as hammers, screwdrivers, knives, wrenches, meat cleavers, walkie-talkies, saucepans, frying pans and rope.
 [*] [b]Bottle pockets[/b]: water bottles, canteens, liquor bottles, juice, milk, soda and beer cans, pill bottles.
-[*] [b]Plushie clip[/b]: Spiffo and the other plushies, dolls.
+[*] [b]Plushie clips[/b]: one on top of the bag and one at the bottom edge of its back, so you can hang two at once. They take Spiffo and the other plushies, dolls, Teddy Bears, Crafted Cotton and Burlap Teddy Bears, and Rubber Ducks; with the 69 Mini car mod installed, its Rupert Bear and Teddy fit too. Teddy bears shrink to about Spiffo's size while hanging on the bag; on the floor they keep their vanilla size.
 [*] [b]Side strap[/b]: closed umbrellas, saws, blowtorches.
 [*] [b]Flashlight clip[/b]: flashlights, penlights, crafted flashlights.
-[*] [b]Bedrolls still work[/b]: the Military, Hiking and Big Hiking Backpacks keep their original bedroll attachment.
+[*] [b]Bedrolls still work[/b]: the Military, Hiking and Big Hiking Backpacks, Day Packs and Expedition Frame Packs keep their original bedroll attachment.
 [*] [b]Multiplayer[/b]: other players see what you hang, and it is still there after you log back in.
 [*] [b]Items from other mods[/b]: items that use the same attachment types fit too.
-[*] [b]Not this mod's seven bags[/b]: their reinforced versions have no extra slots.
+[*] [b]Other bags have none[/b]: the original (not upgraded) bags, the other reinforced bags and the reinforced versions of this mod's other five bags have no extra slots.
 [/list]
 === 🧰 Wearing Full Bags Off the Floor
 When a bag on the floor is very full, the vanilla "Wear" option first moves it into your inventory and fails if it does not fit. In that case the right-click menu adds "Wear (with contents)".
@@ -423,7 +425,7 @@ On the "Tactical Bags" page of the sandbox settings. On a dedicated server, they
 [*] [b]Fanny packs with a stuck name[/b]: up to version 0.3.0, swapping a worn fanny pack you had not renamed could leave it named like "Fanny Pack (Worn)", and on a multiplayer server in the server's language or as an item ID. It gets its normal name back when you enter the game carrying it; one on the ground, in a container or in a vehicle is fixed once you enter the game with it on you. Names written before the server (in single player, your game) switched languages are not recognized; rename the bag once to fix it. A name of yours like the one in the previous item stays when you swap sides.
 [*] [b]One reinforced satchel at a time[/b]: two reinforced satchels both need the second satchel slot.
 [*] [b]Satchel straps cross over[/b]: on female characters, a reinforced cloth satchel worn with a vanilla satchel has straps that clip into each other a little where they cross on the chest and back when seen up close.
-[*] [b]Attachment slots on four families only[/b]: only the reinforced Military Backpacks, Duffel Bags, Hiking and Big Hiking Backpacks have them; the originals and other bags do not.
+[*] [b]Attachment slots on six families only[/b]: only the reinforced Military Backpacks, Duffel Bags, Hiking and Big Hiking Backpacks, Day Packs and Expedition Frame Packs have them; the originals and other bags do not.
 [*] [b]Blowtorch with B42PackMule[/b]: when B42PackMule's sandbox option "Attach: Welding Torch" is on (the default), the blowtorch uses its back slot instead and does not fit this mod's side strap.
 [*] [b]Adding mid-save[/b]: containers that already generated loot do not get new bags.
 [*] [b]Server ran without the original mod[/b]: old bags loaded during that time are already deleted and this mod cannot restore them. See step 4 of "Server Switch".

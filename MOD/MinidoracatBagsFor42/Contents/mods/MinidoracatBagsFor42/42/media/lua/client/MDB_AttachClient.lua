@@ -8,40 +8,56 @@ require "Hotbar/ISHotbar"
 
 -- ===== 座標 =====
 -- 全部掛在 Bip01_BackPack（原版背包的掛點骨頭）。骨頭空間：+x 離開背部朝外、+y 角色左邊、+z 往上。
--- 位置起點由 scripts/blender/attach/anchors.py 從原版穿戴網格算出，再照實機截圖（E2E attach-art-sp）調整。
+-- 位置起點由 scripts/blender/attach/anchors.py 從穿戴網格（原版，與本 MOD 日行、遠征框架背包自己的）算出，再照實機截圖（E2E attach-art-sp）調整。
 -- ANCHOR[家族][性別][掛點] = { x, y, z, yaw }：yaw 是掛點那一面的朝向（繞 z 轉，度）：背面與頂部 0、右側 -90、左側 90。
 local ANCHOR = {
     Alice = {
         M = { Slot1 = { 0.139, 0.055, -0.027, 0 }, Slot2 = { 0.145, 0.000, -0.027, 0 }, Slot3 = { 0.138, -0.055, -0.027, 0 },
-              Plushie = { 0.101, 0.000, 0.090, 0 }, BottleR = { 0.044, -0.114, -0.066, -90 }, BottleL = { 0.044, 0.120, -0.066, 90 },
+              Plushie = { 0.101, 0.000, 0.090, 0 }, Plushie2 = { 0.168, 0.000, -0.120, 0 }, BottleR = { 0.044, -0.114, -0.066, -90 }, BottleL = { 0.044, 0.120, -0.066, 90 },
               UmbrellaR = { 0.100, -0.117, -0.001, -90 }, Flashlight = { 0.044, 0.110, 0.064, 90 } },
         F = { Slot1 = { 0.121, 0.055, -0.018, 0 }, Slot2 = { 0.134, 0.000, -0.018, 0 }, Slot3 = { 0.124, -0.055, -0.018, 0 },
-              Plushie = { 0.090, 0.000, 0.099, 0 }, BottleR = { 0.030, -0.113, -0.057, -90 }, BottleL = { 0.030, 0.119, -0.057, 90 },
+              Plushie = { 0.090, 0.000, 0.099, 0 }, Plushie2 = { 0.157, 0.000, -0.110, 0 }, BottleR = { 0.030, -0.113, -0.057, -90 }, BottleL = { 0.030, 0.119, -0.057, 90 },
               UmbrellaR = { 0.087, -0.117, 0.008, -90 }, Flashlight = { 0.030, 0.110, 0.073, 90 } },
     },
     Duffel = {
         M = { Slot1 = { 0.148, 0.070, -0.074, 0 }, Slot2 = { 0.138, -0.020, -0.118, 0 }, Slot3 = { 0.119, -0.110, -0.139, 0 },
-              Plushie = { 0.060, 0.138, -0.014, 0 }, BottleR = { 0.095, -0.161, -0.148, -90 }, UmbrellaR = { 0.060, -0.191, -0.148, -90 },
+              Plushie = { 0.060, 0.138, -0.014, 0 }, Plushie2 = { 0.120, 0.000, -0.190, 0 }, BottleR = { 0.095, -0.161, -0.148, -90 }, UmbrellaR = { 0.060, -0.191, -0.148, -90 },
               Flashlight = { 0.060, -0.050, -0.036, 0 } },
         F = { Slot1 = { 0.140, 0.070, -0.067, 0 }, Slot2 = { 0.133, -0.020, -0.115, 0 }, Slot3 = { 0.119, -0.110, -0.142, 0 },
-              Plushie = { 0.060, 0.137, -0.000, 0 }, BottleR = { 0.110, -0.140, -0.143, -90 }, UmbrellaR = { 0.060, -0.170, -0.143, -90 },
+              Plushie = { 0.060, 0.137, -0.000, 0 }, Plushie2 = { 0.120, 0.000, -0.180, 0 }, BottleR = { 0.110, -0.140, -0.143, -90 }, UmbrellaR = { 0.060, -0.170, -0.143, -90 },
               Flashlight = { 0.060, -0.050, -0.036, 0 } },
     },
     Hiking = {
         M = { Slot1 = { 0.096, 0.055, -0.021, 0 }, Slot2 = { 0.108, 0.000, -0.021, 0 }, Slot3 = { 0.096, -0.055, -0.021, 0 },
-              Plushie = { 0.077, 0.000, 0.163, 0 }, BottleR = { 0.036, -0.104, -0.068, -90 }, BottleL = { 0.036, 0.101, -0.068, 90 },
+              Plushie = { 0.077, 0.000, 0.163, 0 }, Plushie2 = { 0.138, 0.000, -0.140, 0 }, BottleR = { 0.036, -0.104, -0.068, -90 }, BottleL = { 0.036, 0.101, -0.068, 90 },
               UmbrellaL = { 0.083, 0.074, 0.011, 90 }, Flashlight = { 0.036, -0.077, 0.089, -90 } },
         F = { Slot1 = { 0.073, 0.055, -0.018, 0 }, Slot2 = { 0.085, 0.000, -0.018, 0 }, Slot3 = { 0.073, -0.055, -0.018, 0 },
-              Plushie = { 0.053, 0.000, 0.162, 0 }, BottleR = { 0.014, -0.102, -0.064, -90 }, BottleL = { 0.014, 0.099, -0.064, 90 },
+              Plushie = { 0.053, 0.000, 0.162, 0 }, Plushie2 = { 0.116, 0.000, -0.135, 0 }, BottleR = { 0.014, -0.102, -0.064, -90 }, BottleL = { 0.014, 0.099, -0.064, 90 },
               UmbrellaL = { 0.060, 0.073, 0.013, 90 }, Flashlight = { 0.014, -0.075, 0.090, -90 } },
     },
     BigHiking = {
         M = { Slot1 = { 0.092, 0.055, -0.036, 0 }, Slot2 = { 0.102, 0.000, -0.036, 0 }, Slot3 = { 0.092, -0.055, -0.036, 0 },
-              Plushie = { 0.064, 0.000, 0.181, 0 }, BottleR = { 0.031, -0.106, -0.092, -90 }, BottleL = { 0.031, 0.102, -0.092, 90 },
+              Plushie = { 0.064, 0.000, 0.181, 0 }, Plushie2 = { 0.130, 0.000, -0.165, 0 }, BottleR = { 0.031, -0.106, -0.092, -90 }, BottleL = { 0.031, 0.102, -0.092, 90 },
               UmbrellaL = { 0.074, 0.074, 0.002, 90 }, Flashlight = { 0.031, -0.079, 0.095, -90 } },
         F = { Slot1 = { 0.072, 0.055, -0.032, 0 }, Slot2 = { 0.082, 0.000, -0.032, 0 }, Slot3 = { 0.072, -0.055, -0.032, 0 },
-              Plushie = { 0.044, 0.000, 0.185, 0 }, BottleR = { 0.011, -0.106, -0.088, -90 }, BottleL = { 0.011, 0.102, -0.088, 90 },
+              Plushie = { 0.044, 0.000, 0.185, 0 }, Plushie2 = { 0.110, 0.000, -0.162, 0 }, BottleR = { 0.011, -0.106, -0.088, -90 }, BottleL = { 0.011, 0.102, -0.088, 90 },
               UmbrellaL = { 0.053, 0.074, 0.006, 90 }, Flashlight = { 0.011, -0.079, 0.099, -90 } },
+    },
+    DayPack = {
+        M = { Slot1 = { 0.123, 0.055, -0.022, 0 }, Slot2 = { 0.128, 0.000, -0.022, 0 }, Slot3 = { 0.125, -0.055, -0.022, 0 },
+              Plushie = { 0.092, 0.000, 0.141, 0 }, Plushie2 = { 0.150, 0.000, -0.129, 0 }, BottleR = { 0.047, -0.108, -0.069, -90 }, BottleL = { 0.047, 0.107, -0.069, 90 },
+              UmbrellaL = { 0.096, 0.090, 0.008, 90 }, Flashlight = { 0.047, -0.087, 0.086, -90 } },
+        F = { Slot1 = { 0.099, 0.055, -0.020, 0 }, Slot2 = { 0.104, 0.000, -0.020, 0 }, Slot3 = { 0.101, -0.055, -0.020, 0 },
+              Plushie = { 0.068, 0.000, 0.140, 0 }, Plushie2 = { 0.127, 0.000, -0.124, 0 }, BottleR = { 0.025, -0.106, -0.065, -90 }, BottleL = { 0.025, 0.105, -0.065, 90 },
+              UmbrellaL = { 0.073, 0.088, 0.011, 90 }, Flashlight = { 0.025, -0.085, 0.086, -90 } },
+    },
+    Expedition = {
+        M = { Slot1 = { 0.155, 0.055, -0.035, 0 }, Slot2 = { 0.161, 0.000, -0.035, 0 }, Slot3 = { 0.155, -0.055, -0.035, 0 },
+              Plushie = { 0.125, 0.000, 0.171, 0 }, Plushie2 = { 0.171, 0.000, -0.141, 0 }, BottleR = { 0.068, -0.135, -0.091, -90 }, BottleL = { 0.068, 0.137, -0.091, 90 },
+              UmbrellaL = { 0.124, 0.130, 0.002, 90 }, Flashlight = { 0.068, -0.098, 0.095, -90 } },
+        F = { Slot1 = { 0.128, 0.055, -0.031, 0 }, Slot2 = { 0.133, 0.000, -0.031, 0 }, Slot3 = { 0.127, -0.055, -0.031, 0 },
+              Plushie = { 0.097, 0.000, 0.174, 0 }, Plushie2 = { 0.146, 0.000, -0.142, 0 }, BottleR = { 0.043, -0.133, -0.087, -90 }, BottleL = { 0.043, 0.136, -0.087, 90 },
+              UmbrellaL = { 0.097, 0.128, 0.005, 90 }, Flashlight = { 0.043, -0.096, 0.098, -90 } },
     },
 }
 -- 擺法：物品模型在掛點那一面的旋轉與位移。面座標：+x 朝外（離開包面）、+y 面的左邊、+z 往上。
@@ -67,8 +83,10 @@ local POSE = {
 -- 不照上面慣例做的物品模型：在那個 model 腳本上加同名掛點當自身校正。
 -- 掛上去時 parent 與 self 用同一個掛點名（ModelManager.java:601-607），變換是 骨頭·身體掛點·自身掛點·網格
 -- （AnimatedModel.java:1455-1484；invertAttachmentSelfTransform 從來沒被設成 true，自身掛點照原樣乘）。
--- FIX[model 全名] = { 擺法, rx, ry, rz, ox, oy, oz }：只加在那個擺法的掛點上；位移在擺法轉過之後的座標裡（同上面的慣例座標），
--- 給原點不在握點或背面的模型補回去。方向用 preview.py axes 看各軸，再用 preview.py slot 核對。
+-- FIX[model 全名] = { 擺法, rx, ry, rz, ox, oy, oz, s = 縮放 }：只加在那個擺法的掛點上；位移在擺法轉過之後的座標裡（同上面的慣例座標），
+-- 給原點不在握點或背面的模型補回去。s 沒寫就是 1（自身掛點的變換是 位移·旋轉·縮放，ModelInstanceRenderData.java:106-111）；
+-- 有寫 s 的模型拿在手上也照同樣比例縮（見 installAttachClient）。
+-- 方向用 preview.py axes 看各軸，再用 preview.py slot 核對。
 local FIX = {
     -- *_Ground 玩偶正面朝 -z
     ["Base.PlushieBadger_Ground"] = { "Plushie", 0, 180, 0 }, ["Base.PlushieRabbit_Ground"] = { "Plushie", 0, 180, 0 },
@@ -76,6 +94,12 @@ local FIX = {
     ["Base.PlushieBeaver_Ground"] = { "Plushie", 0, 180, 0 }, ["Base.PlushieMole_Ground"] = { "Plushie", 0, 180, 0 },
     ["Base.PlushieHedgehog_Ground"] = { "Plushie", 0, 180, 0 },
     ["Base.Pancho"] = { "Plushie", 0, -90, 0 },                       -- 正面朝 +x
+    -- 泰迪熊照原版大小比頭還大，縮到和 Spiffo 差不多高（約 0.2；使用者 2026-11-01）。手工泰迪熊正面朝 +x
+    ["Base.ToyBear"] = { "Plushie", 0, 0, 0, s = 0.55 },
+    ["Base.ToyBear_Crafted_Cotton"] = { "Plushie", 0, -90, 0, s = 0.6 }, ["Base.ToyBear_Crafted_Denim"] = { "Plushie", 0, -90, 0, s = 0.6 },
+    -- 69mini 的熊趴在地上（頭朝 +z、臉朝 -y、高 ±0.19 以原點置中、厚度在 0～+y）：立起來臉朝外，往上推半個身高、往外推半個厚度，縮到約 0.2 高
+    ["Base.69miniRupertBearWI"] = { "Plushie", -90, 0, 0, 0, 0.097, 0.025, s = 0.51 },
+    ["Base.69miniTeddyWI"] = { "Plushie", -90, 0, 0, 0, 0.098, 0.025, s = 0.51 },
     -- 原點在背面：往後推半個厚度，置中坐在包頂。扭扭蟲、布繩改借本 MOD 照抄的模型（scripts/MDB_AttachModels.txt，多了手骨掛點），
     -- 校正值和原本加在原版模型上時相同，掛在背包上的樣子不變
     ["MinidoracatBags.MDB_Plushabug"] = { "Plushie", 90, 90, 0, 0, 0, -0.045 },   -- 平趴、頭朝 +x：改成背殼朝外、頭朝上，像攀在包上
@@ -128,7 +152,7 @@ function MDB.attachTransform(anchor, pose)
 end
 
 -- 找到同名掛點就只改值（Lua 重載時 model 腳本可能還是同一份），沒有才加
-local function upsert(ms, id, bone, off, rot)
+local function upsert(ms, id, bone, off, rot, scale)
     local a = ms:getAttachmentById(id)
     if not a then
         a = ModelAttachment.new(id)
@@ -137,6 +161,7 @@ local function upsert(ms, id, bone, off, rot)
     if bone then a:setBone(bone) end
     a:getOffset():set(off[1], off[2], off[3])
     a:getRotate():set(rot[1], rot[2], rot[3])
+    a:setScale(scale or 1)
 end
 
 function MDB.installAttachClient()
@@ -146,17 +171,25 @@ function MDB.installAttachClient()
         if ms then
             MDB.eachAttachPose(function(fam, slot, pose)
                 local off, rot = MDB.attachTransform(ANCHOR[fam][sex][slot], POSE[pose])
-                upsert(ms, MDB.attachModelId(fam, slot, pose), "Bip01_BackPack", off, rot)
+                upsert(ms, MDB.attachModelId(fam, slot, pose), "Bip01_BackPack", off, rot, 1)   -- 參數傳齊：Kahlua 少傳的參數不一定是 nil（家族 pitfalls.md）
             end)
         end
     end
     for model, fix in pairs(FIX) do
         local ms = sm:getModelScript(model)
         if ms then
-            local off = { fix[5] or 0, fix[6] or 0, fix[7] or 0 }
+            local off, s = { fix[5] or 0, fix[6] or 0, fix[7] or 0 }, fix.s or 1
             MDB.eachAttachPose(function(fam, slot, pose)
-                if pose == fix[1] then upsert(ms, MDB.attachModelId(fam, slot, pose), nil, off, { fix[2], fix[3], fix[4] }) end
+                if pose == fix[1] then upsert(ms, MDB.attachModelId(fam, slot, pose), nil, off, { fix[2], fix[3], fix[4] }, s) end
             end)
+            -- 快捷列掛上、拿下的動作把 StaticModel 畫在手上（自身掛點取和手骨同名的 Bip01_Prop1／Prop2，AnimatedModel.java:1456-1472）：
+            -- 縮小的熊在手上也照同樣比例縮，只設縮放、不改位置方向
+            if fix.s then
+                for _, hand in ipairs({ "Bip01_Prop1", "Bip01_Prop2" }) do
+                    local a = ms:getAttachmentById(hand)
+                    if a then a:setScale(s) else upsert(ms, hand, nil, { 0, 0, 0 }, { 0, 0, 0 }, s) end
+                end
+            end
         end
     end
     for _, f in ipairs(MDB.ATTACH_FAMILIES) do
@@ -172,7 +205,7 @@ function MDB.installAttachClient()
     end
 end
 
--- 沒有欄位可掛時，原版把每個接受這個類型的定義各列一行（ISHotbar.lua:176-195）；四個家族同名的欄位會重複四次，這裡去掉重複的行。
+-- 沒有欄位可掛時，原版把每個接受這個類型的定義各列一行（ISHotbar.lua:176-195）；每個家族同名的欄位各列一次，這裡去掉重複的行。
 -- 第一行前面帶著 <INDENT:20>，比對時去掉。
 local doMenuFromInventory = ISHotbar.doMenuFromInventory
 function ISHotbar.doMenuFromInventory(playerNum, item, context)

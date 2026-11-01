@@ -506,7 +506,8 @@ local function suite()
         INV.items, env.sent = {}, {}
         SandboxVars = { MinidoracatBags = { MaxTier = maxTier } }
         local shell = INV:AddItem(newBag("BagUpgradePlus.HydrationBackpackPlus", 49, 100, 1.0, 5.0))
-        shell.fc.amount, shell.contents, shell.md = 5.0, { "bandage" }, { note = "kept" }
+        -- 管理員新生成的外殼：腳本說明寫進了 modData（Item.java:1845），copyClothingItem 整份搬過去
+        shell.fc.amount, shell.contents, shell.md = 5.0, { "bandage" }, { note = "kept", Tooltip = "Tooltip_MDB_LegacyBag" }
         shell.name, shell.custom = "My Plus", true
         MDB.onConvertLegacy(keepData(shell), PLAYER)
         return INV.items[1], shell
@@ -520,6 +521,8 @@ local function suite()
         new.contents[1] == "bandage" and new.md.note == "kept" and new.name == "My Plus" and new.custom == true
         and shell.container == nil
         and #env.sent == 1 and env.sent[1][1] == INV and env.sent[1][2] == shell and env.sent[1][3] == new)
+    check("改裝：外殼 modData 裡的舊說明不帶到強化版（照強化版腳本的說明），其他 modData 照搬",
+        new.md.Tooltip == nil and new.md.note == "kept")
     env.server = false
     new = convertWater(0)
     check("改裝（MaxTier 0）：強化版第 0 階＝水袋組的起始值 12／85；照公式 3.0 升裝不下舊水袋的 5 升，容量留 5 升、水不少",
@@ -664,6 +667,7 @@ if arg and arg[1] == "--mutants" then
         { name = "翻譯缺外殼名稱", file = "/EN/ItemName.json", from = '"BagUpgradePlus.MoneyBagPlus"', to = '"BagUpgradePlus.MoneyBagPlusX"' },
         { name = "原版掉落表寫到外殼名稱", file = "ProceduralDistributions.lua", from = '"PopBottleEmpty", 4,', to = '"PopBottleEmpty", 4,\n"WaterPopBottle", 1,' },
         { name = "原版掉落表寫到外殼名稱加 Empty", file = "ProceduralDistributions.lua", from = '"PopBottleEmpty", 4,', to = '"PopBottleEmpty", 4,\n"WaterPopBottleEmpty", 1,' },
+        { name = "換型帶著舊說明", file = "MDB_Upgrade.lua", from = "        md.Tooltip = nil\n", to = "" },
     }
     rawPrint("== 突變（每個都應至少讓一項 FAIL）")
     local survived = 0

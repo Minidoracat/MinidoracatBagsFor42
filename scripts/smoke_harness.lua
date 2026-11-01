@@ -61,7 +61,7 @@ local function vec() return { set = function() end } end
 ModelAttachment = { new = function(id)
     modelAttachments = modelAttachments + 1
     local off, rot = vec(), vec()
-    return { setBone = function() end, getOffset = function() return off end, getRotate = function() return rot end }
+    return { setBone = function() end, getOffset = function() return off end, getRotate = function() return rot end, setScale = function() end }
 end }
 function getScriptManager()
     return {
@@ -139,14 +139,15 @@ check(nThemed == 44 and nSources == 80, string.format("載入時建好主題強�
 check(type(MDB_WearFromFloor) == "table" and MDB_WearFromFloor.Type == "MDB_WearFromFloor", "計時動作 MDB_WearFromFloor 是同名全域")
 check(humanGroup[1] == SATCHEL2 and ISWearClothing.WalkBodyLocations[1] == SATCHEL2,
     "載入時第二個側背包位置加進 Human 群組、可以邊走邊穿脫")
-local nLoc, nFix = 0, 0
+local nLoc, nFix, nHeld = 0, 0, 0
 for _ in pairs(locations) do nLoc = nLoc + 1 end
-for _, fix in pairs(MDB.ATTACH_FIX or {}) do   -- 模型自身校正：每個模型在它那種擺法的每個掛點各一個
+for _, fix in pairs(MDB.ATTACH_FIX or {}) do   -- 模型自身校正：每個模型在它那種擺法的每個掛點各一個；有縮放的另有左右手骨各一個
     MDB.eachAttachPose(function(_, _, pose) if pose == fix[1] then nFix = nFix + 1 end end)
+    if fix.s then nHeld = nHeld + 2 end
 end
-check(nLoc > 0 and #ISHotbarAttachDefinition > 0 and nFix > 0 and modelAttachments == 2 * nLoc + nFix and doParams > 0,
-    string.format("載入時登記掛點：%d 個 AttachedLocation、%d 個快捷列定義、%d 個模型掛點（身體 %d＋自身校正 %d）、%d 次 DoParam",
-        nLoc, #ISHotbarAttachDefinition, modelAttachments, 2 * nLoc, nFix, doParams))
+check(nLoc > 0 and #ISHotbarAttachDefinition > 0 and nFix > 0 and modelAttachments == 2 * nLoc + nFix + nHeld and doParams > 0,
+    string.format("載入時登記掛點：%d 個 AttachedLocation、%d 個快捷列定義、%d 個模型掛點（身體 %d＋自身校正 %d＋手上縮放 %d）、%d 次 DoParam",
+        nLoc, #ISHotbarAttachDefinition, modelAttachments, 2 * nLoc, nFix, nHeld, doParams))
 
 -- ===== 情境二：各部分的離線測試，含植入違規 =====
 print("情境二：離線測試")

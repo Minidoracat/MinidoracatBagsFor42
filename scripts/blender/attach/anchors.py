@@ -1,4 +1,4 @@
-"""強化版背包額外掛點的位置（掛點骨頭 Bip01_BackPack 空間）：讀原版穿戴 .X 的網格與骨頭反綁定矩陣，射線找包身表面。
+"""強化版背包額外掛點的位置（掛點骨頭 Bip01_BackPack 空間）：讀穿戴 .X（原版與本 MOD 日行、遠征框架背包）的網格與骨頭反綁定矩陣，射線找包身表面。
 uv run --no-project --with numpy python scripts/blender/attach/anchors.py        印出每個網格、男女、每個掛點的座標（Lua 表）
 
 骨頭空間（反綁定矩陣換算，xio.read_x 的 sw[骨名][2]；頂點列向量 × 矩陣）：+x 離開背部朝外、+y 角色左邊、+z 往上。
@@ -15,17 +15,21 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."
 import xio  # noqa: E402
 
 X = "D:/SteamLibrary/steamapps/common/ProjectZomboid/media/models_X/Skinned/BackPacks/"
+MOD_X = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "MOD", "MinidoracatBagsFor42", "Contents", "mods",
+                     "MinidoracatBagsFor42", "42", "media", "models_X", "Skinned", "BackPacks", "")
 MESH = {  # 家族 → (男, 女) 穿戴網格；旅行登山包用一般登山包的網格（Bag_HikingBag_Travel.xml）
-    "Alice": ("M_ALICE_Pack.x", "F_ALICE_Pack.x"),
-    "Duffel": ("M_Duffelbag.x", "F_DuffelBag.x"),
-    "Hiking": ("M_HikingBag.x", "F_HikingBag.x"),
-    "BigHiking": ("M_BigHikingBag.x", "F_BigHikingBag.x"),
+    "Alice": (X + "M_ALICE_Pack.x", X + "F_ALICE_Pack.x"),
+    "Duffel": (X + "M_Duffelbag.x", X + "F_DuffelBag.x"),
+    "Hiking": (X + "M_HikingBag.x", X + "F_HikingBag.x"),
+    "BigHiking": (X + "M_BigHikingBag.x", X + "F_BigHikingBag.x"),
+    "DayPack": (MOD_X + "MDB_DayPack_M.X", MOD_X + "MDB_DayPack_F.X"),
+    "Expedition": (MOD_X + "MDB_ExpeditionPack_M.X", MOD_X + "MDB_ExpeditionPack_F.X"),
 }
 BONE = "Bip01_BackPack"
 
 
 def body(path):
-    d = xio.read_x(X + path)
+    d = xio.read_x(path)
     idx, w, ibm = d["sw"][BONE]
     L = (np.c_[d["V"], np.ones(len(d["V"]))] @ ibm)[:, :3]
     wb = np.zeros(len(L))

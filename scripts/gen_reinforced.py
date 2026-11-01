@@ -86,6 +86,10 @@ THEME_WORDS = {
     "JP": (True, "アンブレラ"), "KO": (True, "엄브렐라"), "PL": (False, UMBRELLA), "PT": (False, UMBRELLA),
     "PTBR": (False, UMBRELLA), "RU": (False, "«Амбрелла»"), "TR": (True, UMBRELLA),
 }
+# 主題款的名稱照代表款在各語言的名稱，這裡是例外（語言, 代表款）→ 名稱。
+# 繁中 ALICE 形狀：LangFor42 的 4 款原版有 3 款叫「軍用背包」，代表款 Bag_ALICEpack 卻叫「大型背包」，玩家升級軍用背包後
+# 找不到自己的背包；英日韓的強化版本來就叫軍用背包。使用者 2026-11-01 裁定改名
+BASE_NAME = {("CH", "Base.Bag_ALICEpack"): "軍用背包"}
 LANGS = sorted(MARK)
 CN_FONTS = ("zomboidSmallChinese.fnt", "zomboidMediumChinese.fnt", "zomboidLargeChinese.fnt")   # fonts/CN/fonts.txt 的六種 UI 字型
 CN_AVOID = "刚满这该顶数时级"   # 本 MOD 簡中譯文已知要避開的缺字
@@ -540,7 +544,7 @@ def build(mirror_path):
         p = os.path.join(TRANSLATE, lang, "ItemName.json")
         d = {k: v for k, v in json.loads(read(p)).items() if not (k.startswith(MODULE + ".") and k.endswith(SUFFIX))}
         for full, src, theme in names:
-            base = names_for(src, lang)
+            base = BASE_NAME.get((lang, src)) or names_for(src, lang)
             d[full] = (with_theme(lang, theme, base) if theme else base) + MARK[lang]
             if lang == "CN" and any(c in d[full] for c in CN_AVOID):
                 cn_bad.append(f"{full}：{d[full]}")
