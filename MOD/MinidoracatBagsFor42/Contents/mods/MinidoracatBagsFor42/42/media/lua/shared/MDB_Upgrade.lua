@@ -186,8 +186,8 @@ local function sendReplace(cont, old, new)
         local outer = cont:getContainingItem()
         local up = outer and outer:getContainer()
         if not up then break end
-        local part = up:getVehiclePart()
-        if part then vehicle = part:getVehicle() break end
+        -- 部位容器的 parent 就是那台車（VehiclePart.java:90-94）
+        if up:getVehiclePart() then vehicle = up:getParent() break end
         cont, old, new = up, outer, outer
     end
     if vehicle then cont:setParent(vehicle) end
@@ -435,6 +435,7 @@ Events.OnServerCommand.Add(MDB.onServerCommand)
 -- 新背包先放進同一個容器再搬：中途出錯時內容物分在兩個背包裡，不會落在沒有容器的物品上。
 -- 伺服器最後只送一次 replace：客戶端依舊 ID 移除、加入整件新背包，並換掉動作佇列裡的舊參照
 -- （ReplaceInventoryItemInContainerPacket.java:57-82）；單機改呼叫 replaceItemInContainer 換動作佇列（LuaManager.java:12428-12435）。
+-- 背包裡的背包見 sendReplace：可能改送外層背包，那時動作佇列只換外層背包的參照。
 -- 地上（含桌面）的背包：Neat Crafting 的「製作」不先搬進物品欄（NC_CraftActionPanel.lua:269-296），背包直接當輸入。
 -- 伺服器重建的地面容器不設物品的 container（ContainerID.java:351-355、:525-534），單機則是背包面板的地面容器，
 -- 兩種都改成在同一格同一位置放新的世界物品（先不送），做完再照原版撿起的寫法移除舊的（ISTransferAction.lua:134-162）、送出新的

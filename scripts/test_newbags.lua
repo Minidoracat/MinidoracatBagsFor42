@@ -1222,7 +1222,7 @@ local function suite()
     end
     local VEH = {}
     local trunk, crate = newContainer(), newContainer()
-    trunk.parent, trunk.part, crate.parent = VEH, { getVehicle = function() return VEH end }, {}
+    trunk.parent, trunk.part, crate.parent = VEH, {}, {}
     local a, inner, b = bagIn(CONTAINER)
     inner.character = PLAYER
     env.sent = {}; MDB.applyTier(b, 1)
@@ -2510,7 +2510,7 @@ if arg and arg[1] == "--mutants" then
         { name = "玩家身上背包裡的也往外找", file = "UPG", from = ' or instanceof(cont:getCharacter(), "IsoPlayer")) do', to = ") do" },
         { name = "車上背包裡的不借車當 parent", file = "UPG", from = "    if vehicle then cont:setParent(vehicle) end\n", to = "" },
         { name = "借來的 parent 沒拿掉", file = "UPG", from = "    if vehicle then cont:setParent(nil) end\n", to = "" },
-        { name = "車上背包裡的整件重送外層", file = "UPG", from = "        if part then vehicle = part:getVehicle() break end\n", to = "" },
+        { name = "車上背包裡的整件重送外層", file = "UPG", from = "        if up:getVehiclePart() then vehicle = up:getParent() break end\n", to = "" },
         { name = "單機也重送", file = "UPG", from = "if isServer() and not holdSend then", to = "if not holdSend then" },
         { name = "地上升階不重送", file = "UPG", from = 'sendServerCommand("MinidoracatBags", "floorTier", args)', to = 'type("MinidoracatBags", "floorTier", args)' },
         { name = "地上升階送出時階級沒更新", file = "UPG", from = "id = bag:getID(), tier = tier,", to = "id = bag:getID(), tier = tier - 1," },
