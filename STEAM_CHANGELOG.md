@@ -1,20 +1,22 @@
-[h1]Minidoracat Bags for B42 42.21.0-0.4.0[/h1]
-[i]2026-11-02[/i]
+[h1]Minidoracat Bags for B42 42.22.2-0.4.1[/h1]
+[i]2026-11-10[/i]
 
-[h3]✨ 新增[/h3]
+[b]English summary[/b]
 [list]
-[*] [b]日行背包、遠征框架背包的強化版也有掛點[/b]：穿上強化版日行背包，快捷列會多出和強化版登山包一樣的掛點，可以掛工具、水瓶、玩偶、雨傘、鋸子與手電筒。強化版遠征框架背包和強化版大登山包一樣。睡袋掛點照舊，還沒升級的原款沒有。其他玩家也看得到你掛的東西。
-[*] [b]玩偶扣環變成上下兩個[/b]：有額外掛點的強化版（軍用背包、行李袋、登山包、大登山包、日行背包、遠征框架背包），包面下緣正中多一個玩偶扣環，一次可以掛兩隻玩偶。你原本的快捷列位置不變，新的扣環排在最後。
-[*] [b]泰迪熊與橡皮鴨也能掛[/b]：玩具熊、手工泰迪熊（棉布、粗麻布）與橡皮鴨可以掛在玩偶扣環。有裝 69 Mini 汽車 MOD 的話，它的 Rupert Bear 與 Teddy 也能掛。泰迪熊照原版大小會擋住整顆頭，所以掛在包上時縮到和 Spiffo 差不多大，放在地上照原版大小。
-[*] [b]說明會寫出哪些強化版有掛點[/b]：滑鼠停在有額外掛點的強化版上，說明多一段能掛哪些東西，不用穿上才知道。
-[/list]
-
-[h3]🔄 變更[/h3]
-[list]
-[*] [b]繁中名稱「大型背包（強化）」改成「軍用背包（強化）」[/b]：和英文名稱一致。已經升級的背包直接顯示新名稱，你自己取的名字不變。
+[*] Updated for Project Zomboid 42.22.2. Every feature was re-tested on 42.22.2, including taking over old Bag Upgrade Plus saves.
+[*] Multiplayer fix: a bag stored inside another bag in a car trunk or on a seat now updates right away after you upgrade it, swap its theme or convert it with a crafting UI that does not move the bag to your inventory first (for example Neat Crafting set to craft directly from nearby containers). Before, you had to relog to see the new tier and capacity.
+[*] Since 42.22, attacking while holding a bag with both hands drops it at your feet. This is vanilla behaviour and vanilla bags do the same. The dropped bag keeps its tier, capacity and contents.
+[*] Spanish (Latin America) names of 30 reinforced bags follow the vanilla names changed in 42.22.2.
 [/list]
 
 [h3]🔧 修正[/h3]
 [list]
-[*] [b]改裝後的背包，說明還是舊 Plus 背包那段[/b]：管理員新生成的舊 Plus 背包改裝成強化版後，滑鼠停上去仍顯示「舊 Plus 背包：要改裝成強化版才能繼續用……」。現在改裝、升級、換主題、改回原版後，說明都照新的背包。已經帶著舊說明的背包不會自動改。
+[*] [b]多人遊戲：車上背包裡的背包，升級後看起來沒變[/b]：把背包放在後車廂或座位上的另一個背包裡，用不會先把背包拿到身上的製作介面（例如 Neat Crafting 設成直接用附近容器裡的物品製作）直接升級、換主題或改裝時，東西其實已經換好，自己的畫面卻還是舊的階級、容量與舊背包，要重新登入才正確。現在做完立刻顯示新的。單人遊戲、原版製作介面，以及放在身上或地上的背包本來就正常，不受影響。
+[/list]
+
+[h3]🔄 變更[/h3]
+[list]
+[*] [b]對應 Project Zomboid 42.22.2[/b]：全部功能在 42.22.2 重新實機驗證過，包含接手 Bag Upgrade Plus 舊存檔。
+[*] [b]兩手拿著背包按攻擊，背包會掉到腳下[/b]：這是 42.22 起原版的行為，原版背包也一樣，不是本 MOD 造成的。掉下去的背包階級、容量與裡面的東西都不變，撿起來照常使用。
+[*] [b]西班牙文（拉丁美洲）的強化版名稱更新[/b]：42.22.2 改了 15 種原版背包的西班牙文（拉丁美洲）名稱，對應的 30 款強化版跟著改。其他語言不變。
 [/list]
