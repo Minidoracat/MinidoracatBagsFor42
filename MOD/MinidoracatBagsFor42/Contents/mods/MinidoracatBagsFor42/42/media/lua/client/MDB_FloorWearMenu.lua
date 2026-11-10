@@ -3,7 +3,7 @@
 MDB = MDB or {}
 
 -- 和原版搬移一樣用 hasRoomFor 判斷（單機 ISInventoryTransferAction.lua:110；MP 客戶端 isItemTransactionConsistent，
--- LuaManager.java:12139-12143、TransactionManager.java:278-292），未穿時重量是自重加全部內容物（InventoryItem.java:3425-3427）
+-- LuaManager.java:12138-12142、TransactionManager.java:256-270），未穿時重量是自重加全部內容物（InventoryItem.java:3446-3448）
 function MDB.needsFloorWear(chr, item)
     return instanceof(item, "InventoryContainer") and item:getWorldItem() ~= nil and item:canBeEquipped() ~= nil
         and not chr:getInventory():hasRoomFor(chr, item)

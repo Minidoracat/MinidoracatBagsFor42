@@ -1,11 +1,11 @@
 -- 強化版背包的額外快捷列掛點（Bag Upgrade Plus 的 AlicepackItemSlot1 這類掛點，改用本 MOD 自己的名稱）。
 -- 一個掛點要四層定義才會出現、掛得上、看得到：
---   1. 快捷列定義 ISHotbarAttachDefinition：穿著的背包提供的每個掛點類型，沒有定義就不建欄位（ISHotbar.lua:472-477）。client/MDB_AttachClient.lua。
+--   1. 快捷列定義 ISHotbarAttachDefinition：穿著的背包提供的每個掛點類型，沒有定義就不建欄位（ISHotbar.lua:473-478）。client/MDB_AttachClient.lua。
 --   2. AttachedLocations 的 Human 群組：掛點名稱 → 模型掛點名稱。伺服器與其他客戶端收到掛上封包時照名稱找，
 --      找不到就丟例外（GameCharacterAttachedItemPacket.java:102-123、AttachedLocationGroup.java:61-68），所以放 shared。
 --   3. FemaleBody／MaleBody 的模型掛點（骨頭、位置、旋轉）：client/MDB_AttachClient.lua。
 --   4. 強化版背包的 AttachmentsProvided：這裡在載入時用 DoParam 加。
--- 都在檔案載入時做：shared Lua 在腳本載入之後執行（Core.java:3928-3947、GameServer.java:1447、:1469）；
+-- 都在檔案載入時做：shared Lua 在腳本載入之後執行（Core.java:3519-3538、GameServer.java:1487、:1509）；
 -- MP 客戶端進服會連腳本一起重載再跑一次 Lua，所以每次都從原始腳本開始。
 MDB = MDB or {}
 
@@ -33,7 +33,7 @@ MDB.ATTACH_ACCEPTS = {
 -- （MDB_Upgrade.lua 的 MDB.THEME_SOURCES），一個網格就是一種形狀的兩件：Bag Upgrade Plus 有掛點的 28 款都在這 4 種形狀裡
 -- （旅行登山包用一般登山包的網格，原版 Bag_HikingBag_Travel.xml，歸 Hiking；BUP 把它歸大登山包，兩邊的掛點組合相同），
 -- 同網格、BUP 沒給掛點的 Bag_DuffelBagTINT 與 Bag_BigHikingBag_Travel 也併進來。base＝床捲掛點：DoParam 是整串取代
--- （Item.java:2410-2411），原版有的要接回去；書包原版沒有，照 Bag Upgrade Plus 的書包加上（它只多這一個、沒有額外掛點）。
+-- （Item.java:2415-2416），原版有的要接回去；書包原版沒有，照 Bag Upgrade Plus 的書包加上（它只多這一個、沒有額外掛點）。
 -- replacement＝穿著時背後欄位的長槍、大刀、鏟子等改用「with Bag」位置（ISHotbarAttachDefinition.lua:96-113）。原版行李袋沒有這欄，
 -- 背後的長槍會埋進包裡；Bag Upgrade Plus 的行李袋 Plus 都加了，照做。代價和原版背包一樣：穿著時吉他不能背（對到 "null"）。
 -- 本 MOD 的日行背包、遠征框架背包是自己的網格（使用者 2026-11-01 裁定加掛點，只加強化版）：組合照它們沿用欄位的登山包、大登山包，
@@ -61,10 +61,10 @@ MDB.ATTACH_FAMILIES = {
       bags = { "ExpeditionPack_Navy", "ExpeditionPack_Olive" },
       slots = { "Slot1", "Slot2", "Slot3", "BottleR", "BottleL", "Plushie", "Plushie2", "UmbrellaL", "Flashlight" } },
 }
--- 有額外掛點的強化版在提示框多一行說明（原版提示框不列掛點，ISHotbar.lua:472-477 是唯一讀 AttachmentsProvided 的地方）
+-- 有額外掛點的強化版在提示框多一行說明（原版提示框不列掛點，ISHotbar.lua:473-478 是唯一讀 AttachmentsProvided 的地方）
 MDB.ATTACH_TOOLTIP = "Tooltip_MDB_AttachSlots"
 
--- 原版物品掛得上去要有 AttachmentType（實例建立時從腳本複製，存檔不記，讀檔重新取：Item.java:1892、InventoryItem.java:1663-1873），
+-- 原版物品掛得上去要有 AttachmentType（實例建立時從腳本複製，存檔不記，讀檔重新取：Item.java:1897、InventoryItem.java:1667-1877），
 -- 掛上去畫的是 StaticModel（ModelManager.java:601-607），沒有就看不到。腳本沒有讀 AttachmentType 的 getter，所以清單只收原版沒有
 -- AttachmentType 的物品（test_attach.lua 對原版腳本核對）；類型名照 Bag Upgrade Plus 與常見掛點 MOD 的寫法，其他 MOD 的物品也掛得上。
 -- 只加這兩個欄位：不照 Bag Upgrade Plus 拿掉液體、開瓶配方、cookable 等欄位。
@@ -109,7 +109,7 @@ MDB.ATTACH_ITEMS = {
     -- 繩子
     ["Base.Rope"] = "Rope", ["Base.SheetRope"] = "SheetRope",
 }
--- 沒有 StaticModel 的物品借它自己的地面模型（腳本已解析完，要寫全名：Item.java:3177-3180、ScriptManager.java:1926-1941）。
+-- 沒有 StaticModel 的物品借它自己的地面模型（腳本已解析完，要寫全名：Item.java:3184-3187、ScriptManager.java:1926-1941）。
 -- 寫了不存在的模型也算沒有：解析結果是「???.名稱」（ScriptManager.java:1946），一樣畫不出來；Bag Upgrade Plus 覆寫的獾、兔、狐就是這樣。
 -- 快捷列掛上、拿下的動作會把 StaticModel 畫在手上：布繩、扭扭蟲改指向本 MOD 照抄的模型，多了手骨掛點（scripts/MDB_AttachModels.txt）
 MDB.ATTACH_STATIC = {

@@ -1,11 +1,11 @@
--- 戰利品：在 OnPreDistributionMerge 直接追加到原版清單（IsoWorld.java:1886 觸發，之後才 ItemPickerJava.Parse，:1901）。
--- 權重是每輪擲骰的百分比（ItemPickerJava.java:2091-2109），乘上沙盒 LootMultiplier；倍率 ≤ 0 不加。
+-- 戰利品：在 OnPreDistributionMerge 直接追加到原版清單（IsoWorld.java:1899 觸發，之後才 ItemPickerJava.Parse，:1914）。
+-- 權重是每輪擲骰的百分比（ItemPickerJava.java:2090-2108），乘上沙盒 LootMultiplier；倍率 ≤ 0 不加。
 -- 警局放 S.T.A.R.S.（_Navy），軍事與醫療放保護傘（_Olive）；露營用品店不放。
--- 專用伺服器開機時已讀入沙盒（GameServer.java:1481-1488），merge 時就是存檔值（bags-newbags-1025c 實測 ×2）。
--- 單機讀檔時 merge 早於 SandboxOptions.load()（IsoWorld.java:1896），讀到的是 continueLatestSave 先設的預設值：
+-- 專用伺服器開機時已讀入沙盒（GameServer.java:1521-1528），merge 時就是存檔值（bags-newbags-1025c 實測 ×2）。
+-- 單機讀檔時 merge 早於 SandboxOptions.load()（IsoWorld.java:1909），讀到的是 continueLatestSave 先設的預設值：
 -- bags-sandbox-sp-1025c 實測新遊戲 ×2、讀同一存檔變 ×1。所以單機在 OnInitGlobalModData 用存檔值重算一次
--- （IsoWorld.java:2009 GlobalModData.init → GlobalModData.java:54；在 load、toLua（SandboxOptions.java:966-981）之後，
--- 載入 chunk（IsoWorld.java:2188）之前），有改才重跑 ItemPickerJava.Parse()（先清空再重建，ItemPickerJava.java:137-143）。
+-- （IsoWorld.java:2022 GlobalModData.init → GlobalModData.java:54；在 load、toLua（SandboxOptions.java:962-977）之後，
+-- 載入 chunk（IsoWorld.java:2198）之前），有改才重跑 ItemPickerJava.Parse()（先清空再重建，ItemPickerJava.java:136-142）。
 MDB = MDB or {}
 
 local LOOT = {

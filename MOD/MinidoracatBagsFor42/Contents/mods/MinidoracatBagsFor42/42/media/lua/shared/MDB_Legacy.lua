@@ -2,7 +2,7 @@
 -- MDB.opt、MDB.applyTier、MDB.toReinforced、MDB.reinforcedOf 在 MDB_Upgrade.lua；這裡只在呼叫時用到，不受載入順序影響。
 MDB = MDB or {}
 
--- AcceptItemFunction（ItemContainer.isItemAllowed，ItemContainer.java:296-304）：
+-- AcceptItemFunction（ItemContainer.isItemAllowed，ItemContainer.java:298-306）：
 -- LockLegacyBags 明確為 false 才放行；讀不到沙盒時 MDB.opt 退回預設 true，也就是鎖住。
 function MDB.acceptLegacy(container, item)
     return MDB.opt("LockLegacyBags") == false
@@ -51,7 +51,7 @@ MDB.LEGACY_TARGET = {
     ["ExtraCraft.SheetSlingBagPlus"] = "Base.Bag_SheetSlingBag",
 }
 
--- 改裝配方 OnCreate（只在單機或伺服器執行，ISHandcraftAction.lua:221-234）：舊背包換成對應原版的強化版、直接給最高階；
+-- 改裝配方 OnCreate（只在單機或伺服器執行，ISHandcraftAction.lua:225-238）：舊背包換成對應原版的強化版、直接給最高階；
 -- 內容物、modData、液體（舊水袋 5 升）照 MDB.swapBag 搬過去，原款記成對應的原版（還原時換回它）
 function MDB.onConvertLegacy(data, character)
     local bag = MDB.keepBag(data)
@@ -61,7 +61,7 @@ end
 
 -- 強化版布吊帶包直接製作（BUP 的 MakeSheetSlingBagPlus 同材料）：配方 RemoveResultItems 不產出，這裡自己建。
 -- 還沒放進容器時套最高階（applyTier 不重送），再放進主物品欄（自重 0.1，超重也不丟地上），伺服器整件送一次
--- （AddInventoryItemToContainerPacket.java:54-58；sendAddItemToContainer 只在伺服器有作用，LuaManager.java:12370-12374）
+-- （AddInventoryItemToContainerPacket.java:54-58；sendAddItemToContainer 只在伺服器有作用，LuaManager.java:12356-12360）
 function MDB.onMakeReinforcedSling(data, character)
     local bag = instanceItem(MDB.reinforcedOf("Base.Bag_SheetSlingBag"))
     MDB.applyTier(bag, MDB.opt("MaxTier"))

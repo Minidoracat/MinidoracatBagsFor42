@@ -1,5 +1,5 @@
 -- 放入限制（AcceptItemFunction，簽名 (container, item)）。函式名解析不到時容器會照收任何物品
--- （ItemContainer.java:296-304），名稱由 scripts/test_newbags.lua 檢查。
+-- （ItemContainer.java:298-306），名稱由 scripts/test_newbags.lua 檢查。
 MDB = MDB or {}
 
 -- 醫療腰包：只收急救類（繃帶、消毒水、藥品）

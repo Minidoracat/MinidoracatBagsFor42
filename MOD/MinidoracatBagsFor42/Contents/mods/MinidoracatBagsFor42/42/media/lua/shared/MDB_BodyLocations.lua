@@ -1,6 +1,6 @@
 -- 第二個側背包位置（registries.lua 註冊）加進人物的穿戴位置群組。
 -- 沒加進群組就穿，BodyLocationGroup.isMultiItem 會空指標錯誤（BodyLocationGroup.java:116-119）。
--- 群組在重載 Lua 前被清空（Core.java:3896），原版 NPCs/BodyLocations.lua 載入時重建，所以這裡每次載入都接在它後面加；
+-- 群組在重載 Lua 前被清空（Core.java:3487），原版 NPCs/BodyLocations.lua 載入時重建，所以這裡每次載入都接在它後面加；
 -- 不 reset、不重建整個群組，原版與其他 MOD 的位置與規則都不動。
 -- 位置在群組裡的順序就是繪製順序（WornItems.java:68-81），排在原版側背包（base:satchel）後面，兩個側背包畫的層次相同。
 -- 原版側背包沒有任何互斥或隱藏規則（BodyLocations.lua:104 只加進群組），這個位置也不設，和原版側背包一樣。

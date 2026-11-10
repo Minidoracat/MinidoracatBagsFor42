@@ -82,7 +82,7 @@ local POSE = {
 }
 -- 不照上面慣例做的物品模型：在那個 model 腳本上加同名掛點當自身校正。
 -- 掛上去時 parent 與 self 用同一個掛點名（ModelManager.java:601-607），變換是 骨頭·身體掛點·自身掛點·網格
--- （AnimatedModel.java:1455-1484；invertAttachmentSelfTransform 從來沒被設成 true，自身掛點照原樣乘）。
+-- （AnimatedModel.java:1459-1488；invertAttachmentSelfTransform 從來沒被設成 true，自身掛點照原樣乘）。
 -- FIX[model 全名] = { 擺法, rx, ry, rz, ox, oy, oz, s = 縮放 }：只加在那個擺法的掛點上；位移在擺法轉過之後的座標裡（同上面的慣例座標），
 -- 給原點不在握點或背面的模型補回去。s 沒寫就是 1（自身掛點的變換是 位移·旋轉·縮放，ModelInstanceRenderData.java:106-111）；
 -- 有寫 s 的模型拿在手上也照同樣比例縮（見 installAttachClient）。
@@ -182,7 +182,7 @@ function MDB.installAttachClient()
             MDB.eachAttachPose(function(fam, slot, pose)
                 if pose == fix[1] then upsert(ms, MDB.attachModelId(fam, slot, pose), nil, off, { fix[2], fix[3], fix[4] }, s) end
             end)
-            -- 快捷列掛上、拿下的動作把 StaticModel 畫在手上（自身掛點取和手骨同名的 Bip01_Prop1／Prop2，AnimatedModel.java:1456-1472）：
+            -- 快捷列掛上、拿下的動作把 StaticModel 畫在手上（自身掛點取和手骨同名的 Bip01_Prop1／Prop2，AnimatedModel.java:1460-1476）：
             -- 縮小的熊在手上也照同樣比例縮，只設縮放、不改位置方向
             if fix.s then
                 for _, hand in ipairs({ "Bip01_Prop1", "Bip01_Prop2" }) do

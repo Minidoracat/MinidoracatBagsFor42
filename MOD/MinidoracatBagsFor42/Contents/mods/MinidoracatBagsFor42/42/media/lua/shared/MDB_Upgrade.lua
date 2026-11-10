@@ -140,7 +140,7 @@ local DEFAULTS = {
 }
 
 -- 沙盒值；SandboxVars 還沒有本 MOD 的表時（例如單機 OnPreDistributionMerge 早於 SandboxOptions.load，
--- IsoWorld.java:1886、:1896）退回 sandbox-options.txt 的預設值。
+-- IsoWorld.java:1899、:1909）退回 sandbox-options.txt 的預設值。
 function MDB.opt(name)
     local o = SandboxVars and SandboxVars.MinidoracatBags
     local v = o and o[name]
@@ -162,8 +162,8 @@ local function settingsKey()
 end
 
 -- 第 t 階（共 m 階）的容量與負重減輕：base + round((full - base) * t / m)，round(x) = floor(x + 0.5)；全用整數算，免浮點誤差。
--- 上限＝50 減背包自重：腳本載入與 tooltip 都壓在這裡（Item.java:2493-2499、InventoryContainer.java:125-131），
--- 原本的 Plus 背包就是 49。自重取腳本值（Item.java:533）：伺服器上 getActualWeight() 會回 0（顯示名稱等於全名時，InventoryItem.java:2740-2742）
+-- 上限＝50 減背包自重：腳本載入與 tooltip 都壓在這裡（Item.java:2498-2504、InventoryContainer.java:125-131），
+-- 原本的 Plus 背包就是 49。自重取腳本值（Item.java:534）：伺服器上 getActualWeight() 會回 0（顯示名稱等於全名時，InventoryItem.java:2755-2757）
 local function tierValues(bag, base, baseWr, t, m, pct, limit, fullWr)
     local function step(b, full) return b + math.floor(((full - b) * t * 2 + m) / (2 * m)) end
     local top = math.floor(50 - bag:getScriptItem():getActualWeight())
@@ -190,7 +190,7 @@ function MDB.applyTier(bag, tier)
     bag:setCapacity(cap)
     bag:setWeightReduction(wr)
     -- 液體容量存在 FluidContainer 元件（GameEntity.java:183、FluidContainer.java:683、存檔 :1202-1205）；
-    -- 放在地上時元件搬到世界物品上（IsoWorldInventoryObject.java:103-105，撿起時搬回 :650-653）
+    -- 放在地上時元件搬到世界物品上（IsoWorldInventoryObject.java:103-105，撿起時搬回 :648-651）
     local fc, fluid, keptWater = bag:getFluidContainerFromSelfOrWorldItem(), nil, false
     if fc then
         if md.MDB_fluid == nil then md.MDB_fluid = fc:getCapacity() end
@@ -206,11 +206,11 @@ function MDB.applyTier(bag, tier)
     md.MDB_tier, md.MDB_max, md.MDB_cfg = tier, maxTier, (not keptWater) and settingsKey() or nil
     local args = { id = bag:getID(), tier = tier, max = maxTier, cfg = md.MDB_cfg, cap = cap, wr = wr, fluid = fluid,
         baseCap = md.MDB_cap, baseWr = md.MDB_wr, baseFluid = md.MDB_fluid }
-    -- 客戶端的容量與負重減輕要整件重送才會更新；單機無作用（LuaManager.java:12404-12412、RecipeCodeOnCreate.java:892-894）。
-    -- 地上（含桌面）的背包在伺服器上沒有 container（ContainerID.java:392-396），改用伺服器指令把新數值送給客戶端，
+    -- 客戶端的容量與負重減輕要整件重送才會更新；單機無作用（LuaManager.java:12390-12398、RecipeCodeOnCreate.java:889-891）。
+    -- 地上（含桌面）的背包在伺服器上沒有 container（ContainerID.java:351-355），改用伺服器指令把新數值送給客戶端，
     -- 由 MDB.onServerCommand 套在客戶端原本那件上。不用世界物品的 SWAP_ITEM：它在客戶端換成新物件（IsoWorldInventoryObject.java:115-153），
     -- 不像容器的 replace 會換動作佇列裡的參照（ReplaceInventoryItemInContainerPacket.java:76-81），排好的搬移會被當成東西不在而跳過
-    -- （ItemContainer.java:634-635、ISInventoryTransferAction.lua:36-40）；原版也沒有帶容量與負重減輕的物品同步封包。
+    -- （ItemContainer.java:693-694、ISInventoryTransferAction.lua:36-40）；原版也沒有帶容量與負重減輕的物品同步封包。
     if isServer() and not holdSend then
         local wi, container = bag:getWorldItem(), bag:getContainer()
         if wi then
@@ -264,7 +264,7 @@ end
 
 -- 原版換穿寫進存檔的名字（ISClothingExtraAction.lua:76-79 把舊物品的 getName() 當成改名寫進新物品；檔尾的包裝不再留下）：
 -- 這件或換穿對象（ClothingItemExtra）的顯示名稱或物品全名（專用伺服器上本 MOD 物品的顯示名稱就是全名），外面包零到多層
--- getName() 的染血、壞掉、磨損字樣（IGUI_ClothingNaming，InventoryItem.java:2448-2480；每換穿一次包一層）。字樣與顯示名稱照這台的語言比。
+-- getName() 的染血、壞掉、磨損字樣（IGUI_ClothingNaming，InventoryItem.java:2463-2495；每換穿一次包一層）。字樣與顯示名稱照這台的語言比。
 -- 玩家打的名字（含舊版換穿弄丟旗標的）不是這個樣子，留著
 local NAME_MARK = "\1"
 local function isVanillaSwapName(bag, name)
@@ -301,7 +301,7 @@ local function isVanillaSwapName(bag, name)
     return false
 end
 
--- 沒改過名、名字是原版換穿寫進的背包設回原名（和原名相同就不存不送，InventoryItem.java:1711-1714）；改了傳回 true
+-- 沒改過名、名字是原版換穿寫進的背包設回原名（和原名相同就不存不送，InventoryItem.java:1715-1718）；改了傳回 true
 local function fixSwapName(bag)
     local orig, name = bag:getScriptItem():getDisplayName(), bag:getDisplayName()
     if bag:isCustomName() or name == orig or not isVanillaSwapName(bag, name) then return false end
@@ -324,10 +324,10 @@ local function refreshAll(container, player)
     end
 end
 
--- 伺服器（OnClientCommand，GameServer.java:2313；player 由連線決定，:2285）：客戶端進場後要求重算自己身上的背包。
+-- 伺服器（OnClientCommand，GameServer.java:2335；player 由連線決定，:2307）：客戶端進場後要求重算自己身上的背包。
 -- 只看送出者自己的物品欄，數值照伺服器的沙盒算，沒過期的不動。每次請求都要走完整個物品欄，同一位玩家 5 秒內只受理一次。
 -- 鍵用名稱加 onlineID：Steam 主持模式只擋同一個 SteamID、不擋同名（LoginPacket.java:78-91）。
--- getTimestampMs 是牆上時鐘（LuaManager.java:9292-9295），時間往回調時照常受理
+-- getTimestampMs 是牆上時鐘（LuaManager.java:9228-9231），時間往回調時照常受理
 local REFRESH_COOLDOWN_MS = 5000
 local lastRefresh = {}
 function MDB.onClientCommand(module, command, player, args)
@@ -341,7 +341,7 @@ end
 Events.OnClientCommand.Add(MDB.onClientCommand)
 
 -- MP 客戶端進場時還不能送指令：GameClient.ingame 要到第一次 UpdateStuff 才設（IngameState.java:568），之前送會走單機的路
--- （LuaManager.java:8936-8949）。OnTick 在同一幀的 UpdateStuff 之後（:1559、:1654），只掛一次，送出就拿掉
+-- （LuaManager.java:8872-8885）。OnTick 在同一幀的 UpdateStuff 之後（:1558、:1653），只掛一次，送出就拿掉
 local function requestRefresh()
     Events.OnTick.Remove(requestRefresh)
     sendClientCommand(getPlayer(), "MinidoracatBags", "refreshBags", {})
@@ -361,7 +361,7 @@ end
 Events.OnGameStart.Add(MDB.onGameStart)
 
 -- 開局後才加入的分割畫面玩家（OnCreatePlayer，AddCoopPlayer.java:162）：MP 這時已完成加入握手（:140-162），可以直接送。
--- 主玩家（第 0 位）的 OnCreatePlayer 太早（GameLoadingState.java:429，MP 還送不出指令），交給 OnGameStart
+-- 主玩家（第 0 位）的 OnCreatePlayer 太早（GameLoadingState.java:433，MP 還送不出指令），交給 OnGameStart
 function MDB.onCreatePlayer(index, player)
     if index == 0 then return end
     if isClient() then
@@ -373,7 +373,7 @@ end
 Events.OnCreatePlayer.Add(MDB.onCreatePlayer)
 
 -- 客戶端：套用伺服器算好的數值。階級與基準也寫進 modData：OnTest 在客戶端用 MDB_tier 判斷下一階。
--- 伺服器指令走 RELIABLE、不保證順序（GameServer.java:3497-3522 的 ClientCommand 封包，PacketTypes.java:510），比現在低的是晚到的舊指令，不套
+-- 伺服器指令走 RELIABLE、不保證順序（GameServer.java:3507-3532 的 ClientCommand 封包，PacketTypes.java:508），比現在低的是晚到的舊指令，不套
 local function setTier(bag, args)
     local md = bag:getModData()
     if (md.MDB_tier or 0) > args.tier then return end
@@ -385,9 +385,9 @@ local function setTier(bag, args)
     if fc then fc:setCapacity(args.fluid) end
 end
 
--- 客戶端（OnServerCommand，GameClient.java:1071）：floorTier＝伺服器在地上原地升階，照 ID 找那一格的世界物品，寫在同一個物件上，
+-- 客戶端（OnServerCommand，GameClient.java:993）：floorTier＝伺服器在地上原地升階，照 ID 找那一格的世界物品，寫在同一個物件上，
 -- 排好的動作與開著的背包面板照舊指著它；那一格沒載入就不管，區塊載入時拿到的是伺服器存的那份。
--- bagTier／bagName＝進場重算，照 ID 在本機玩家的物品欄（含背包裡）找（ItemContainer.java:3094-3108），穿著的也在主物品欄裡
+-- bagTier／bagName＝進場重算，照 ID 在本機玩家的物品欄（含背包裡）找（ItemContainer.java:3125-3150，42.22 起最多往下 16 層），穿著的也在主物品欄裡
 function MDB.onServerCommand(module, command, args)
     if module ~= "MinidoracatBags" then return end
     if command == "floorTier" then
@@ -412,11 +412,11 @@ Events.OnServerCommand.Add(MDB.onServerCommand)
 -- copyClothingItem 搬內容物（同一批物件，ID 不變）、外觀、改名、顏色、耐久、最愛、液體與 modData（ISClothingExtraAction.lua:62-112）。
 -- 新背包先放進同一個容器再搬：中途出錯時內容物分在兩個背包裡，不會落在沒有容器的物品上。
 -- 伺服器最後只送一次 replace：客戶端依舊 ID 移除、加入整件新背包，並換掉動作佇列裡的舊參照
--- （ReplaceInventoryItemInContainerPacket.java:57-82）；單機改呼叫 replaceItemInContainer 換動作佇列（LuaManager.java:12442-12449）。
+-- （ReplaceInventoryItemInContainerPacket.java:57-82）；單機改呼叫 replaceItemInContainer 換動作佇列（LuaManager.java:12428-12435）。
 -- 地上（含桌面）的背包：Neat Crafting 的「製作」不先搬進物品欄（NC_CraftActionPanel.lua:269-296），背包直接當輸入。
--- 伺服器重建的地面容器不設物品的 container（ContainerID.java:392-396、:566-575），單機則是背包面板的地面容器，
--- 兩種都改成在同一格同一位置放新的世界物品（先不送），做完再照原版撿起的寫法移除舊的（ISTransferAction.lua:131-159）、送出新的
--- （IsoGridSquare.java:6141-6143）。
+-- 伺服器重建的地面容器不設物品的 container（ContainerID.java:351-355、:525-534），單機則是背包面板的地面容器，
+-- 兩種都改成在同一格同一位置放新的世界物品（先不送），做完再照原版撿起的寫法移除舊的（ISTransferAction.lua:134-162）、送出新的
+-- （IsoGridSquare.java:6132-6134）。
 function MDB.swapBag(old, newType, tier, character)
     local wi = old:getWorldItem()
     local cont = old:getContainer()
@@ -428,7 +428,7 @@ function MDB.swapBag(old, newType, tier, character)
     local fluid = nfc and nfc:getCapacity()
     if wi then
         wi:getSquare():AddWorldInventoryItem(new, wi:getOffX(), wi:getOffY(), wi:getOffZ(), false)
-        -- 「放置」擺的方向與不被地上物品清除的旗標存在舊的那份上（ISDropWorldItemAction.lua:81-87、IsoGridSquare.java:3223-3240），照搬
+        -- 「放置」擺的方向與不被地上物品清除的旗標存在舊的那份上（ISDropWorldItemAction.lua:81-87、IsoGridSquare.java:3208-3225），照搬
         new:setWorldXRotation(old:getWorldXRotation())
         new:setWorldYRotation(old:getWorldYRotation())
         new:setWorldZRotation(old:getWorldZRotation())
@@ -442,12 +442,12 @@ function MDB.swapBag(old, newType, tier, character)
         copyClothingItem(old, new)
         local md = new:getModData()
         md.MDB_cap, md.MDB_wr, md.MDB_fluid = cap, wr, fluid
-        -- 說明照新背包的腳本：getTooltip() 先讀 modData 的 Tooltip（InventoryItem.java:3134-3136），新生成的物品會把腳本的說明寫進去
-        -- （Item.java:1845），copyClothingItem 又把整份 modData 換成舊背包的（InventoryItem.java:3003-3011）。不拿掉的話，舊背包的說明
+        -- 說明照新背包的腳本：getTooltip() 先讀 modData 的 Tooltip（InventoryItem.java:3155-3157），新生成的物品會把腳本的說明寫進去
+        -- （Item.java:1850），copyClothingItem 又把整份 modData 換成舊背包的（InventoryItem.java:3018-3026）。不拿掉的話，舊背包的說明
         -- （例：新生成的舊 Plus 外殼）會蓋掉新背包的；拿掉後照新背包腳本的欄位顯示，存檔也不帶這一欄
         md.Tooltip = nil
         -- 換回記下的原款（MDB.toReinforced 記的）：顏色也換回去。主題強化版只有一張貼圖、不能隨機染色，搬過來的 textureChoice
-        -- 一畫就被改成 0、染色變白（ItemVisual.java:153-166、:185-196），不能靠 copyClothingItem 帶回來
+        -- 一畫就被改成 0、染色變白（ItemVisual.java:150-163、:182-193），不能靠 copyClothingItem 帶回來
         local v = newType == md.MDB_origin and new:getVisual()
         if v then
             v:setTextureChoice(md.MDB_originTex or -1)
@@ -496,7 +496,7 @@ function MDB.swapBag(old, newType, tier, character)
         if isServer() then new:getWorldItem():transmitCompleteItemToClients() end
         return new
     end
-    cont:Remove(old)   -- 也會把它從手上拿掉（ItemContainer.java:2036-2039）
+    cont:Remove(old)   -- 也會把它從手上拿掉（ItemContainer.java:2084-2087）
     if isServer() then
         sendReplaceItemInContainer(cont, old, new)
     elseif character and cont == character:getInventory() then
@@ -520,7 +520,7 @@ end
 
 -- 換成強化版。原版來源 sourceType（舊外殼則是它對應的原版）照這個包的顏色選主題，並把原款、顏色與染色記在 modData
 -- （記在舊背包上，copyClothingItem 跟著搬，伺服器送出的新背包就帶著），還原時用。
--- textureChoice：getVisual() 第一次建立時就選好（InventoryItem.java:2323-2330、ItemVisual.java:214-222）。
+-- textureChoice：getVisual() 第一次建立時就選好（InventoryItem.java:2338-2345、ItemVisual.java:211-219）。
 -- 染色存成 ImmutableColor.decode 讀得懂的整數字串（ImmutableColor.java:102-119、:129-131；整數值的 tostring 不帶小數點，
 -- KahluaUtil.java:180-188）
 function MDB.toReinforced(bag, sourceType, tier, character)
@@ -583,7 +583,7 @@ function MDB.onTestTier1(item, character) return gate(item, 1) end
 function MDB.onTestTier2(item, character) return gate(item, 2) end
 function MDB.onTestTier3(item, character) return gate(item, 3) end
 
--- OnCreate（data, character）：只在單機或伺服器執行（ISHandcraftAction.lua:221-234）。
+-- OnCreate（data, character）：只在單機或伺服器執行（ISHandcraftAction.lua:225-238）。
 -- 有強化版的背包先換成強化版再套新階級
 function MDB.onUpgrade(data, character)
     local bag = MDB.keepBag(data)
@@ -601,13 +601,13 @@ end
 -- 換穿法（腰包前背↔後背）換成另一個物品：原版 createItemNew 搬了 modData，沒搬容量與負重減輕
 -- （ISClothingExtraAction.lua:66-112），換完回到腳本預設、MDB_tier 卻還在，就升不回來了。這裡依 MDB_tier 重算。
 -- 同一個函式也是 copyClothingItem（:62-64 呼叫時才查 ISClothingExtraAction.createItemNew，所以 MDB.swapBag 也走這個包裝；
--- InventoryItem.java:5029-5036）與背負噴霧器換物（ISEquipWeaponAction.lua:152）的路徑。
--- MP 的 complete() 在伺服器跑（NetTimedAction.java:132-139；客戶端不跑，LuaTimedActionNew.java:164-170）。
+-- InventoryItem.java:5062-5069）與背負噴霧器換物（ISEquipWeaponAction.lua:152）的路徑。
+-- MP 的 complete() 在伺服器跑（NetTimedAction.java:132-139；客戶端不跑，LuaTimedActionNew.java:169-175）。
 -- 新物品這時還沒放進容器也沒放上地面，applyTier 不重送；接著 sendAddItemToContainer 整件送出，負重減輕與容量都在裡面
--- （AddInventoryItemToContainerPacket.java:54-58、InventoryContainer.java:57-58、ItemContainer.java:2439）。
+-- （AddInventoryItemToContainerPacket.java:54-58、InventoryContainer.java:57-58、ItemContainer.java:2487）。
 -- MDB.swapBag 呼叫 copyClothingItem 時新背包已在容器裡或地上，由 holdSend 擋下這次重送。
 -- 名字：原版拿舊物品的 getName()（帶磨損、染血字樣）和腳本名稱比，不同就寫進新物品（:76-79），沒搬改名旗標；名字和原名不同就存檔、
--- 照原樣送給每個客戶端（InventoryItem.java:1711-1714）。背包在這裡重設：改過名的帶原始名稱與旗標；沒改過名的，原始名稱認得出是
+-- 照原樣送給每個客戶端（InventoryItem.java:1715-1718）。背包在這裡重設：改過名的帶原始名稱與旗標；沒改過名的，原始名稱認得出是
 -- 預設名或原版換穿寫的（isVanillaSwapName）就設回原名（不存不送，各自的語言），認不出的（舊版換穿弄丟旗標的改名、換過語言前寫的）
 -- 照原始名稱留著，不帶這次加上的字樣、不設旗標：換穿不新增掉名的路徑。MDB.swapBag 之後自己再清（見那裡）。
 require "TimedActions/ISClothingExtraAction"

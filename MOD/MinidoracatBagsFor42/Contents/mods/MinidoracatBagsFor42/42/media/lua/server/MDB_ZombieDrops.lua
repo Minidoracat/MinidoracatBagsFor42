@@ -1,5 +1,5 @@
 -- 殭屍死亡掉落：每隻殭屍死亡時執行一次，不掛每次殭屍更新的事件。
--- OnZombieDead 在 DoZombieInventory() 之後觸發（IsoZombie.java:5405-5409），屍體接手這份 inventory（IsoDeadBody.java:324-339），
+-- OnZombieDead 在 DoZombieInventory() 之後觸發（IsoZombie.java:5383-5387），屍體接手這份 inventory（IsoDeadBody.java:326-341），
 -- 所以直接加進 zombie:getInventory() 不會被清掉。只在單機或伺服器執行，客戶端直接 return。
 -- 服裝名稱出自原版 media/clothing/clothing.xml 的 <m_Name>。
 MDB = MDB or {}
