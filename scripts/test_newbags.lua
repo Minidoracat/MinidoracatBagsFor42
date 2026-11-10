@@ -265,7 +265,7 @@ end
 function isServer() return env.server end
 function isClient() return env.client end
 ItemPickerJava = { Parse = function() env.parsed = env.parsed + 1 end }
-function sendReplaceItemInContainer(c, a, b) env.sent[#env.sent + 1] = { c, a, b } end
+function sendReplaceItemInContainer(c, a, b) env.sent[#env.sent + 1] = { c, a, b, c.parent } end
 -- sendServerCommand 有兩種：全部玩家（module, command, args），或只送給一位玩家（player, module, command, args）
 function sendServerCommand(a, b, c, d)
     if type(a) == "string" then a, b, c, d = nil, a, b, c end
@@ -320,6 +320,12 @@ local function newContainer()
     end
     function c:DoRemoveItem(i) self:Remove(i) end
     function c:getItems() return javaList(self.items) end
+    -- 送封包要看的三樣（GameServer.java:2463-2485）與車輛部位（ItemContainer.java:3488-3490）；getCharacter 這裡不往外找，由測試直接設
+    function c:getParent() return self.parent end
+    function c:setParent(p) self.parent = p end
+    function c:getCharacter() return self.character end
+    function c:getContainingItem() return self.containingItem end
+    function c:getVehiclePart() return self.part end
     -- ItemContainer.getItemWithIDRecursiv（ItemContainer.java:3094-3108）：也往背包裡找
     function c:getItemWithIDRecursiv(id)
         local function find(list)
@@ -334,7 +340,8 @@ local function newContainer()
     return c
 end
 local CONTAINER = newContainer()
-local PLAYER = { getInventory = function() return CONTAINER end }
+local PLAYER = { __class = "IsoPlayer", getInventory = function() return CONTAINER end }
+CONTAINER.parent = PLAYER
 -- ItemVisual：textureChoice 與染色。single＝ClothingItem 只有一張貼圖、不能隨機染色（主題強化版）：一畫就把超出範圍的
 -- textureChoice 改成 0（只能選那一張）、染色變白（ItemVisual.java:153-166、:185-196）。這裡讀的時候就照畫過的回，還原時只能靠 modData 的紀錄
 local function newTint(r, g, b)
@@ -1206,6 +1213,56 @@ local function suite()
         and env.sent[1][2] == sv and env.sent[1][3] == sv)
     local floor = newBag(20, 75, 0.8); floor.container = nil
     check("applyTier: no container on server does not error", pcall(MDB.applyTier, floor, 1) and #env.sent == 1)
+    -- 原版不送的容器（GameServer.java:2463-2485）：背包裡的背包。bagIn(外層容器) 傳回外層背包、它的容器、裡面那件
+    do
+    local function bagIn(outerCont)
+        local a, inner, b = newBag(20, 75, 0.8), newContainer(), newBag(20, 75, 0.8)
+        a.container, inner.containingItem, b.container = outerCont, a, inner
+        return a, inner, b
+    end
+    local VEH = {}
+    local trunk, crate = newContainer(), newContainer()
+    trunk.parent, trunk.part, crate.parent = VEH, { getVehicle = function() return VEH end }, {}
+    local a, inner, b = bagIn(CONTAINER)
+    inner.character = PLAYER
+    env.sent = {}; MDB.applyTier(b, 1)
+    check("applyTier: bag inside a worn bag is resent in its own container",
+        #env.sent == 1 and env.sent[1][1] == inner and env.sent[1][2] == b and env.sent[1][3] == b)
+    a, inner, b = bagIn(trunk)
+    env.sent = {}; MDB.applyTier(b, 1)
+    check("applyTier: bag inside a bag in a vehicle part is resent in its own container, the vehicle lent as parent only for the send",
+        #env.sent == 1 and env.sent[1][1] == inner and env.sent[1][2] == b and env.sent[1][3] == b and env.sent[1][4] == VEH
+        and inner.parent == nil)
+    local a2, inner2, b2 = bagIn(inner)
+    env.sent = {}; MDB.applyTier(b2, 1)
+    check("applyTier: two bags deep in a vehicle part resends the middle bag inside the one lying in the part",
+        #env.sent == 1 and env.sent[1][1] == inner and env.sent[1][2] == a2 and env.sent[1][3] == a2 and env.sent[1][4] == VEH
+        and inner.parent == nil and inner2.parent == nil)
+    a, inner, b = bagIn(crate)
+    env.sent = {}; MDB.applyTier(b, 1)
+    check("applyTier: bag inside a bag in furniture resends the outer bag in the furniture container",
+        #env.sent == 1 and env.sent[1][1] == crate and env.sent[1][2] == a and env.sent[1][3] == a)
+    -- 玩家身上超過 16 層：getCharacter 找不到玩家（ItemContainer.java:3327-3346），往外一層找得到
+    a, inner, b = bagIn(newContainer())
+    a.container.character = PLAYER
+    env.sent = {}; MDB.applyTier(b, 1)
+    check("applyTier: past the 16-level lookup the nearest bag the player still owns is resent",
+        #env.sent == 1 and env.sent[1][1] == a.container and env.sent[1][2] == a and env.sent[1][3] == a)
+    -- 外層背包在地上：伺服器上它沒有 container，照原版的第三種直接送
+    a, inner, b = bagIn(nil)
+    a.worldItem = {}
+    env.sent = {}; MDB.applyTier(b, 1)
+    check("applyTier: bag inside a bag on the ground is resent in its own container",
+        #env.sent == 1 and env.sent[1][1] == inner and env.sent[1][2] == b and env.sent[1][4] == nil)
+    a, inner, b = bagIn(trunk)
+    b.fullType = "MinidoracatBags.Bag_DuffelBag_Navy_Reinforced"
+    inner.items[1] = b
+    env.sent = {}
+    local swappedIn = MDB.swapBag(b, "MinidoracatBags.Bag_DuffelBag_Olive_Reinforced", 1)
+    check("swapBag: inside a bag in a vehicle part sends one replace (bag's container, old, new) with the vehicle lent as parent",
+        #env.sent == 1 and env.sent[1][1] == inner and env.sent[1][2] == b and env.sent[1][3] == swappedIn and env.sent[1][4] == VEH
+        and inner.parent == nil and inner.items[1] == swappedIn and #inner.items == 1)
+    end
     env.server = false
 
     -- 8. OnTest 與 onUpgrade
@@ -2448,7 +2505,12 @@ if arg and arg[1] == "--mutants" then
         { name = "MP 進場立刻送請求", file = "UPG", from = "        Events.OnTick.Add(requestRefresh)\n", to = "        requestRefresh()\n" },
         { name = "請求沒拿掉 OnTick", file = "UPG", from = "    Events.OnTick.Remove(requestRefresh)\n", to = "" },
         { name = "客戶端不處理 bagTier", file = "UPG", from = 'elseif command == "bagTier" or command == "bagName" then', to = 'elseif command == "bagName" then' },
-        { name = "伺服器不重送", file = "UPG", from = "sendReplaceItemInContainer(container, bag, bag)", to = "" },
+        { name = "伺服器不重送", file = "UPG", from = "sendReplace(container, bag, bag)", to = "" },
+        { name = "送不出去時不往外找", file = "UPG", from = "        cont, old, new = up, outer, outer\n", to = "        break\n" },
+        { name = "玩家身上背包裡的也往外找", file = "UPG", from = ' or instanceof(cont:getCharacter(), "IsoPlayer")) do', to = ") do" },
+        { name = "車上背包裡的不借車當 parent", file = "UPG", from = "    if vehicle then cont:setParent(vehicle) end\n", to = "" },
+        { name = "借來的 parent 沒拿掉", file = "UPG", from = "    if vehicle then cont:setParent(nil) end\n", to = "" },
+        { name = "車上背包裡的整件重送外層", file = "UPG", from = "        if part then vehicle = part:getVehicle() break end\n", to = "" },
         { name = "單機也重送", file = "UPG", from = "if isServer() and not holdSend then", to = "if not holdSend then" },
         { name = "地上升階不重送", file = "UPG", from = 'sendServerCommand("MinidoracatBags", "floorTier", args)', to = 'type("MinidoracatBags", "floorTier", args)' },
         { name = "地上升階送出時階級沒更新", file = "UPG", from = "id = bag:getID(), tier = tier,", to = "id = bag:getID(), tier = tier - 1," },
@@ -2471,7 +2533,7 @@ if arg and arg[1] == "--mutants" then
         { name = "換穿法沒包裝", file = "UPG", from = "function ISClothingExtraAction:createItemNew(item, newItem)", to = "function MDB:unusedCreateItemNew(item, newItem)" },
         { name = "升級不換型", file = "UPG", from = "    if MDB.reinforcedOf(ft) then\n", to = "    if false then\n" },
         { name = "換型途中照送", file = "UPG", from = "if isServer() and not holdSend then", to = "if isServer() then" },
-        { name = "換型最後不送", file = "UPG", from = "        sendReplaceItemInContainer(cont, old, new)\n", to = "" },
+        { name = "換型最後不送", file = "UPG", from = "        sendReplace(cont, old, new)\n", to = "" },
         { name = "單機不換動作佇列", file = "UPG", from = "        replaceItemInContainer(cont, old, new)", to = "" },
         { name = "舊背包沒移除", file = "UPG", from = "    cont:Remove(old)", to = "" },
         { name = "液體沒在容量設好後重搬", file = "UPG", from = "            nfc:copyFluidsFrom(ofc)\n", to = "" },

@@ -173,6 +173,28 @@ local function tierValues(bag, base, baseWr, t, m, pct, limit, fullWr)
     return step(base, fullCap), step(baseWr, math.max(baseWr, fullWr))
 end
 
+-- 伺服器把容器裡的 old 換成 new 送給客戶端。原版只在三種容器才送，其他的什麼都不送（GameServer.java:2463-2485）：
+-- 有 parent 的（玩家的主物品欄、家具、車輛部位）、屬於玩家的（往外最多找 16 層，ItemContainer.java:3327-3346）、所屬背包在地上的
+-- （地上的背包在伺服器上沒有 container，往外找到它就停）。送不出去的（車上或家具裡的背包裡、玩家身上超過 16 層）：
+-- ・背包直接放在車輛部位裡：封包指得到它的容器（ContainerID.java:69-75、:140-149，客戶端 :426-446），只是原版不送。暫時把
+--   車當成容器的 parent 讓原版送出，客戶端換的是同一個容器裡的那一件，開著的背包面板照常更新；送完拿掉，其他地方不靠這個 parent。
+-- ・其餘：往外找到第一個送得出去的容器，把那一層的背包整件重送（內容物都在裡面，InventoryContainer.java:57-58；
+--   客戶端照 ID 換掉整件，ReplaceInventoryItemInContainerPacket.java:56-82）。
+local function sendReplace(cont, old, new)
+    local vehicle
+    while not (cont:getParent() or instanceof(cont:getCharacter(), "IsoPlayer")) do
+        local outer = cont:getContainingItem()
+        local up = outer and outer:getContainer()
+        if not up then break end
+        local part = up:getVehiclePart()
+        if part then vehicle = part:getVehicle() break end
+        cont, old, new = up, outer, outer
+    end
+    if vehicle then cont:setParent(vehicle) end
+    sendReplaceItemInContainer(cont, old, new)
+    if vehicle then cont:setParent(nil) end
+end
+
 -- 最高階（MaxTier）升滿，中間各階平均分配；MaxTier 0 維持原值。傳回新數值（bagTier／floorTier 指令的內容）。
 -- 同一階重套（重算、換型、換穿）時，MaxTier 改過就取升得比較滿的那個：調低照新的算，調高或設成 0 不會讓已升級的背包變小
 function MDB.applyTier(bag, tier)
@@ -218,7 +240,7 @@ function MDB.applyTier(bag, tier)
             args.x, args.y, args.z = sq:getX(), sq:getY(), sq:getZ()
             sendServerCommand("MinidoracatBags", "floorTier", args)
         elseif container then
-            sendReplaceItemInContainer(container, bag, bag)
+            sendReplace(container, bag, bag)
         end
     end
     return args
@@ -498,7 +520,7 @@ function MDB.swapBag(old, newType, tier, character)
     end
     cont:Remove(old)   -- 也會把它從手上拿掉（ItemContainer.java:2084-2087）
     if isServer() then
-        sendReplaceItemInContainer(cont, old, new)
+        sendReplace(cont, old, new)
     elseif character and cont == character:getInventory() then
         replaceItemInContainer(cont, old, new)   -- 會把容器的 parent 轉成 IsoPlayer，只能用在主物品欄
     end

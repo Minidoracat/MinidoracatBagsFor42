@@ -209,6 +209,7 @@ local INV = { items = {} }
 function INV:AddItem(i) self.items[#self.items + 1] = i; i.container = self; return i end
 function INV:Remove(i) for k, v in ipairs(self.items) do if v == i then table.remove(self.items, k); i.container = nil end end end
 local PLAYER = { getInventory = function() return INV end }
+function INV:getParent() return PLAYER end   -- 主物品欄的 parent 是玩家，伺服器直接送（GameServer.java:2463-2465）
 local function newFluid(capacity, amount)
     local fc = { capacity = capacity, amount = amount or 0 }
     function fc:getCapacity() return self.capacity end
