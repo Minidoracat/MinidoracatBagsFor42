@@ -123,8 +123,10 @@ for _, s in pairs(MDB.THEME_SOURCES) do
     end
 end
 
--- 來源的強化版：原版照 textureChoice（-1＝沒有顏色選擇）查主題；本 MOD 的一款一件
-function MDB.reinforcedOf(ft, choice)
+-- 來源的強化版：原版照 textureChoice（-1＝沒有顏色選擇）查主題；本 MOD 的一款一件。
+-- choice 可省略，用 ... 接：Kahlua 少傳的固定參數不保證是 nil（家族 pitfalls「選用參數用 ... 接」）
+function MDB.reinforcedOf(ft, ...)
+    local choice = ...
     local s = MDB.THEME_SOURCES[ft]
     if not s then return MDB.REINFORCED[ft] end
     return MDB.themedId(s.shape, s.themes[(choice or 0) + 1] or s.themes[1])
