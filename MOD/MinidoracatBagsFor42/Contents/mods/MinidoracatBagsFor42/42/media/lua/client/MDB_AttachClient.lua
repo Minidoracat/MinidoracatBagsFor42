@@ -97,9 +97,10 @@ local FIX = {
     -- 泰迪熊照原版大小比頭還大，縮到和 Spiffo 差不多高（約 0.2；使用者 2026-11-01）。手工泰迪熊正面朝 +x
     ["Base.ToyBear"] = { "Plushie", 0, 0, 0, s = 0.55 },
     ["Base.ToyBear_Crafted_Cotton"] = { "Plushie", 0, -90, 0, s = 0.6 }, ["Base.ToyBear_Crafted_Denim"] = { "Plushie", 0, -90, 0, s = 0.6 },
-    -- 69mini 的熊趴在地上（頭朝 +z、臉朝 -y、高 ±0.19 以原點置中、厚度在 0～+y）：立起來臉朝外，往上推半個身高、往外推半個厚度，縮到約 0.2 高
-    ["Base.69miniRupertBearWI"] = { "Plushie", -90, 0, 0, 0, 0.097, 0.025, s = 0.51 },
-    ["Base.69miniTeddyWI"] = { "Plushie", -90, 0, 0, 0, 0.098, 0.025, s = 0.51 },
+    -- 69mini 的熊仰躺（頭朝 +z、臉朝 +y、高 ±0.19 以原點置中、厚度在 0～+y）：rx -90 立起來、rz 180 讓臉朝外（只轉 rx 會臉朝包），
+    -- 往上推半個身高、厚度置中，縮到約 0.2 高
+    ["Base.69miniRupertBearWI"] = { "Plushie", -90, 0, 180, 0, 0.097, -0.025, s = 0.51 },
+    ["Base.69miniTeddyWI"] = { "Plushie", -90, 0, 180, 0, 0.098, -0.025, s = 0.51 },
     -- 69mini 的肉丸鬥牛犬坐著（y 朝上、底部在原點、高約 0.17、臉朝 -z），同 *_Ground 玩偶轉過來；大小已和 Spiffo 差不多，不縮
     ["Base.69miniMeatballBulldogWI"] = { "Plushie", 0, 180, 0 },
     -- 原點在背面：往後推半個厚度，置中坐在包頂。扭扭蟲、布繩改借本 MOD 照抄的模型（scripts/MDB_AttachModels.txt，多了手骨掛點），
