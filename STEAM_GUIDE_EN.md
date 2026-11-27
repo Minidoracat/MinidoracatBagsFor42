@@ -271,7 +271,7 @@ The reinforced Military Backpacks, Duffel Bags, Hiking Backpacks, Big Hiking Bac
 [list]
 [*] [b]Backpack slots[/b]: tools such as hammers, screwdrivers, knives, wrenches, meat cleavers, walkie-talkies, saucepans, frying pans and rope.
 [*] [b]Bottle pockets[/b]: water bottles, canteens, liquor bottles, juice, milk, soda and beer cans, pill bottles.
-[*] [b]Plushie clips[/b]: one on top of the bag and one at the bottom edge of its back, so you can hang two at once. They take Spiffo and the other plushies, dolls, Teddy Bears, Crafted Cotton and Burlap Teddy Bears, and Rubber Ducks; with the 69 Mini car mod installed, its Rupert Bear and Teddy fit too. Teddy bears shrink to about Spiffo's size while hanging on the bag; on the floor they keep their vanilla size.
+[*] [b]Plushie clips[/b]: one on top of the bag and one at the bottom edge of its back, so you can hang two at once. They take Spiffo and the other plushies, dolls, Teddy Bears, Crafted Cotton and Burlap Teddy Bears, and Rubber Ducks; with the 69 Mini car mod installed, its Rupert Bear, Teddy and Meatball the Bulldog fit too. Teddy bears shrink to about Spiffo's size while hanging on the bag; on the floor they keep their vanilla size.
 [*] [b]Side strap[/b]: closed umbrellas, saws, blowtorches.
 [*] [b]Flashlight clip[/b]: flashlights, penlights, crafted flashlights.
 [*] [b]Bedrolls still work[/b]: the Military, Hiking and Big Hiking Backpacks, Day Packs and Expedition Frame Packs keep their original bedroll attachment.
