@@ -97,7 +97,7 @@ MDB.ATTACH_ITEMS = {
     ["Base.ToyBear"] = "TeddyBear", ["Base.ToyBear_Crafted_Cotton"] = "TeddyBear", ["Base.ToyBear_Crafted_Burlap"] = "TeddyBear",
     ["Base.Rubberducky"] = "RubberDuck",
     -- 其他 MOD 的玩偶（模組也是 Base；沒裝那個 MOD 時 getItem 是 nil，不做事）
-    ["Base.69miniRupertBear"] = "TeddyBear", ["Base.69miniTeddy"] = "TeddyBear",
+    ["Base.69miniRupertBear"] = "TeddyBear", ["Base.69miniTeddy"] = "TeddyBear", ["Base.69miniMeatballBulldog"] = "SpiffoPlushie",
     -- 側邊束帶：收合的傘、鋸子、噴燈
     ["Base.ClosedUmbrellaBlack"] = "Umbrella", ["Base.ClosedUmbrellaBlue"] = "Umbrella", ["Base.ClosedUmbrellaRed"] = "Umbrella",
     ["Base.ClosedUmbrellaTINTED"] = "Umbrella", ["Base.ClosedUmbrellaWhite"] = "Umbrella",
@@ -123,10 +123,11 @@ MDB.ATTACH_STATIC = {
     -- 橡皮鴨生成時隨機上色（OnCreate onCreateRandomColor），要借灰階的 TINTED 模型才是它的顏色；黃色貼圖乘上色會變綠、變黑
     ["Base.ToyBear_Crafted_Burlap"] = "Base.ToyBear_Crafted_Denim", ["Base.Rubberducky"] = "Base.RubberduckyTINTED",
     ["Base.69miniRupertBear"] = "Base.69miniRupertBearWI", ["Base.69miniTeddy"] = "Base.69miniTeddyWI",
+    ["Base.69miniMeatballBulldog"] = "Base.69miniMeatballBulldogWI",
     ["Base.Rope"] = "Base.Rope_Looped", ["Base.SheetRope"] = "MinidoracatBags.MDB_SheetRope",
 }
 -- ATTACH_ITEMS 裡不是原版的物品 → 提供它的 MOD（test_attach 的原版核對略過，改對本機 Workshop 副本核對）
-MDB.ATTACH_OTHER_MODS = { ["Base.69miniRupertBear"] = "69mini", ["Base.69miniTeddy"] = "69mini" }
+MDB.ATTACH_OTHER_MODS = { ["Base.69miniRupertBear"] = "69mini", ["Base.69miniMeatballBulldog"] = "69mini", ["Base.69miniTeddy"] = "69mini" }
 -- 本 MOD 照抄的模型的原版來源：物品的 StaticModel 正好是來源時也換成照抄的（只多手骨掛點，掛在包上一樣）。
 -- 收錄 Bag Upgrade Plus 的 ServerPatch 把扭扭蟲的 StaticModel 寫成原版 Plushabug，不換的話拿在手上照舊包住手、背包上的校正也對不上
 MDB.ATTACH_STATIC_SOURCE = { ["Base.SheetRope"] = "Base.SheetRope", ["Base.Plushabug"] = "Base.Plushabug" }
